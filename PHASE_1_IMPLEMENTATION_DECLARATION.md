@@ -1,8 +1,8 @@
 # Pawpaw — Phase 1 Implementation Declaration
 
-**Status:** Awaiting ChatGPT review  
-**Scope authority:** `PROJECT_BRIEF.md`  
-**Implementation agent:** Claude  
+**Status:** Corrections applied — awaiting second ChatGPT review
+**Scope authority:** `PROJECT_BRIEF.md`
+**Implementation agent:** Claude
 **Review agent:** ChatGPT
 
 ## 1. Build boundary
@@ -37,12 +37,16 @@ Phase 1 will not create Her Story, Gallery, Letters, Moments, vault, finance, an
 - `.gitignore` — extend only if generated files require it
 - `README.md` — replace placeholder content with setup, run, test, migration, and backup instructions
 
+### Supabase configuration
+
+- `supabase/config.toml` — Supabase CLI project configuration required for local development, reproducible migrations, and `supabase db push`
+
 ### Application shell and request gate
 
 - `src/app/layout.tsx`
 - `src/app/globals.css`
 - `src/app/robots.ts`
-- `src/proxy.ts`
+- `src/proxy.ts` — request gate protecting archive and administrator route groups; validates the signed viewer cookie using Edge-compatible Web Crypto; redirects unauthenticated viewers to family login; injects `X-Robots-Tag: noindex, nofollow, noarchive` on every permitted protected response
 
 ### Public authentication routes
 
@@ -81,7 +85,7 @@ Phase 1 will not create Her Story, Gallery, Letters, Moments, vault, finance, an
 - `src/lib/auth/admin.ts`
 - `src/lib/auth/viewer-cookie.ts`
 - `src/lib/auth/viewer-passphrase.ts`
-- `src/lib/auth/throttle.ts`
+- `src/lib/auth/throttle.ts` — implements the database-backed viewer-login throttle against the `viewer_login_attempts` table; all throttle checks and failure updates run exclusively through server-side code
 - `src/lib/auth/origin.ts`
 - `src/lib/content/home.ts`
 - `src/lib/content/schema.ts`
@@ -94,6 +98,7 @@ Phase 1 will not create Her Story, Gallery, Letters, Moments, vault, finance, an
 - `supabase/migrations/0001_initial_schema.sql`
 - `supabase/migrations/0002_rls_and_admin_policies.sql`
 - `supabase/migrations/0003_private_media_bucket.sql`
+- `supabase/migrations/0004_viewer_login_throttle.sql`
 - `supabase/seed.sql` — development-only documented seed without real credentials or private photographs
 
 ### Tests
@@ -102,6 +107,7 @@ Phase 1 will not create Her Story, Gallery, Letters, Moments, vault, finance, an
 - `tests/unit/viewer-cookie.test.ts`
 - `tests/unit/content-schema.test.ts`
 - `tests/unit/origin-check.test.ts`
+- `tests/unit/throttle.test.ts`
 - `tests/integration/publication-boundary.test.ts`
 - `playwright.config.ts`
 - `tests/e2e/auth-boundaries.spec.ts`
@@ -136,6 +142,29 @@ The implementation agent may reduce this list when two small responsibilities ar
 - composite uniqueness preventing duplicate placement;
 - stable sort order;
 - foreign keys with deletion rules preventing silent loss of referenced media.
+
+### `viewer_login_attempts`
+
+Stores the throttle state for family-login attempts. Added by `0004_viewer_login_throttle.sql`.
+
+Schema:
+
+- `key_hash text primary key` — server-generated keyed hash of the normalized client identifier; not a raw IP address and not the submitted passphrase or any derivative of it
+- `failure_count integer not null default 0`
+- `window_started_at timestamptz not null`
+- `blocked_until timestamptz`
+- `updated_at timestamptz not null default now()`
+
+Declared behaviours:
+
+- family-login failures are counted in Supabase Postgres so throttling is consistent across all Vercel instances and cold starts;
+- the throttle check and failure update are performed only through server-side code (`src/lib/auth/throttle.ts`);
+- anonymous clients and ordinary authenticated clients receive no direct read or write access to this table;
+- a successful login clears or resets the matching throttle record;
+- records whose `blocked_until` and `window_started_at` are in the past are ignored at query time and may be removed by a documented periodic cleanup operation;
+- a database error during the throttle check fails safely: the login attempt is rejected and no false success is reported;
+- the block threshold, failure window duration, and block duration are centralized named constants in `src/lib/auth/throttle.ts` and are covered by automated tests;
+- the raw client identifier, submitted passphrase, and any passphrase hash are never persisted to this table.
 
 ### Policy boundary
 
@@ -248,7 +277,13 @@ Before deployment, Claude must record the exact current Hobby limits relevant to
 - draft content is absent from viewer results;
 - inactive/non-allowlisted authenticated user cannot mutate content;
 - anonymous Storage read fails;
-- viewer cookie never authorizes an administrator route.
+- viewer cookie never authorizes an administrator route;
+- throttle: failures below the threshold remain retryable;
+- throttle: reaching the threshold blocks subsequent attempts;
+- throttle: the block expires after the declared period and attempts become retryable again;
+- throttle: a successful login resets the throttle record for that key;
+- throttle: different throttle keys do not share failure counters;
+- throttle: no raw client identifier or passphrase is persisted to `viewer_login_attempts`.
 
 ### Manual browser acceptance
 
