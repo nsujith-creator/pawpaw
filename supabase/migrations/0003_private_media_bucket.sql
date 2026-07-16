@@ -19,7 +19,7 @@ create policy "active_admins_upload_media"
   to authenticated
   with check (
     bucket_id = 'media'
-    and public.is_active_admin()
+    and (select private.is_active_admin())
   );
 
 -- Active admins can read (for the admin UI).
@@ -29,7 +29,7 @@ create policy "active_admins_read_media"
   to authenticated
   using (
     bucket_id = 'media'
-    and public.is_active_admin()
+    and (select private.is_active_admin())
   );
 
 -- Active admins can update (e.g. focal point re-crop replacement).
@@ -39,7 +39,7 @@ create policy "active_admins_update_media"
   to authenticated
   using (
     bucket_id = 'media'
-    and public.is_active_admin()
+    and (select private.is_active_admin())
   );
 
 -- Active admins can delete objects not referenced by any content_media row.
@@ -50,5 +50,5 @@ create policy "active_admins_delete_media"
   to authenticated
   using (
     bucket_id = 'media'
-    and public.is_active_admin()
+    and (select private.is_active_admin())
   );
