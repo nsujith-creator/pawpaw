@@ -1,0 +1,75 @@
+.home {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  font-size: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.prose {
+  padding: 2rem 1.25rem;
+  max-width: 48rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.paragraph {
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  font-size: 1.0625rem;
+}
+
+.quote {
+  border-left: 3px solid var(--color-accent);
+  padding: 0.75rem 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.quote cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-style: normal;
+}
+
+.logoutForm {
+  padding: 1rem 1.25rem 2rem;
+  text-align: right;
+  max-width: 48rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.logoutButton {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
