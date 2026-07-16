@@ -16,6 +16,11 @@ const allMigrationSql = readdirSync(MIGRATIONS_DIR)
 
 const rls = readFileSync(join(MIGRATIONS_DIR, '0002_rls_and_admin_policies.sql'), 'utf8')
 const bucket = readFileSync(join(MIGRATIONS_DIR, '0003_private_media_bucket.sql'), 'utf8')
+const privileges = readFileSync(join(MIGRATIONS_DIR, '0005_table_privileges.sql'), 'utf8')
+const searchPathFix = readFileSync(
+  join(MIGRATIONS_DIR, '0006_lock_set_updated_at_search_path.sql'),
+  'utf8',
+)
 
 describe('is_active_admin migration security', () => {
   it('no migration references public.is_active_admin', () => {
@@ -87,5 +92,140 @@ describe('is_active_admin migration security', () => {
     const config = readFileSync(join(__dirname, '../../supabase/config.toml'), 'utf8')
     const schemasLine = config.match(/schemas = \[(.*)\]/)?.[1] ?? ''
     expect(schemasLine).not.toContain('private')
+  })
+})
+
+// Static enforcement of the table-privilege posture in 0005:
+// service_role gets full DML, authenticated gets only what RLS then gates
+// (and can never write admin_users), anon gets nothing.
+
+const TABLES = [
+  'admin_users',
+  'content_items',
+  'media_assets',
+  'content_media',
+  'viewer_login_attempts',
+] as const
+
+// SQL statements without comments, whitespace-normalized for exact matching.
+const privilegeStatements = privileges
+  .split('\n')
+  .filter(line => !line.trimStart().startsWith('--'))
+  .join('\n')
+  .split(';')
+  .map(s => s.replace(/\s+/g, ' ').trim())
+  .filter(Boolean)
+  .map(s => `${s};`)
+
+const grants  = privilegeStatements.filter(s => s.startsWith('grant '))
+const revokes = privilegeStatements.filter(s => s.startsWith('revoke '))
+
+describe('table privileges migration (0005)', () => {
+  it('contains only grant and revoke statements — no schema or policy changes', () => {
+    expect(privilegeStatements.length).toBe(grants.length + revokes.length)
+  })
+
+  it('revokes all privileges from anon, authenticated, and service_role on every table first', () => {
+    for (const table of TABLES) {
+      expect(revokes).toContain(
+        `revoke all on table public.${table} from anon, authenticated, service_role;`,
+      )
+    }
+    expect(revokes).toHaveLength(TABLES.length)
+  })
+
+  it('all revokes appear before the first grant', () => {
+    const firstGrant = privilegeStatements.findIndex(s => s.startsWith('grant '))
+    const lastRevoke = privilegeStatements.map(s => s.startsWith('revoke ')).lastIndexOf(true)
+    expect(lastRevoke).toBeLessThan(firstGrant)
+  })
+
+  it('service_role receives exactly select, insert, update, delete on every table', () => {
+    for (const table of TABLES) {
+      expect(grants).toContain(
+        `grant select, insert, update, delete on table public.${table} to service_role;`,
+      )
+    }
+  })
+
+  it('authenticated receives only SELECT on admin_users and DML on the content tables', () => {
+    const authGrants = grants.filter(s => s.endsWith('to authenticated;')).sort()
+    expect(authGrants).toEqual([
+      'grant select on table public.admin_users to authenticated;',
+      'grant select, insert, update, delete on table public.content_items to authenticated;',
+      'grant select, insert, update, delete on table public.content_media to authenticated;',
+      'grant select, insert, update, delete on table public.media_assets to authenticated;',
+    ])
+  })
+
+  it('authenticated is never granted INSERT, UPDATE, or DELETE on admin_users', () => {
+    const adminUserGrants = grants.filter(
+      s => s.includes('public.admin_users') && s.endsWith('to authenticated;'),
+    )
+    for (const g of adminUserGrants) {
+      expect(g).not.toMatch(/insert|update|delete/)
+    }
+  })
+
+  it('viewer_login_attempts is granted only to service_role', () => {
+    const vlaGrants = grants.filter(s => s.includes('viewer_login_attempts'))
+    expect(vlaGrants).toEqual([
+      'grant select, insert, update, delete on table public.viewer_login_attempts to service_role;',
+    ])
+  })
+
+  it('there are no grants beyond the expected nine', () => {
+    // 5 tables × service_role + 4 tables × authenticated.
+    expect(grants).toHaveLength(9)
+  })
+
+  it('anon is never granted anything in any migration', () => {
+    const allStatements = allMigrationSql
+      .split('\n')
+      .filter(line => !line.trimStart().startsWith('--'))
+      .join('\n')
+      .split(';')
+    for (const stmt of allStatements) {
+      const s = stmt.replace(/\s+/g, ' ').trim()
+      if (s.startsWith('grant ')) expect(s).not.toMatch(/\banon\b/)
+    }
+  })
+
+  it('no migration uses broad grants or default privileges', () => {
+    const withoutComments = allMigrationSql
+      .split('\n')
+      .filter(line => !line.trimStart().startsWith('--'))
+      .join('\n')
+    expect(withoutComments).not.toMatch(/all tables in schema/i)
+    expect(withoutComments).not.toMatch(/alter default privileges/i)
+  })
+})
+
+// Static enforcement of the search_path fix in 0006: the exact
+// zero-argument function signature must get an empty search_path.
+
+describe('set_updated_at search_path migration (0006)', () => {
+  const statements = searchPathFix
+    .split('\n')
+    .filter(line => !line.trimStart().startsWith('--'))
+    .join('\n')
+    .split(';')
+    .map(s => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .map(s => `${s};`)
+
+  it('contains exactly one statement', () => {
+    expect(statements).toHaveLength(1)
+  })
+
+  it("sets an empty search_path on public.set_updated_at()'s exact signature", () => {
+    expect(statements[0]).toBe(
+      "alter function public.set_updated_at() set search_path = '';",
+    )
+  })
+
+  it('does not recreate or drop the function', () => {
+    expect(searchPathFix).not.toMatch(/create (or replace )?function/i)
+    expect(searchPathFix).not.toMatch(/drop function/i)
   })
 })

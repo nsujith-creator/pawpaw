@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration:live": "vitest run --mode live tests/integration",
     "test:e2e": "playwright test"
   },
   "dependencies": {
