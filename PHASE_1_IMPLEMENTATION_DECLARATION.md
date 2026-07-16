@@ -1,6 +1,6 @@
 # Pawpaw — Phase 1 Implementation Declaration
 
-**Status:** Corrections applied — awaiting second ChatGPT review
+**Status:** Approved corrections applied — awaiting final ChatGPT review
 **Scope authority:** `PROJECT_BRIEF.md`
 **Implementation agent:** Claude
 **Review agent:** ChatGPT
@@ -149,7 +149,7 @@ Stores the throttle state for family-login attempts. Added by `0004_viewer_login
 
 Schema:
 
-- `key_hash text primary key` — server-generated keyed hash of the normalized client identifier; not a raw IP address and not the submitted passphrase or any derivative of it
+- `key_hash text primary key` — server-generated HMAC-SHA-256 of the normalized client identifier, keyed with `THROTTLE_KEY_SECRET`; `THROTTLE_KEY_SECRET` is separate from `VIEWER_COOKIE_SECRET`; the raw client identifier is never stored or logged; all comparisons and database lookups use only the resulting keyed hash
 - `failure_count integer not null default 0`
 - `window_started_at timestamptz not null`
 - `blocked_until timestamptz`
@@ -231,6 +231,7 @@ The repository will document names only:
 - `VIEWER_COOKIE_SECRET`
 - `VIEWER_SESSION_VERSION`
 - `NEXT_PUBLIC_SITE_URL`
+- `THROTTLE_KEY_SECRET`
 
 No secret value may be committed, logged, rendered to the browser, or placed in a `NEXT_PUBLIC_` variable unless it is explicitly intended to be public.
 
@@ -283,7 +284,8 @@ Before deployment, Claude must record the exact current Hobby limits relevant to
 - throttle: the block expires after the declared period and attempts become retryable again;
 - throttle: a successful login resets the throttle record for that key;
 - throttle: different throttle keys do not share failure counters;
-- throttle: no raw client identifier or passphrase is persisted to `viewer_login_attempts`.
+- throttle: no raw client identifier or passphrase is persisted to `viewer_login_attempts`;
+- throttle: changing `THROTTLE_KEY_SECRET` produces a different key hash for the same client identifier.
 
 ### Manual browser acceptance
 
