@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { findOrphans, ORPHAN_MAX_AGE_MS } from '@/lib/media/orphan-sweep'
+import { describe, it, expect, vi } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { findOrphans, ORPHAN_MAX_AGE_MS, sweepOrphans } from '@/lib/media/orphan-sweep'
 
 const ADMIN = '123e4567-e89b-12d3-a456-426614174000'
 const NOW = Date.parse('2026-07-16T12:00:00Z')
@@ -36,5 +37,27 @@ describe('findOrphans', () => {
   it('returns full storage paths under the admin folder', () => {
     const objects = [{ name: 'a.jpg', created_at: hoursAgo(30) }]
     expect(findOrphans(objects, new Set(), ADMIN, NOW)).toEqual([`${ADMIN}/a.jpg`])
+  })
+})
+
+describe('sweepOrphans pagination', () => {
+  it('continues beyond the first 100 Storage objects', async () => {
+    const first = Array.from({ length: 100 }, (_, index) => ({
+      name: `fresh-${index}.jpg`, created_at: new Date().toISOString(),
+    }))
+    const list = vi.fn()
+      .mockResolvedValueOnce({ data: first, error: null })
+      .mockResolvedValueOnce({ data: [{ name: 'last.jpg', created_at: new Date().toISOString() }], error: null })
+    const db = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        like: vi.fn().mockResolvedValue({ data: [], error: null }),
+      })),
+      storage: { from: vi.fn(() => ({ list, remove: vi.fn() })) },
+    } as unknown as SupabaseClient
+
+    await sweepOrphans(db, ADMIN)
+    expect(list).toHaveBeenNthCalledWith(1, ADMIN, expect.objectContaining({ limit: 100, offset: 0 }))
+    expect(list).toHaveBeenNthCalledWith(2, ADMIN, expect.objectContaining({ limit: 100, offset: 100 }))
   })
 })

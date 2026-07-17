@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { fixtureEmail, fixtureMetadata, fixtureObjectName, fixtureSlug } from './fixture-names'
 
 // Live-database checks for the private.is_active_admin() security posture.
 // Requires a real Supabase project with migrations applied — skipped against
@@ -36,19 +37,21 @@ describe.skipIf(!hasRealCredentials)(
     const svc = hasRealCredentials ? serviceClient() : (null as unknown as SupabaseClient)
     let nonAdminId = ''
     let adminId    = ''
-    const nonAdminEmail = `it-nonadmin-${Date.now()}@example.com`
-    const adminEmail    = `it-admin-${Date.now()}@example.com`
+    const nonAdminEmail = fixtureEmail('admin-security', 'nonadmin')
+    const adminEmail    = fixtureEmail('admin-security', 'admin')
     const createdContentIds: string[] = []
 
     beforeAll(async () => {
       const a = await svc.auth.admin.createUser({
         email: nonAdminEmail, password: TEST_PASSWORD, email_confirm: true,
+        user_metadata: fixtureMetadata('admin-security'),
       })
       if (a.error) throw a.error
       nonAdminId = a.data.user.id
 
       const b = await svc.auth.admin.createUser({
         email: adminEmail, password: TEST_PASSWORD, email_confirm: true,
+        user_metadata: fixtureMetadata('admin-security'),
       })
       if (b.error) throw b.error
       adminId = b.data.user.id
@@ -63,7 +66,7 @@ describe.skipIf(!hasRealCredentials)(
       for (const id of createdContentIds) {
         await svc.from('content_items').delete().eq('id', id)
       }
-      await svc.storage.from('media').remove([`${adminId}/integration-test.png`])
+      await svc.storage.from('media').remove([`${adminId}/${fixtureObjectName('admin-security', 'png')}`])
       if (adminId)    { await svc.from('admin_users').delete().eq('user_id', adminId); await svc.auth.admin.deleteUser(adminId) }
       if (nonAdminId) { await svc.auth.admin.deleteUser(nonAdminId) }
     })
@@ -92,7 +95,7 @@ describe.skipIf(!hasRealCredentials)(
       const client = await signedInClient(nonAdminEmail)
 
       const insert = await client.from('content_items').insert({
-        type: 'home', slug: `it-nonadmin-${Date.now()}`, title: 'should fail',
+        type: 'story', slug: fixtureSlug('admin-security', 'nonadmin-write'), title: 'should fail',
         created_by: nonAdminId, updated_by: nonAdminId,
       })
       expect(insert.error).not.toBeNull()
@@ -109,12 +112,12 @@ describe.skipIf(!hasRealCredentials)(
 
     it('active admin passes RLS: can write and read content and upload to Storage', async () => {
       const client = await signedInClient(adminEmail)
-      const slug   = `it-admin-${Date.now()}`
+      const slug = fixtureSlug('admin-security', 'admin-write')
 
       const insert = await client
         .from('content_items')
         .insert({
-          type: 'home', slug, title: 'integration test draft',
+          type: 'story', slug, title: 'integration test draft',
           created_by: adminId, updated_by: adminId,
         })
         .select('id')
@@ -128,7 +131,7 @@ describe.skipIf(!hasRealCredentials)(
 
       const upload = await client.storage
         .from('media')
-        .upload(`${adminId}/integration-test.png`, new Uint8Array([137, 80, 78, 71]), {
+        .upload(`${adminId}/${fixtureObjectName('admin-security', 'png')}`, new Uint8Array([137, 80, 78, 71]), {
           contentType: 'image/png',
         })
       expect(upload.error).toBeNull()
@@ -146,7 +149,7 @@ describe.skipIf(!hasRealCredentials)(
       expect(read.error !== null || (read.data ?? []).length === 0).toBe(true)
 
       const insert = await client.from('content_items').insert({
-        type: 'home', slug: `it-inactive-${Date.now()}`, title: 'should fail',
+        type: 'story', slug: fixtureSlug('admin-security', 'inactive-write'), title: 'should fail',
         created_by: adminId, updated_by: adminId,
       })
       expect(insert.error).not.toBeNull()

@@ -7,15 +7,45 @@ function req(name: string): string {
   return v
 }
 
+export const MIN_VIEWER_COOKIE_SECRET_BYTES = 32
+
+export type ViewerAuthConfigResult =
+  | { valid: true; secret: string; sessionVersion: number }
+  | { valid: false }
+
+export function readViewerAuthConfig(
+  source: Record<string, string | undefined> = process.env,
+): ViewerAuthConfigResult {
+  const secret = source.VIEWER_COOKIE_SECRET
+  const rawVersion = source.VIEWER_SESSION_VERSION
+
+  if (!secret || !rawVersion || !/^[1-9]\d*$/.test(rawVersion)) {
+    return { valid: false }
+  }
+
+  const secretBytes = new TextEncoder().encode(secret)
+  const distinctCharacters = new Set(secret).size
+  if (secretBytes.byteLength < MIN_VIEWER_COOKIE_SECRET_BYTES || distinctCharacters < 16) {
+    return { valid: false }
+  }
+
+  const sessionVersion = Number(rawVersion)
+  if (!Number.isSafeInteger(sessionVersion)) return { valid: false }
+
+  return { valid: true, secret, sessionVersion }
+}
+
+function viewerAuthConfig() {
+  const result = readViewerAuthConfig()
+  if (!result.valid) throw new Error('Viewer authentication configuration is invalid')
+  return result
+}
+
 export const serverEnv = {
   get supabaseServiceRoleKey() { return req('SUPABASE_SERVICE_ROLE_KEY') },
   get viewerPassphraseHash()   { return req('VIEWER_PASSPHRASE_HASH') },
-  get viewerCookieSecret()     { return req('VIEWER_COOKIE_SECRET') },
-  get viewerSessionVersion() {
-    const v = parseInt(process.env.VIEWER_SESSION_VERSION ?? '1', 10)
-    if (isNaN(v)) throw new Error('VIEWER_SESSION_VERSION must be an integer')
-    return v
-  },
+  get viewerCookieSecret()     { return viewerAuthConfig().secret },
+  get viewerSessionVersion()   { return viewerAuthConfig().sessionVersion },
   get throttleKeySecret() { return req('THROTTLE_KEY_SECRET') },
 }
 

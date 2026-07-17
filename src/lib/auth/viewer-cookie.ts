@@ -1,6 +1,8 @@
 // Viewer session cookie: HMAC-SHA-256 signed, httpOnly, expiring, version-revocable.
 // Uses only Web Crypto (SubtleCrypto) for Edge and Node compatibility.
 
+import { readViewerAuthConfig } from '@/lib/env'
+
 export const VIEWER_COOKIE_NAME = 'pawpaw_viewer'
 
 const DURATION_SECONDS = 60 * 60 * 24 * 30 // 30 days
@@ -27,6 +29,12 @@ function b64urlDecode(s: string): Uint8Array<ArrayBuffer> {
 }
 
 async function importKey(secret: string): Promise<CryptoKey> {
+  const config = readViewerAuthConfig({
+    VIEWER_COOKIE_SECRET: secret,
+    VIEWER_SESSION_VERSION: '1',
+  })
+  if (!config.valid) throw new Error('Viewer authentication configuration is invalid')
+
   return crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -40,6 +48,9 @@ export async function signViewerCookie(
   secret: string,
   sessionVersion: number,
 ): Promise<string> {
+  if (!Number.isSafeInteger(sessionVersion) || sessionVersion < 1) {
+    throw new Error('Viewer authentication configuration is invalid')
+  }
   const payload: Payload = {
     ver: sessionVersion,
     exp: Math.floor(Date.now() / 1000) + DURATION_SECONDS,
@@ -55,6 +66,10 @@ export async function verifyViewerCookie(
   secret: string,
   expectedVersion: number,
 ): Promise<{ valid: boolean; reason?: string }> {
+  if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1) {
+    return { valid: false, reason: 'configuration' }
+  }
+
   const parts = value.split('.')
   if (parts.length !== 2) return { valid: false, reason: 'malformed' }
   const [payloadB64, sigB64] = parts

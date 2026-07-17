@@ -4,11 +4,14 @@ import { finalizeUploadCore } from '@/lib/media/finalize-upload'
 import { buildUploadPath } from '@/lib/media/upload-path'
 import {
   updateMediaDetailsCore,
+  attachMediaCore,
   reorderAttachmentCore,
   detachMediaCore,
   deleteMediaCore,
 } from '@/lib/media/manage-media'
 import { generateSignedUrl } from '@/lib/media/private-url'
+import sharp from 'sharp'
+import { fixtureEmail, fixtureMetadata, fixtureSlug } from './fixture-names'
 
 // Live checks for attached-photo management: list, signed thumbnails,
 // alt-text edit, reorder, detach (keeps file), permanent delete (removes
@@ -32,10 +35,11 @@ function anonClient(): SupabaseClient {
   return createClient(url, anon, { auth: { persistSession: false } })
 }
 
-function pngBytes(n: number): Uint8Array {
-  const buf = new Uint8Array(n)
-  buf.set([137, 80, 78, 71, 13, 10, 26, 10])
-  return buf
+async function pngBytes(n: number): Promise<Buffer> {
+  const valid = await sharp({
+    create: { width: 2, height: 2, channels: 3, background: '#ec4899' },
+  }).png().toBuffer()
+  return n > valid.length ? Buffer.concat([valid, Buffer.alloc(n - valid.length)]) : valid
 }
 
 describe.skipIf(!hasRealCredentials)(
@@ -60,7 +64,8 @@ describe.skipIf(!hasRealCredentials)(
 
     beforeAll(async () => {
       const a = await svc.auth.admin.createUser({
-        email: `it-mm-admin-${Date.now()}@example.com`, password: TEST_PASSWORD, email_confirm: true,
+        email: fixtureEmail('media-management', 'admin-a'), password: TEST_PASSWORD, email_confirm: true,
+        user_metadata: fixtureMetadata('media-management'),
       })
       if (a.error) throw a.error
       adminId = a.data.user.id
@@ -69,17 +74,22 @@ describe.skipIf(!hasRealCredentials)(
       })
       if (row.error) throw row.error
 
-      nonAdminEmail = `it-mm-nonadmin-${Date.now()}@example.com`
+      nonAdminEmail = fixtureEmail('media-management', 'admin-b')
       const b = await svc.auth.admin.createUser({
         email: nonAdminEmail, password: TEST_PASSWORD, email_confirm: true,
+        user_metadata: fixtureMetadata('media-management'),
       })
       if (b.error) throw b.error
       nonAdminId = b.data.user.id
+      const secondAdmin = await svc.from('admin_users').insert({
+        user_id: nonAdminId, display_name: 'Media Mgmt Test Admin B', active: true,
+      })
+      if (secondAdmin.error) throw secondAdmin.error
 
       const { data: content, error: contentError } = await svc
         .from('content_items')
         .insert({
-          type: 'story', slug: `it-mm-${Date.now()}`, title: 'Media management test',
+          type: 'story', slug: fixtureSlug('media-management', 'content'), title: 'Media management test',
           body_blocks: [], status: 'draft', created_by: adminId, updated_by: adminId,
         })
         .select('id').single()
@@ -94,7 +104,7 @@ describe.skipIf(!hasRealCredentials)(
         if (signError || !signed?.token) throw new Error('setup: signing failed')
         const { error: upErr } = await anonClient().storage
           .from('media')
-          .uploadToSignedUrl(path, signed.token, pngBytes(100 * 1024), { contentType: 'image/png' })
+          .uploadToSignedUrl(path, signed.token, await pngBytes(100 * 1024), { contentType: 'image/png' })
         if (upErr) throw new Error('setup: upload failed')
         const result = await finalizeUploadCore(svc, adminId, {
           path, altText: `photo ${i}`, caption: `caption ${i}`, contentId,
@@ -113,7 +123,10 @@ describe.skipIf(!hasRealCredentials)(
         await svc.from('admin_users').delete().eq('user_id', adminId)
         await svc.auth.admin.deleteUser(adminId)
       }
-      if (nonAdminId) await svc.auth.admin.deleteUser(nonAdminId)
+      if (nonAdminId) {
+        await svc.from('admin_users').delete().eq('user_id', nonAdminId)
+        await svc.auth.admin.deleteUser(nonAdminId)
+      }
     }, SLOW)
 
     it('lists attachments in sort order — the data the admin page renders', async () => {
@@ -122,6 +135,44 @@ describe.skipIf(!hasRealCredentials)(
       expect(rows.map(r => r.media_id)).toEqual(media.map(m => m.id))
       expect(rows.map(r => r.sort_order)).toEqual([0, 1, 2])
     })
+
+    it('serializes concurrent appends into unique deterministic sort orders', async () => {
+      const { data: tempContent, error: contentError } = await svc.from('content_items').insert({
+        type: 'story', slug: fixtureSlug('media-management', 'concurrent-content'),
+        title: 'Concurrent append test', body_blocks: [], status: 'draft',
+        created_by: adminId, updated_by: adminId,
+      }).select('id').single()
+      expect(contentError).toBeNull()
+
+      const { data: tempMedia, error: mediaError } = await svc.from('media_assets').insert([
+        {
+          storage_path: `${adminId}/${fixtureSlug('media-management', 'concurrent-a')}.png`,
+          mime_type: 'image/png', byte_size: 1, width: 1, height: 1,
+          alt_text: 'A', processing_status: 'ready', created_by: adminId,
+        },
+        {
+          storage_path: `${adminId}/${fixtureSlug('media-management', 'concurrent-b')}.png`,
+          mime_type: 'image/png', byte_size: 1, width: 1, height: 1,
+          alt_text: 'B', processing_status: 'ready', created_by: adminId,
+        },
+      ]).select('id')
+      expect(mediaError).toBeNull()
+
+      try {
+        const results = await Promise.all(tempMedia!.map(row =>
+          attachMediaCore(svc, adminId, tempContent!.id, row.id),
+        ))
+        results.forEach(result => expect(result).toHaveProperty('ok', true))
+        const { data: orders, error } = await svc.from('content_media')
+          .select('sort_order, media_id').eq('content_id', tempContent!.id)
+          .order('sort_order', { ascending: true }).order('media_id', { ascending: true })
+        expect(error).toBeNull()
+        expect(orders?.map(row => row.sort_order)).toEqual([0, 1])
+      } finally {
+        await svc.from('content_items').delete().eq('id', tempContent!.id)
+        await svc.from('media_assets').delete().in('id', tempMedia!.map(row => row.id))
+      }
+    }, SLOW)
 
     it('dashboard query returns the exact attachment count and first attached image', async () => {
       const { data, error } = await svc
@@ -203,18 +254,18 @@ describe.skipIf(!hasRealCredentials)(
     })
 
     it('reorders an attachment one step later and back', async () => {
-      const later = await reorderAttachmentCore(svc, contentId, media[0].id, 'later')
+      const later = await reorderAttachmentCore(svc, adminId, contentId, media[0].id, 'later')
       expect(later).toHaveProperty('ok', true)
       let rows = await attachedRows()
       expect(rows.map(r => r.media_id)).toEqual([media[1].id, media[0].id, media[2].id])
 
-      const earlier = await reorderAttachmentCore(svc, contentId, media[0].id, 'earlier')
+      const earlier = await reorderAttachmentCore(svc, adminId, contentId, media[0].id, 'earlier')
       expect(earlier).toHaveProperty('ok', true)
       rows = await attachedRows()
       expect(rows.map(r => r.media_id)).toEqual([media[0].id, media[1].id, media[2].id])
     })
 
-    it('a non-admin cannot modify, detach, or remove photos (RLS)', async () => {
+    it('another active admin cannot modify, detach, attach, reorder, or remove owner A media', async () => {
       const authed = anonClient()
       const { error: loginError } = await authed.auth.signInWithPassword({
         email: nonAdminEmail, password: TEST_PASSWORD,
@@ -228,6 +279,10 @@ describe.skipIf(!hasRealCredentials)(
 
       await authed.from('content_media').delete().eq('content_id', contentId)
       expect(await attachedRows()).toHaveLength(3)
+
+      expect(await attachMediaCore(svc, nonAdminId, contentId, media[0].id)).toHaveProperty('error')
+      expect(await reorderAttachmentCore(svc, nonAdminId, contentId, media[0].id, 'later')).toHaveProperty('error')
+      expect(await detachMediaCore(svc, nonAdminId, contentId, media[0].id)).toHaveProperty('error')
 
       await authed.storage.from('media').remove([media[0].path])
       const { data: stillThere } = await svc.storage.from('media').exists(media[0].path)
@@ -251,7 +306,7 @@ describe.skipIf(!hasRealCredentials)(
     })
 
     it('detach removes the association but keeps media_assets and the Storage object', async () => {
-      const result = await detachMediaCore(svc, contentId, media[2].id)
+      const result = await detachMediaCore(svc, adminId, contentId, media[2].id)
       expect(result).toHaveProperty('ok', true)
 
       const rows = await attachedRows()

@@ -36,11 +36,19 @@ export async function loginViewer(
   const valid     = await verifyPassphrase(submitted)
 
   if (!valid) {
-    await recordFailure(clientId)
+    try {
+      await recordFailure(clientId)
+    } catch {
+      return { error: 'Login is temporarily unavailable. Please try again later.' }
+    }
     return { error: 'Incorrect passphrase.' }
   }
 
-  await clearThrottle(clientId)
+  try {
+    await clearThrottle(clientId)
+  } catch {
+    return { error: 'Login is temporarily unavailable. Please try again later.' }
+  }
 
   const cookieValue = await signViewerCookie(
     serverEnv.viewerCookieSecret,

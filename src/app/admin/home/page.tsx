@@ -6,6 +6,7 @@ import { generateSignedUrl } from '@/lib/media/private-url'
 import HomeEditor from './home-editor'
 import UploadForm from '../media/upload-form'
 import AttachmentList, { type AttachmentItem } from '../media/attachment-list'
+import { loadCanonicalAdminHome } from '@/lib/content/manage-home'
 
 interface AttachmentRow {
   sort_order:   number
@@ -19,6 +20,14 @@ interface AttachmentRow {
   }
 }
 
+interface AdminHomeItem {
+  id: string
+  title: string
+  body_blocks: unknown[]
+  status: 'draft' | 'published'
+  content_media: AttachmentRow[]
+}
+
 export default async function AdminHomePage() {
   const supabase = await createClient()
 
@@ -30,16 +39,31 @@ export default async function AdminHomePage() {
 
   const db = createAdminClient()
 
-  const { data: item } = await db
-    .from('content_items')
-    .select('id, title, body_blocks, status, content_media(sort_order, media_assets(id, storage_path, alt_text, caption, mime_type, byte_size))')
-    .eq('type', 'home')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const homeResult = await loadCanonicalAdminHome<AdminHomeItem>(async () => {
+    const { data, error } = await db
+      .from('content_items')
+      .select('id, title, body_blocks, status, content_media(sort_order, media_assets(id, storage_path, alt_text, caption, mime_type, byte_size))')
+      .eq('type', 'home')
+      .eq('slug', 'home')
+      .limit(2)
+    return { rows: data as unknown as AdminHomeItem[] | null, error }
+  })
+
+  if (homeResult.state === 'error') {
+    return (
+      <div>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', marginBottom: '1rem' }}>Home</h1>
+        <p role="alert" style={{ color: '#b91c1c' }}>
+          Home could not be loaded. Nothing has been changed; please try again later.
+        </p>
+      </div>
+    )
+  }
+
+  const item = homeResult.state === 'ready' ? homeResult.item : null
 
   const attachmentRows = ((item?.content_media ?? []) as unknown as AttachmentRow[])
-    .sort((a, b) => a.sort_order - b.sort_order)
+    .sort((a, b) => a.sort_order - b.sort_order || a.media_assets.id.localeCompare(b.media_assets.id))
 
   const attachments: AttachmentItem[] = await Promise.all(
     attachmentRows.map(async (row) => {

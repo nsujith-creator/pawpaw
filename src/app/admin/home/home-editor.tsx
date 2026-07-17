@@ -47,7 +47,7 @@ export default function HomeEditor({ existing }: Props) {
       if (existing?.id) fd.set('id', existing.id)
 
       const result = await saveHomeContent(fd)
-      if (result.error) setError(result.error)
+      if ('error' in result && result.error) setError(result.error)
       else setSuccess(action === 'publish' ? 'Published. The family page is live.' : 'Draft saved.')
     } catch {
       setError('Something went wrong while saving. Please try again.')
@@ -61,8 +61,8 @@ export default function HomeEditor({ existing }: Props) {
     clearMessages()
     setBusy(true)
     try {
-      const result = await unpublishHome(existing.id)
-      if (result.error) setError(result.error)
+      const result = await unpublishHome()
+      if ('error' in result && result.error) setError(result.error)
       else setSuccess('Unpublished. The family page now shows the waiting message.')
     } catch {
       setError('Something went wrong. Please try again.')

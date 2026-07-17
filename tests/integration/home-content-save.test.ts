@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { plainTextToBlocks } from '@/lib/content/plain-text'
 import { bodyBlocksSchema } from '@/lib/content/schema'
+import { fixtureEmail, fixtureMetadata, fixtureSlug } from './fixture-names'
 
 // Live checks for the save path the admin editor drives: plain text is
 // converted to paragraph blocks, validated, and persisted as draft, then
@@ -28,9 +29,10 @@ describe.skipIf(!hasRealCredentials)(
 
     beforeAll(async () => {
       const { data, error } = await svc.auth.admin.createUser({
-        email: `it-editor-${Date.now()}@example.com`,
+        email: fixtureEmail('home-save', 'editor'),
         password: 'integration-test-password-1!',
         email_confirm: true,
+        user_metadata: fixtureMetadata('home-save'),
       })
       if (error) throw error
       userId = data.user.id
@@ -50,7 +52,7 @@ describe.skipIf(!hasRealCredentials)(
       const { data, error } = await svc
         .from('content_items')
         .insert({
-          type: 'story', slug: `it-editor-draft-${Date.now()}`,
+          type: 'story', slug: fixtureSlug('home-save', 'draft'),
           title: 'Editor draft test', body_blocks: blocks, status: 'draft',
           created_by: userId, updated_by: userId,
         })
@@ -67,7 +69,7 @@ describe.skipIf(!hasRealCredentials)(
       const { data, error } = await svc
         .from('content_items')
         .insert({
-          type: 'story', slug: `it-editor-empty-${Date.now()}`,
+          type: 'story', slug: fixtureSlug('home-save', 'empty'),
           title: 'Empty draft test', body_blocks: [], status: 'draft',
           created_by: userId, updated_by: userId,
         })
@@ -79,7 +81,7 @@ describe.skipIf(!hasRealCredentials)(
     })
 
     it('publishes a draft and it becomes visible to the published filter', async () => {
-      const slug = `it-editor-publish-${Date.now()}`
+      const slug = fixtureSlug('home-save', 'publish')
       const { data: draft, error: insertErr } = await svc
         .from('content_items')
         .insert({
@@ -106,6 +108,16 @@ describe.skipIf(!hasRealCredentials)(
         .single()
       expect(readErr).toBeNull()
       expect(found?.status).toBe('published')
+    })
+
+    it('database enforcement blocks creation of a second Home row', async () => {
+      const { error } = await svc.from('content_items').insert({
+        type: 'home', slug: fixtureSlug('home-save', 'second-home'),
+        title: 'Must not be created', body_blocks: [], status: 'draft',
+        created_by: userId, updated_by: userId,
+      })
+      expect(error).not.toBeNull()
+      expect(error?.code).toBe('23505')
     })
   },
 )

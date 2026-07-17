@@ -1,14 +1,12 @@
-// Database-backed viewer login throttle.
-// Consistent across all Vercel instances because state lives in Postgres.
-// key_hash = HMAC-SHA-256(normalized_client_id, THROTTLE_KEY_SECRET).
-// Raw client identifiers are never stored or logged.
+// Database-backed viewer login throttle. Failure increments are atomic in
+// Postgres so concurrent requests cannot lose counts.
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { serverEnv } from '@/lib/env'
 
 export const FAILURE_THRESHOLD = 10
-export const WINDOW_SECONDS    = 15 * 60  // 15 minutes
-export const BLOCK_SECONDS     = 30 * 60  // 30 minutes
+export const WINDOW_SECONDS = 15 * 60
+export const BLOCK_SECONDS = 30 * 60
 
 export async function computeThrottleKey(rawClientId: string): Promise<string> {
   const normalized = rawClientId.toLowerCase().trim()
@@ -30,7 +28,7 @@ export async function checkThrottle(rawClientId: string): Promise<{ blocked: boo
   try {
     keyHash = await computeThrottleKey(rawClientId)
   } catch {
-    return { blocked: true }  // fail safe: secret missing or crypto error
+    return { blocked: true }
   }
 
   const db = createAdminClient()
@@ -40,62 +38,21 @@ export async function checkThrottle(rawClientId: string): Promise<{ blocked: boo
     .eq('key_hash', keyHash)
     .maybeSingle()
 
-  if (error) return { blocked: true }  // fail safe on DB error
-  if (!data)  return { blocked: false }
-
-  if (data.blocked_until && new Date(data.blocked_until) > new Date()) {
-    return { blocked: true }
-  }
-
-  return { blocked: false }
+  if (error) return { blocked: true }
+  if (!data) return { blocked: false }
+  return { blocked: Boolean(data.blocked_until && new Date(data.blocked_until) > new Date()) }
 }
 
 export async function recordFailure(rawClientId: string): Promise<void> {
-  let keyHash: string
-  try {
-    keyHash = await computeThrottleKey(rawClientId)
-  } catch {
-    return  // cannot persist — acceptable; throttle is defence in depth
-  }
-
+  const keyHash = await computeThrottleKey(rawClientId)
   const db = createAdminClient()
-  const now = new Date()
-
-  const { data: existing } = await db
-    .from('viewer_login_attempts')
-    .select('failure_count, window_started_at')
-    .eq('key_hash', keyHash)
-    .maybeSingle()
-
-  const windowExpired = existing
-    ? (now.getTime() - new Date(existing.window_started_at).getTime()) > WINDOW_SECONDS * 1000
-    : false
-
-  const newCount       = windowExpired ? 1 : (existing?.failure_count ?? 0) + 1
-  const newWindowStart = (windowExpired || !existing)
-    ? now.toISOString()
-    : existing.window_started_at
-  const blockedUntil   = newCount >= FAILURE_THRESHOLD
-    ? new Date(now.getTime() + BLOCK_SECONDS * 1000).toISOString()
-    : null
-
-  await db.from('viewer_login_attempts').upsert({
-    key_hash:          keyHash,
-    failure_count:     newCount,
-    window_started_at: newWindowStart,
-    blocked_until:     blockedUntil,
-    updated_at:        now.toISOString(),
-  })
+  const { error } = await db.rpc('record_viewer_login_failure', { p_key_hash: keyHash })
+  if (error) throw new Error('Throttle datastore unavailable')
 }
 
 export async function clearThrottle(rawClientId: string): Promise<void> {
-  let keyHash: string
-  try {
-    keyHash = await computeThrottleKey(rawClientId)
-  } catch {
-    return
-  }
-
+  const keyHash = await computeThrottleKey(rawClientId)
   const db = createAdminClient()
-  await db.from('viewer_login_attempts').delete().eq('key_hash', keyHash)
+  const { error } = await db.from('viewer_login_attempts').delete().eq('key_hash', keyHash)
+  if (error) throw new Error('Throttle datastore unavailable')
 }

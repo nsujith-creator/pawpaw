@@ -2,6 +2,9 @@
   "name": "pawpaw",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration:live": "vitest run --mode live tests/integration",
-    "test:e2e": "playwright test"
+    "test:e2e": "node scripts/run-e2e.mjs"
   },
   "dependencies": {
     "next": "^16.2.9",

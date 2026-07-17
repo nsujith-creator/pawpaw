@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyViewerCookie, VIEWER_COOKIE_NAME } from '@/lib/auth/viewer-cookie'
+import { readViewerAuthConfig } from '@/lib/env'
 
 const ROBOTS_HEADER = 'X-Robots-Tag'
 const ROBOTS_VALUE  = 'noindex, nofollow, noarchive'
@@ -42,9 +43,18 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(new URL('/family-login', req.url))
     }
 
-    const secret  = process.env.VIEWER_COOKIE_SECRET ?? ''
-    const version = parseInt(process.env.VIEWER_SESSION_VERSION ?? '1', 10)
-    const { valid } = await verifyViewerCookie(cookieValue, secret, version)
+    const authConfig = readViewerAuthConfig()
+    if (!authConfig.valid) {
+      const res = NextResponse.redirect(new URL('/family-login', req.url))
+      res.cookies.delete(VIEWER_COOKIE_NAME)
+      return res
+    }
+
+    const { valid } = await verifyViewerCookie(
+      cookieValue,
+      authConfig.secret,
+      authConfig.sessionVersion,
+    )
 
     if (!valid) {
       const res = NextResponse.redirect(new URL('/family-login', req.url))

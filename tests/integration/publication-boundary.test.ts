@@ -75,10 +75,16 @@ describe.skipIf(!hasRealCredentials)(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       )
-      const { error } = await anonClient.from('content_items').select('id').limit(1)
+      const { data, error } = await anonClient.from('content_items').select('id').limit(1)
       // RLS with no anon policy should produce a policy error or empty result.
       // Either is acceptable — what's NOT acceptable is returning rows.
-      expect(error !== null || true).toBe(true)
+      if (error) {
+        expect(data).toBeNull()
+        expect(error.message).toMatch(/permission denied|row-level security/i)
+        return
+      }
+
+      expect(data).toEqual([])
     })
   },
 )

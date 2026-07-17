@@ -1,21 +1,98 @@
+import { randomUUID } from 'node:crypto'
+import { createClient } from '@supabase/supabase-js'
 import { test, expect, type Page } from '@playwright/test'
-import { makeViewerCookieValue } from './viewer-session'
+import sharp from 'sharp'
+import { loadEnvLocal, makeViewerCookieValue } from './viewer-session'
 
 const skip = process.env.PLAYWRIGHT_SKIP_AUTH === '1'
 
-// A valid viewer cookie is minted deterministically from the local
-// VIEWER_COOKIE_SECRET (see viewer-session.ts) — no manual pasting needed.
 let cookie: string | null = null
+let fixture: {
+  ids: string[]
+  paths: string[]
+  homeId: string
+  originalStatus: string
+  originalPublishedAt: string | null
+} | null = null
+
 test.beforeAll(async () => {
   cookie = await makeViewerCookieValue()
+  if (!cookie) return
+
+  const env = loadEnvLocal()
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return
+  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { data: home, error: homeError } = await db.from('content_items')
+    .select('id, created_by, status, published_at').eq('type', 'home').eq('slug', 'home').single()
+  if (homeError || !home) throw homeError ?? new Error('Canonical Home missing')
+
+  const runId = process.env.PAWPAW_TEST_RUN_ID ?? `pawpaw-test-e2e-${randomUUID().slice(0, 8)}`
+  const bytes = await sharp({
+    create: { width: 3, height: 2, channels: 3, background: '#7c3aed' },
+  }).png().toBuffer()
+  const paths = [`${home.created_by}/${runId}-carousel-a.png`, `${home.created_by}/${runId}-carousel-b.png`]
+  const ids: string[] = []
+
+  try {
+    for (const [index, path] of paths.entries()) {
+      const upload = await db.storage.from('media').upload(path, bytes, {
+        contentType: 'image/png', upsert: false,
+      })
+      if (upload.error) throw upload.error
+      const inserted = await db.from('media_assets').insert({
+        storage_path: path, mime_type: 'image/png', byte_size: bytes.length,
+        width: 3, height: 2, alt_text: `Pawpaw carousel fixture ${index + 1}`,
+        processing_status: 'ready', created_by: home.created_by,
+      }).select('id').single()
+      if (inserted.error || !inserted.data) throw inserted.error ?? new Error('Fixture insert failed')
+      ids.push(inserted.data.id)
+      const attached = await db.rpc('attach_owned_media', {
+        p_admin_id: home.created_by, p_content_id: home.id, p_media_id: inserted.data.id,
+      })
+      if (attached.error) throw attached.error
+    }
+    if (home.status !== 'published') {
+      const published = await db.from('content_items').update({
+        status: 'published', published_at: new Date().toISOString(),
+      }).eq('id', home.id)
+      if (published.error) throw published.error
+    }
+    fixture = {
+      ids, paths, homeId: home.id,
+      originalStatus: home.status, originalPublishedAt: home.published_at,
+    }
+  } catch (error) {
+    if (ids.length) {
+      await db.from('content_media').delete().in('media_id', ids)
+      await db.from('media_assets').delete().in('id', ids)
+    }
+    await db.storage.from('media').remove(paths)
+    throw error
+  }
+})
+
+test.afterAll(async () => {
+  if (!fixture) return
+  const env = loadEnvLocal()
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Missing E2E cleanup configuration')
+  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  await db.from('content_media').delete().in('media_id', fixture.ids)
+  await db.from('media_assets').delete().in('id', fixture.ids)
+  await db.storage.from('media').remove(fixture.paths)
+  if (fixture.originalStatus !== 'published') {
+    await db.from('content_items').update({
+      status: fixture.originalStatus, published_at: fixture.originalPublishedAt,
+    }).eq('id', fixture.homeId)
+  }
 })
 
 async function seedViewerSession(page: Page) {
   await page.context().addCookies([{
-    name:   'pawpaw_viewer',
-    value:  cookie!,
-    domain: 'localhost',
-    path:   '/',
+    name: 'pawpaw_viewer', value: cookie!, domain: 'localhost', path: '/',
   }])
 }
 
@@ -25,13 +102,8 @@ test.describe('Home page carousel (requires viewer session)', () => {
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
     await seedViewerSession(page)
     await page.goto('/')
-    // If media exists, controls should be visible.
-    const prev = page.getByRole('button', { name: 'Previous photo' })
-    const next = page.getByRole('button', { name: 'Next photo' })
-    if (await prev.isVisible()) {
-      await expect(prev).toBeVisible()
-      await expect(next).toBeVisible()
-    }
+    await expect(page.getByRole('button', { name: 'Previous photo' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Next photo' })).toBeVisible()
   })
 
   test('viewer page offers a Leave control that ends the session', async ({ page }) => {
@@ -39,59 +111,40 @@ test.describe('Home page carousel (requires viewer session)', () => {
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
     await seedViewerSession(page)
     await page.goto('/')
-    // The Leave control must exist in BOTH the published and the empty
-    // "being prepared" state — whichever the site is currently in.
     const leave = page.getByRole('button', { name: 'Leave' })
     await expect(leave).toBeVisible()
     await leave.click()
     await expect(page).toHaveURL(/\/family-login/)
-    // Session is gone: revisiting / must demand the passphrase again.
     await page.goto('/')
     await expect(page).toHaveURL(/\/family-login/)
   })
 
-  test('family page never overflows horizontally (bounded media frame)', async ({ page }) => {
+  test('family page never overflows and carousel dots are visible', async ({ page }) => {
     test.skip(skip, 'Skipping: no server available in CI')
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
     await seedViewerSession(page)
     await page.goto('/')
-    // Whatever the current photo's aspect ratio (portrait, landscape,
-    // square), the contained frame must never widen the document.
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     )
     expect(overflow).toBeLessThanOrEqual(0)
-    // If a carousel is present, its dots (position tablist) must be visible —
-    // this runs on the mobile profile too.
-    const dots = page.getByRole('tablist', { name: 'Photo position' })
-    if (await dots.count() > 0) {
-      await expect(dots).toBeVisible()
-    }
+    await expect(page.getByRole('tablist', { name: 'Photo position' })).toBeVisible()
   })
 
-  test('carousel does not autoplay (no video or timed transitions)', async ({ page }) => {
+  test('carousel does not autoplay', async ({ page }) => {
     test.skip(skip, 'Skipping: no server available in CI')
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
     await seedViewerSession(page)
     await page.goto('/')
-    const initialIndex = await page.evaluate(() => {
-      // No autoplay: the carousel position should not change on its own.
-      return document.querySelector('[aria-selected="true"]')?.getAttribute('aria-label') ?? ''
-    })
+    const selected = page.locator('[aria-selected="true"]')
+    await expect(selected).toHaveCount(1)
+    const initial = await selected.getAttribute('aria-label')
     await page.waitForTimeout(3000)
-    const laterIndex = await page.evaluate(() => {
-      return document.querySelector('[aria-selected="true"]')?.getAttribute('aria-label') ?? ''
-    })
-    expect(initialIndex).toBe(laterIndex)
+    expect(await selected.getAttribute('aria-label')).toBe(initial)
   })
 })
 
 test.describe('family passphrase login flow', () => {
-  // Full-flow variant: runs only when the operator exports the real
-  // passphrase as PLAYWRIGHT_FAMILY_PASSPHRASE (never stored in source or
-  // printed). Example (PowerShell, value read interactively, not echoed):
-  //   $env:PLAYWRIGHT_FAMILY_PASSPHRASE = Read-Host -MaskInput 'Passphrase'
-  //   npm run test:e2e
   test('entering the family passphrase grants a viewer session', async ({ page }) => {
     test.skip(skip, 'Skipping: no server available in CI')
     const passphrase = process.env.PLAYWRIGHT_FAMILY_PASSPHRASE

@@ -15,7 +15,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { MAX_UPLOAD_BYTES, ALLOWED_UPLOAD_TYPES } from './validate-upload'
 import { pathBelongsTo } from './upload-path'
-import { extractImageMetadata } from './image-metadata'
+import { verifyImageBytes } from './image-metadata'
 import { extractPalette } from './palette'
 
 export interface FinalizeParams {
@@ -56,22 +56,30 @@ export async function finalizeUploadCore(
     }
   }
 
-  // Metadata and palette from a server-side download of the verified object.
-  // Non-fatal: on any failure the asset is stored with pending status.
-  let width: number | null = null
-  let height: number | null = null
+  // Download and decode the entire object. Storage MIME metadata is not proof
+  // that the bytes are a valid image of that format.
+  let buffer: Buffer
   let palette: string[] | null = null
   try {
-    const { data: blob } = await db.storage.from('media').download(path)
-    if (blob) {
-      const buffer = Buffer.from(await blob.arrayBuffer())
-      const meta = await extractImageMetadata(buffer)
-      width   = meta.width
-      height  = meta.height
-      palette = await extractPalette(buffer)
-    }
+    const { data: blob, error: downloadError } = await db.storage.from('media').download(path)
+    if (downloadError || !blob) throw new Error('download failed')
+    buffer = Buffer.from(await blob.arrayBuffer())
   } catch {
-    // fall through with nulls
+    await db.storage.from('media').remove([path])
+    return { error: 'The uploaded image could not be verified and was discarded.' }
+  }
+
+  const verified = await verifyImageBytes(buffer, mime)
+  if (!verified || !verified.width || !verified.height) {
+    await db.storage.from('media').remove([path])
+    return { error: 'The file is malformed or does not match its image type. It was discarded.' }
+  }
+  const width = verified.width
+  const height = verified.height
+  try {
+    palette = await extractPalette(buffer)
+  } catch {
+    palette = null
   }
 
   const { data: asset, error: dbError } = await db
@@ -85,7 +93,7 @@ export async function finalizeUploadCore(
       alt_text:          altText,
       caption:           caption?.trim() || null,
       extracted_palette: palette,
-      processing_status: width ? 'ready' : 'pending',
+      processing_status: 'ready',
       created_by:        adminId,
     })
     .select('id')
@@ -99,18 +107,10 @@ export async function finalizeUploadCore(
   }
 
   if (contentId) {
-    const { data: maxRow } = await db
-      .from('content_media')
-      .select('sort_order')
-      .eq('content_id', contentId)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    const { error: attachError } = await db.from('content_media').insert({
-      content_id: contentId,
-      media_id:   asset.id,
-      sort_order: (maxRow?.sort_order ?? -1) + 1,
+    const { error: attachError } = await db.rpc('attach_owned_media', {
+      p_admin_id: adminId,
+      p_content_id: contentId,
+      p_media_id: asset.id,
     })
     if (attachError) {
       console.error('finalizeUploadCore content_media attach failed:', attachError)

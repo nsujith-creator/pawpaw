@@ -1,6 +1,6 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 17 July 2026 (Phase 1 implementation and manual acceptance complete; PR #2 eligible to be marked ready for review)
+**Status date:** 17 July 2026 (Phase 1 blocker remediation complete; final clean verification passed; checkpoint commit pending)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `phase-1-implementation`
 **PR:** `#2 — Implement Phase 1 private Home flow` (open and ready for review; not merged)
@@ -149,20 +149,24 @@ Applied migrations — tracked locally in `supabase/migrations/` and applied rem
 - `0004_viewer_login_throttle.sql` — committed before `dc7e41c`
 - `0005_table_privileges.sql` — added by commit `23467de`
 - `0006_lock_set_updated_at_search_path.sql` — added by commit `23467de`
+- `20260717102121_phase1_security_hardening.sql` — canonical Home singleton plus atomic viewer-login failure accounting; applied remotely in this run
+- `20260717102133_owner_scoped_atomic_media.sql` — owner-scoped media and Storage policies plus atomic attachment, reorder, detach, and relational-delete functions; applied remotely in this run
 
-All 6 files exist on disk under `supabase/migrations/` and are tracked in HEAD (`git ls-files supabase/migrations` returns all 6). They remain the current and authoritative Pawpaw migration set. The linked Supabase project is intentionally shared with qtpi tracker and Paru Health because the Supabase Free plan permits only two projects and Sujith operates more than two Supabase-backed apps. This is an explicit accepted cost constraint, not a Pawpaw release blocker by itself.
+All 8 Pawpaw files exist on disk under `supabase/migrations/`; the two timestamped files are the forward-only migrations created and applied in this remediation run. They form the current Pawpaw migration set. The linked Supabase project is intentionally shared with qtpi tracker and Paru Health because the Supabase Free plan permits only two projects and Sujith operates more than two Supabase-backed apps. This is an explicit accepted cost constraint, not a Pawpaw release blocker by itself.
 
-The three additional remote-only history versions were inspected read-only in a temporary audit copy and classified without importing them into this repository or altering remote migration history:
+The five additional remote-only history versions were inspected and classified without importing them into this repository or altering their history:
 
 - `20260716231532` — `create_paru_health_assets_bucket`: creates only Paru Health's `paru-health-assets` bucket and Paru-specific Storage policies.
 - `20260716235504` — `create_qtpi_feeds`: creates only `public.qtpi_feeds`, its index, qtpi-scoped RLS policies, and its Realtime publication entry.
 - `20260717040149` — `grant_qtpi_feeds_anon`: grants only schema usage and qtpi table privileges required by qtpi tracker's existing anonymous-client model.
+- `20260717091207` — `create_qtpi_assets_bucket`: creates only qtpi tracker's `qtpi-assets` bucket and qtpi-scoped Storage policies.
+- `20260717091406` — `drop_qtpi_assets_anon_insert`: removes only qtpi tracker's anonymous insert policy from `qtpi-assets`.
 
 None references or changes Pawpaw's tables, helper function, `media` bucket, media paths, privileges, policies, tests, or application runtime. They are accepted shared-project history and must not be copied into Pawpaw merely to make local and remote version columns symmetrical.
 
 Verified:
 
-- local and remote Pawpaw histories match through `0006`; the three later remote-only entries are classified unrelated-app history as listed above;
+- local and remote Pawpaw histories match through `20260717102133`; the five shared-app entries are remote-only and classified as listed above;
 - active-admin RLS works;
 - inactive admins are rejected;
 - anonymous users cannot read private tables;
@@ -173,6 +177,7 @@ Verified:
 - service-role and authenticated table privileges are explicit;
 - `public.set_updated_at()` has a fixed empty `search_path`;
 - the advisor warning for public `paru-health-assets` belongs to Paru Health and does not cross its bucket predicate; it is a separate Paru-specific security concern, not a Pawpaw blocker;
+- the advisor warning for public `qtpi-assets` belongs to qtpi tracker and does not cross its bucket predicate; it is a separate qtpi-specific security concern, not a Pawpaw blocker;
 - the accepted Free-plan leaked-password-protection warning remains;
 - the repository is linked to the intended shared project ref.
 
@@ -292,27 +297,32 @@ The full declared milestone is implemented, committed, and automatically verifie
 
 **File changed:** `vitest.config.ts` — added `pool: 'forks'` explicitly to lock in the safe worker pool.
 
-#### Full verification results (17 July 2026 — Phase 1 acceptance checkpoint)
+#### Full verification results (17 July 2026 — blocker-remediation checkpoint)
 
 | Command | Exit | Result |
 |---|---|---|
 | `npm run type-check` | 0 | Passed |
 | `npm run lint` | 0 | Passed — no findings, full `eslint .` |
-| `npm test` | 0 | 17 files passed, 4 skipped; **224 tests passed**, 36 skipped |
-| `npm run test:integration:live` | 0 | 5 files passed; **37 tests passed**, 0 skipped (all live Supabase calls) |
+| `npm test` | 0 | 18 files passed, 5 skipped; **238 tests passed**, 42 skipped |
+| `npm run test:integration:live` | 0 | 6 files passed; **43 tests passed**, 0 skipped; global fixture reconciliation active |
+| Pawpaw fixture residue query | 0 | users 0, content 0, media 0, Storage objects 0, throttle rows 0 |
 | `npm run test:e2e` | 0 | **21 passed, 3 skipped**, 0 failed; one worker protects the shared live Home singleton |
+| Pawpaw server-process check | 0 | `PAWPAW_SERVER_PROCESSES_POST=0` |
 | `npm run build` | 0 | 12 routes — clean |
 | `git diff --check` | 0 | No whitespace errors; Windows LF/CRLF normalization warnings only |
-| `git status --short` | 0 | Only intended documentation/status files modified; generated `next-env.d.ts` change restored |
+| `npx supabase migration list` | 0 | 8 Pawpaw migrations aligned local/remote; 5 classified shared-app migrations remain remote-only |
+| `npx supabase db advisors --linked` | 0 | 3 accepted warnings: Paru public listing, qtpi public listing, leaked-password protection disabled |
+| `git status --short` | 0 | Only intended blocker-remediation files modified; generated `next-env.d.ts` change restored |
 
-All eight required commands exited 0. No test failed. The live integration suite passed all 37 credential-gated tests with no skips. The accepted shared-project evidence remains: Pawpaw migrations are current through `0006`, later shared-project entries touch only Paru Health/qtpi objects, and Pawpaw's private `media` bucket remains isolated.
+Every required step exited 0 in one sequential run. No test failed. The live integration suite passed all 43 credential-gated tests with no skips. Pawpaw migrations are current through `20260717102133`; the five remote-only shared-project entries touch only Paru Health/qtpi objects, and Pawpaw's private `media` bucket remains isolated.
 
 **Skipped tests (intentional — require live credentials not available in default run):**
 - `tests/integration/admin-function-security.test.ts` — 6 skipped (requires real Supabase credentials; run via `test:integration:live`)
-- `tests/integration/direct-upload.test.ts` — 10 skipped (same)
-- `tests/integration/home-content-save.test.ts` — 3 skipped (same)
-- `tests/integration/media-management.test.ts` — 13 skipped (same)
+- `tests/integration/direct-upload.test.ts` — 13 skipped (same)
+- `tests/integration/home-content-save.test.ts` — 4 skipped (same)
+- `tests/integration/media-management.test.ts` — 14 skipped (same)
 - `tests/integration/publication-boundary.test.ts` — 4 of 5 skipped (1 runs in default mode; 4 require credentials)
+- `tests/integration/throttle-live.test.ts` — 1 skipped (same)
 
 **E2E skipped tests (3):**
 - `[chromium] home-flow.spec.ts — family passphrase login flow — entering the family passphrase grants a viewer session` — raw family passphrase is intentionally unavailable to automation
@@ -461,18 +471,34 @@ Replace the flat image-background colour with:
 
 ---
 
-## 5. Current documentation-only work
+## 5. Phase 1 blocker-remediation work
 
-The Phase 1 implementation inventory previously recorded here was committed in `0f529a8b47b4a6bc34b3d371bdfb64bcab648ef9`. At the start of this acceptance update, the branch and `origin/phase-1-implementation` both pointed to that commit and the working tree was clean.
+This remediation started from clean commit `a5efaaf89edba59f27478b8d56ed101bcfad46f6`. Scope was limited to the independently reported merge blockers and important pre-merge findings. PR #2 was not altered, merged, or deployed.
 
-This checkpoint is limited to:
+Root causes and closures:
 
-- recording the fully passed Manual Test Round 3 and completed Phase 1 manual acceptance in this file;
-- correcting README wording for the accepted shared-Supabase arrangement;
-- updating PR #2's description and marking it ready for review after required verification passed (completed);
-- creating and pushing one documentation/status commit.
+- **Viewer cookie fail-closed:** proxy code accepted an empty-string secret fallback and viewer-auth configuration lacked central validation. `src/lib/env.ts`, `src/lib/auth/viewer-cookie.ts`, and `src/proxy.ts` now reject missing, empty, weak, or invalid configuration without logging secret values; valid signed/versioned cookies continue to work.
+- **Test isolation and cleanup:** fixtures used timestamp-only legacy names, cleanup was suite-local, and the global cleanup process could not see live environment values. Live tests now use a run-scoped `pawpaw-test-*` ID plus fixture metadata, reconcile only conclusively tagged Pawpaw fixtures before and after the suite, paginate Auth users, and remove related content, associations, media, Storage objects, allowlist rows, and Auth users. The first effective reconciliation found 4 legacy Pawpaw users and ended at zero; subsequent residue checks are zero.
+- **Windows E2E server lifecycle:** Playwright could leave a Pawpaw Next.js server after completion. `scripts/run-e2e.mjs` runs Playwright, terminates only command lines verified as this repository's Next dev/start server, and fails unless the post-run count is zero. `reuseExistingServer` is disabled.
+- **Home singleton and mutation safety:** Home mutations trusted a client ID and did not prove affected rows. Migration `20260717102121` adds the singleton index; server code resolves canonical `type='home'`/`slug='home'`, rejects mismatched IDs, checks returned rows, preserves Home content during unpublish, and distinguishes query errors from a genuine empty state.
+- **Atomic throttling:** read/increment/upsert could lose concurrent failures and datastore errors were not conservative. Migration `20260717102121` adds one atomic database function restricted to service role; login denies when throttle reads/writes/clears fail. A 10-way live concurrent test proves threshold blocking.
+- **Owner-scoped media:** earlier active-admin rules did not consistently enforce record/path ownership. Migration `20260717102133` aligns table and Storage policies and adds ownership-checking RPCs. Server actions verify the active admin and canonical owned Home; two-admin live tests prove cross-owner update, attach, reorder, detach, and delete denial.
+- **Image-byte verification:** finalization trusted reported MIME/metadata. Existing `sharp` now decodes the uploaded bytes, verifies actual format and dimensions, and rejects/removes truncated, mislabeled, or header-only data before registration.
+- **Transactional media operations:** max-plus-one append, multi-step reorder, and relational deletion were race-prone; orphan listing stopped at 100. Database RPCs serialize append/reorder and atomically delete relations, Storage deletion failures are explicit, and orphan cleanup paginates.
+- **False-positive tests:** anonymous denial, protected response headers, and carousel assertions could pass without proving behavior. Tests now branch only between explicit permission denial and an empty result, inspect the real protected response, seed deterministic media, and require controls/dots on desktop and mobile.
+- **Node runtime floor:** `package.json` and README now require Node `>=20.9.0`, matching Next.js 16; no dependency was broadly upgraded and the installed Node version was not changed.
 
-No application code, migration, Supabase state, deployment, or merge is authorized.
+Files in this checkpoint:
+
+- Runtime/config: `package.json`, `package-lock.json`, `playwright.config.ts`, `vitest.config.ts`, `scripts/run-e2e.mjs`.
+- Viewer/login: `src/proxy.ts`, `src/lib/env.ts`, `src/lib/auth/viewer-cookie.ts`, `src/lib/auth/throttle.ts`, `src/app/family-login/actions.ts`.
+- Home: `src/lib/content/home.ts`, `src/lib/content/manage-home.ts`, `src/app/admin/home/actions.ts`, `src/app/admin/home/home-editor.tsx`, `src/app/admin/home/page.tsx`.
+- Media: `src/lib/media/finalize-upload.ts`, `src/lib/media/image-metadata.ts`, `src/lib/media/manage-media.ts`, `src/lib/media/orphan-sweep.ts`, `src/app/admin/media/actions.ts`.
+- Migrations: `supabase/migrations/20260717102121_phase1_security_hardening.sql`, `supabase/migrations/20260717102133_owner_scoped_atomic_media.sql`.
+- Tests: `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/home-flow.spec.ts`, `tests/integration/admin-function-security.test.ts`, `tests/integration/direct-upload.test.ts`, `tests/integration/fixture-names.ts`, `tests/integration/global-fixtures.ts`, `tests/integration/home-content-save.test.ts`, `tests/integration/media-management.test.ts`, `tests/integration/publication-boundary.test.ts`, `tests/integration/throttle-live.test.ts`, `tests/unit/manage-home.test.ts`, `tests/unit/manage-media.test.ts`, `tests/unit/media-library.test.ts`, `tests/unit/orphan-sweep.test.ts`, `tests/unit/throttle.test.ts`, `tests/unit/viewer-cookie.test.ts`.
+- Documentation: `README.md`, `docs/PROJECT_STATUS.md`.
+
+No new package was added. `sharp` was already installed. No Paru Health or qtpi data, policies, or migrations were modified. Manual testing remains closed at 3/3.
 
 ---
 
@@ -611,14 +637,14 @@ npx supabase db advisors --linked
 
 Expected:
 
-- Pawpaw migrations `0001`–`0006` remain present on both sides; unrelated remote-only qtpi/Paru history is documented rather than imported;
-- no new Pawpaw security advisor warning beyond the accepted Free-plan leaked-password warning; the isolated Paru Health public-bucket warning is tracked separately;
+- Pawpaw migrations through `20260717102133` remain present on both sides; unrelated remote-only qtpi/Paru history is documented rather than imported;
+- no Pawpaw-specific advisor warning; the leaked-password, Paru public-listing, and qtpi public-listing warnings are accepted and tracked separately;
 - no `next-env.d.ts` change in the final diff; `next build` regenerated it and the generated change was restored;
 - no secret files tracked;
 - no skipped live integration tests;
 - every skipped E2E test explicitly identified.
 
-### Current package scripts (verified 16 July 2026)
+### Current package scripts (verified 17 July 2026)
 
 ```json
 {
@@ -630,7 +656,7 @@ Expected:
   "test": "vitest run",
   "test:watch": "vitest",
   "test:integration:live": "vitest run --mode live tests/integration",
-  "test:e2e": "playwright test"
+  "test:e2e": "node scripts/run-e2e.mjs"
 }
 ```
 
@@ -650,13 +676,14 @@ tests/
 
 ### P0 — release blockers
 
-- **RESOLVED BY RECLASSIFICATION — shared migration history:** remote-only `20260716231532` belongs to Paru Health; `20260716235504` and `20260717040149` belong to qtpi tracker. Their SQL touches only `paru-health-assets` or `public.qtpi_feeds`, with no Pawpaw-object reference. They are accepted shared-project history, not Pawpaw blockers. Pawpaw migrations `0001`–`0006` remain authoritative; no history was repaired or imported.
+- **RESOLVED BY RECLASSIFICATION — shared migration history:** remote-only `20260716231532` belongs to Paru Health; `20260716235504`, `20260717040149`, `20260717091207`, and `20260717091406` belong to qtpi tracker. Their SQL touches only `paru-health-assets`, `public.qtpi_feeds`, or `qtpi-assets`, with no Pawpaw-object reference. They are accepted shared-project history, not Pawpaw blockers. Pawpaw migrations are aligned locally/remotely through `20260717102133`; no shared-app history was repaired or imported.
 - **RESOLVED BY RECLASSIFICATION — Paru Health public bucket:** `paru-health-assets` and policies `paru_assets_public_read` / `paru_assets_anon_insert` are explicitly bucket-scoped to Paru Health. Pawpaw source, migrations, tests, and database media records use the separate private `media` bucket only. The Paru public/anonymous-upload posture remains a Paru-specific security warning for that app's owner to review; Pawpaw does not modify it and is not blocked by it.
+- **RESOLVED BY RECLASSIFICATION — qtpi public bucket:** the `qtpi-assets` listing advisor warning is scoped to qtpi's bucket and read policy. It grants no access to Pawpaw's private `media` bucket or owner paths, so Pawpaw records it without modifying qtpi state.
 - ~~Complete Admin Dashboard requirements in Section 4.1.~~ **DONE** — timestamps, exact media usage, first signed thumbnail, search, combined filters, deterministic ordering, ownership scope, and explicit query errors implemented.
 - ~~Complete Content Library requirements in Section 4.2.~~ **DONE** — case-insensitive title search, combined filters, deterministic ordering, clear/no-results/error states, and disabled Release 2 Create New decision implemented without a second Home action.
 - ~~Complete Media Library requirements in Section 4.3.~~ **DONE** — creation metadata, safe filename, accurate usage titles/counts, cross-field search, MIME/attachment filters, deterministic newest/oldest sorting, and explicit query errors implemented.
 - ~~Ensure detached media remains visible and reusable.~~ **DONE** — "Move to Media Library" detaches only content_media row; asset and Storage object survive; media appears in /admin/media
-- ~~Re-run complete automated verification after integration.~~ **DONE** — all required commands exit 0: type-check, full `eslint .`, `npm test` (224 passed, 36 skipped), `test:integration:live` (37 passed, 0 skipped), `test:e2e` (21 passed, 3 expected skips), build (12 routes)
+- ~~Re-run complete automated verification after integration.~~ **DONE** — all required commands exit 0: type-check, full `eslint .`, `npm test` (238 passed, 42 skipped), `test:integration:live` (43 passed, 0 skipped), `test:e2e` (21 passed, 3 expected skips), build (12 routes), zero fixture residue, and zero Pawpaw server processes.
 - ~~Diagnose and stabilize Tinypool crash and ESLint crash.~~ **DONE** — crashes were transient; `pool: 'forks'` made explicit in vitest.config.ts; root causes documented in Section 3.6
 - ~~Conduct Manual Test Round 2.~~ **DONE — Round 2 failed and consumed.** Five defects confirmed and fixed (17 Jul 2026):
   - **BLOCKER 1 fixed** — Media Library showed 0 files. Root cause: `content_media(id)` in PostgREST embed; `content_media` has no `id` column (composite PK only). Fixed in `src/app/admin/media/page.tsx` and `src/app/admin/media/actions.ts`. Client refactored to Attached/Unattached sections.
@@ -696,6 +723,7 @@ tests/
 - The Supabase Free-plan project is shared with qtpi tracker and Paru Health. Pawpaw remains isolated through its own tables, RLS, owner-scoped paths, and private `media` bucket, but unrelated apps' remote migration history and advisor findings appear in the same Supabase project.
 - Supabase Free plan lacks leaked-password protection.
 - The Paru Health `paru-health-assets` public/anonymous-upload advisor warning remains a separate, bucket-scoped warning and is not changed by Pawpaw.
+- The qtpi tracker `qtpi-assets` public-listing advisor warning remains a separate, bucket-scoped warning and is not changed by Pawpaw.
 - Family page currently requires refresh to see admin changes.
 - Detached media remains visible and reusable in the implemented Media Library core flow.
 - Alt text is accessibility metadata and is not a hover tooltip.
@@ -712,7 +740,8 @@ tests/
 
 **PHASE 1 ACCEPTANCE COMPLETE — no Pawpaw release blocker remains after automated verification, shared-project isolation verification, and fully passed Manual Test Round 3.**
 **PR #2 is open and ready for review after every required command exited 0. It is not merged.**
-**Commit and push are authorized only for this documentation/status checkpoint on `origin/phase-1-implementation`.**
+**The independently reported blockers and important findings are remediated; PR #2 is eligible for a fresh independent re-review after the checkpoint commit is pushed.**
+**One commit and push are authorized on `origin/phase-1-implementation`; PR metadata must remain unchanged.**
 **Do not merge or deploy.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
@@ -728,11 +757,11 @@ Release boundary status after final checkpoint verification:
 8. ✓ Published Home regression covers valid prose/media, degraded media, genuine empty, operational error, publish, fresh repeat, unpublish, and republish.
 9. ✓ Pawpaw tables remain RLS-protected; anonymous reads expose zero rows.
 10. ✓ Pawpaw `media` bucket is private; paths are owner-scoped; anonymous listing exposes zero objects and known-object download is blocked.
-11. ✓ `20260716231532` is Paru Health-only; `20260716235504` and `20260717040149` are qtpi-only; none changes Pawpaw objects.
+11. ✓ `20260716231532` is Paru Health-only; `20260716235504`, `20260717040149`, `20260717091207`, and `20260717091406` are qtpi-only; none changes Pawpaw objects.
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** PR #2 description is current and the PR is ready for review; create and push only the single documentation/status commit, and do not merge, deploy, or make a cross-app change.
+15. ✓ **Release decision:** blocker remediation is eligible for independent re-review after the single authorized commit/push; do not alter or merge PR #2, deploy, or make a cross-app change.
 
 ---
 

@@ -115,7 +115,10 @@ export async function loadPublishedHomeContent(
 
   let mediaIssueCount = 0
   const sorted = [...(mediaResult.data ?? [])]
-    .sort((a, b) => a.sort_order - b.sort_order)
+    .sort((a, b) =>
+      a.sort_order - b.sort_order ||
+      (a.media_assets?.id ?? '').localeCompare(b.media_assets?.id ?? ''),
+    )
 
   const items = await Promise.all(
     sorted.map(async (contentMedia): Promise<CarouselItem | null> => {

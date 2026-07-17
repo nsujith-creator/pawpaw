@@ -110,12 +110,12 @@ describe('attachMediaToHome server action', () => {
     expect(fn).toContain('admin.id')
   })
 
-  it('prevents attaching a photo that is already on the Home page', () => {
-    expect(mediaActions).toContain('already attached to the Home page')
+  it('delegates duplicate prevention to the transactional attach function', () => {
+    expect(manageMedia).toContain("rpc('attach_owned_media'")
   })
 
   it('returns an error when no Home content item exists yet', () => {
-    expect(mediaActions).toContain('No Home page has been saved yet')
+    expect(mediaActions).toContain('No Home page owned by you is available')
   })
 
   it('revalidates the viewer page, admin home, and media library on success', () => {
@@ -156,12 +156,11 @@ describe('media library client — Attached and Unattached sections', () => {
 })
 
 describe('detachMediaCore — preserves media_assets and Storage', () => {
-  it('deletes only the content_media association row', () => {
+  it('delegates association-only deletion to the atomic database function', () => {
     const pos = manageMedia.indexOf('export async function detachMediaCore')
     const end = manageMedia.indexOf('\nexport', pos + 1)
     const fn  = manageMedia.slice(pos, end)
-    expect(fn).toContain("from('content_media')")
-    expect(fn).toContain('.delete()')
+    expect(fn).toContain("rpc('detach_owned_media'")
   })
 
   it('does not touch the media_assets row', () => {
@@ -185,11 +184,11 @@ describe('attachMediaToHome — reattachment after detach', () => {
     // existing is null and the guard does not fire — the insert proceeds.
     const pos = mediaActions.indexOf('export async function attachMediaToHome')
     const fn  = mediaActions.slice(pos)
-    expect(fn).toContain('.maybeSingle()')
+    expect(fn).toContain('attachMediaCore(db, admin.id, homes[0].id, mediaId)')
     // Guard fires only when existing IS truthy (row found = duplicate).
-    expect(fn).toContain('if (existing) return { error:')
+    expect(manageMedia).toContain("rpc('attach_owned_media'")
     // Guard must NOT fire on the absence of a row (that would block reattach).
-    expect(fn).not.toMatch(/if \(!existing\)[^}]*return/)
+    expect(fn).not.toContain("from('content_media').insert")
   })
 })
 

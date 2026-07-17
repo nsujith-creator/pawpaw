@@ -13,7 +13,7 @@ Private family archive for Varada. Read the canonical documents before touching 
 
 ### 1. Prerequisites
 
-- Node.js 18+
+- Node.js 20.9.0 or newer (required by Next.js 16)
 - npm 9+
 - Supabase CLI (`npm install -g supabase`)
 - Access to the configured shared Supabase project. Pawpaw uses isolated tables, policies, and a private `media` bucket within that project; see `docs/PROJECT_STATUS.md` for the accepted Free-plan constraint.

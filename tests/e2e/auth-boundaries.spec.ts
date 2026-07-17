@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { makeViewerCookieValue } from './viewer-session'
 
 // These tests require a running dev server with real Supabase credentials.
 // They are skipped when PLAYWRIGHT_SKIP_AUTH is set.
@@ -50,12 +51,13 @@ test.describe('admin login page', () => {
 test.describe('security headers', () => {
   test('protected pages include X-Robots-Tag header', async ({ request }) => {
     test.skip(skip, 'Skipping: no server available')
-    // Hit the login page (public) to check header injection.
-    // Protected pages behind auth would require a valid cookie.
-    const res = await request.get('/family-login')
-    // The proxy adds the header on archive routes, not public ones.
-    // This test verifies the header is present on a protected page
-    // by using a pre-seeded viewer cookie (manual test in acceptance).
-    expect(res.status()).toBeLessThan(500)
+    const cookie = await makeViewerCookieValue()
+    test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
+    const res = await request.get('/', {
+      headers: { cookie: `pawpaw_viewer=${cookie}` },
+      maxRedirects: 0,
+    })
+    expect(res.status()).toBe(200)
+    expect(res.headers()['x-robots-tag']).toBe('noindex, nofollow, noarchive')
   })
 })

@@ -8,11 +8,14 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { checkOrigin } from '@/lib/auth/origin'
 import { bodyBlocksSchema } from '@/lib/content/schema'
 import { plainTextToBlocks } from '@/lib/content/plain-text'
+import {
+  createHomeMutationStore,
+  saveCanonicalHome,
+  unpublishCanonicalHome,
+} from '@/lib/content/manage-home'
 
 // Generic user-facing message for unexpected persistence failures.
 // Details go to the server log only — never to the browser.
-const SAVE_FAILED = 'Could not save right now. Please try again in a moment.'
-
 export async function saveHomeContent(formData: FormData) {
   const headersList = await headers()
   checkOrigin(headersList)
@@ -48,57 +51,38 @@ export async function saveHomeContent(formData: FormData) {
     return { error: `Content is not valid${blockNo}: ${issue?.message ?? 'unknown problem'}.` }
   }
 
-  const db     = createAdminClient()
   const status = action === 'publish' ? 'published' : 'draft'
-
-  const payload = {
-    type:        'home',
-    slug:        'home',
+  const result = await saveCanonicalHome(
+    createHomeMutationStore(createAdminClient()),
+    admin.id,
+    existingId,
+    {
     title,
     body_blocks: parsed.data,
     status,
     published_at: action === 'publish' ? new Date().toISOString() : null,
-    updated_by:  admin.id,
-  }
-
-  if (existingId) {
-    const { error } = await db.from('content_items').update(payload).eq('id', existingId)
-    if (error) {
-      console.error('saveHomeContent update failed:', error)
-      return { error: SAVE_FAILED }
-    }
-  } else {
-    const { error } = await db.from('content_items').insert({ ...payload, created_by: admin.id })
-    if (error) {
-      console.error('saveHomeContent insert failed:', error)
-      return { error: SAVE_FAILED }
-    }
-  }
+    },
+  )
+  if ('error' in result) return result
 
   revalidatePath('/')
   revalidatePath('/admin/home')
-  return { ok: true }
+  return { ok: true as const }
 }
 
-export async function unpublishHome(id: string) {
+export async function unpublishHome() {
   const headersList = await headers()
   checkOrigin(headersList)
 
   const supabase = await createClient()
-  await requireActiveAdmin(supabase)
-
-  const db = createAdminClient()
-  const { error } = await db
-    .from('content_items')
-    .update({ status: 'draft', published_at: null })
-    .eq('id', id)
-
-  if (error) {
-    console.error('unpublishHome failed:', error)
-    return { error: SAVE_FAILED }
-  }
+  const admin = await requireActiveAdmin(supabase)
+  const result = await unpublishCanonicalHome(
+    createHomeMutationStore(createAdminClient()),
+    admin.id,
+  )
+  if ('error' in result) return result
 
   revalidatePath('/')
   revalidatePath('/admin/home')
-  return { ok: true }
+  return { ok: true as const }
 }
