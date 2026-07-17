@@ -2,6 +2,7 @@
 
 Private family archive for Varada. Read the canonical documents before touching any code.
 
+- [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) — **read this first**: current build status, working-tree inventory, pending work, and manual-testing policy
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md)
 - [CLAUDE_PROJECT_INSTRUCTIONS.md](CLAUDE_PROJECT_INSTRUCTIONS.md)
 - [PHASE_1_IMPLEMENTATION_DECLARATION.md](PHASE_1_IMPLEMENTATION_DECLARATION.md)

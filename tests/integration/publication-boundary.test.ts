@@ -28,6 +28,33 @@ describe.skipIf(!hasRealCredentials)(
       })
     })
 
+    it('family loader returns the exact published Home with renderable blocks and signed media', async () => {
+      const { createAdminClient } = await import('@/lib/supabase/admin')
+      const { getPublishedHomeContent } = await import('@/lib/content/home')
+      const { bodyBlocksSchema } = await import('@/lib/content/schema')
+      const db = createAdminClient()
+
+      const { data: exactRow, error } = await db
+        .from('content_items')
+        .select('id, title, body_blocks, status')
+        .eq('type', 'home')
+        .eq('status', 'published')
+        .single()
+
+      expect(error).toBeNull()
+      expect(exactRow?.status).toBe('published')
+      expect(bodyBlocksSchema.safeParse(exactRow?.body_blocks).success).toBe(true)
+
+      const result = await getPublishedHomeContent()
+      expect(result.state).toBe('published')
+      if (result.state !== 'published') return
+      expect(result.content.id).toBe(exactRow?.id)
+      expect(result.content.title).toBe(exactRow?.title)
+      expect(result.content.bodyBlocks).toEqual(exactRow?.body_blocks)
+      expect(result.content.carousel.length).toBeGreaterThan(0)
+      result.content.carousel.forEach(item => expect(item.signedUrl).toMatch(/^https:\/\//))
+    })
+
     it('draft content_items are not included in the published filter', async () => {
       const { createAdminClient } = await import('@/lib/supabase/admin')
       const db = createAdminClient()

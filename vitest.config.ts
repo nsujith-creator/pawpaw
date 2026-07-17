@@ -4,6 +4,11 @@ import { resolve } from 'path'
 
 export default defineConfig(({ mode }) => ({
   test: {
+    // Vitest 3 defaults to 'forks' (child processes) which is stable on
+    // Windows + Node 24. Explicit here so the project doesn't drift if the
+    // upstream default ever changes, and to prevent worker_threads teardown
+    // crashes seen intermittently with tinypool on this platform.
+    pool: 'forks',
     environment: 'node',
     globals: true,
     setupFiles: ['./tests/setup.ts'],

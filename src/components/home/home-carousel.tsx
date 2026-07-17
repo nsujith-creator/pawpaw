@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import type { CarouselItem } from '@/lib/content/home'
 import CarouselControls from './carousel-controls'
+import styles from './home-carousel.module.css'
 
 interface Props {
   items: CarouselItem[]
@@ -35,50 +36,56 @@ export default function HomeCarousel({ items, title }: Props) {
   const item = items[index]
   if (!item) return null
 
-  const objectPosition = item.focalX != null && item.focalY != null
-    ? `${item.focalX * 100}% ${item.focalY * 100}%`
-    : 'center center'
-
   return (
     <section
       aria-label={`${title} photo gallery`}
-      style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a2e' }}
       onKeyDown={(e) => {
         if (e.key === 'ArrowLeft')  prev()
         if (e.key === 'ArrowRight') next()
       }}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
       tabIndex={0}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        key={item.id}
-        src={item.signedUrl}
-        alt={item.altText ?? `Photo ${index + 1} of ${items.length}`}
-        style={{
-          width: '100%', height: '100%',
-          objectFit: 'cover', objectPosition,
-          display: 'block',
-        }}
-      />
+      <div
+        className={styles.frame}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Blurred copy of the photo fills the letterboxed space.
+            Decorative only — hidden from assistive technology. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          key={`bg-${item.id}`}
+          src={item.signedUrl}
+          alt=""
+          aria-hidden="true"
+          className={styles.blurredBg}
+        />
+
+        {/* Semi-transparent gradient overlay on top of the blurred background. */}
+        <div className={styles.overlay} />
+
+        {/* The alt attribute carries the accessibility text; the visible
+            caption is rendered separately below the frame. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          key={item.id}
+          src={item.signedUrl}
+          alt={item.altText ?? `Photo ${index + 1} of ${items.length}`}
+          className={styles.image}
+        />
+
+        <CarouselControls
+          total={items.length}
+          current={index}
+          onPrev={prev}
+          onNext={next}
+          onGoto={setIndex}
+        />
+      </div>
 
       {item.caption && (
-        <p style={{
-          position: 'absolute', bottom: '3rem', left: '1rem', right: '4rem',
-          color: '#fff', fontSize: '0.875rem', textShadow: '0 1px 3px rgba(0,0,0,0.7)',
-        }}>
-          {item.caption}
-        </p>
+        <p className={styles.caption}>{item.caption}</p>
       )}
-
-      <CarouselControls
-        total={items.length}
-        current={index}
-        onPrev={prev}
-        onNext={next}
-        onGoto={setIndex}
-      />
     </section>
   )
 }
