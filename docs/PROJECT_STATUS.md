@@ -1,10 +1,10 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 18 July 2026 (four final independent-review findings resolved; clean verification passed; checkpoint commit authorized)
+**Status date:** 18 July 2026 (Phase 1 merged into `main`; post-merge verification passed)
 **Repository:** `nsujith-creator/pawpaw`
-**Working branch:** `phase-1-implementation`
-**PR:** `#2 — Implement Phase 1 private Home flow` (open and ready for review; not merged)
-**Current branch checkpoint:** `Resolve final Phase 1 review findings` — the commit containing this status update; its exact SHA is recorded in PR #2 and the final handoff after commit creation
+**Working branch:** `main`
+**PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
+**Main merge commit:** `93e464f30bdb95975bbac5d9e387a931c509c0ff` — normal GitHub merge of PR #2
 **Purpose of this file:** Single self-contained source of truth for current work, completed work, pending tasks, active risks, verification status, and manual-testing policy.
 
 ---
@@ -131,8 +131,9 @@ Avoid:
   - `a5efaaf89edba59f27478b8d56ed101bcfad46f6 — Finalize Phase 1 acceptance status`
   - `c02d4c6fba6ab5acac5d6e10e287377f8e75a2c0 — Fix Phase 1 security and verification blockers`
   - `Resolve final Phase 1 review findings` — current checkpoint commit containing this file; exact SHA is added to PR #2 after push
-- Branch is pushed to `origin/phase-1-implementation`.
-- PR #2 is open, marked ready for review, and cleanly mergeable. Merge remains unauthorized.
+  - `93e464f30bdb95975bbac5d9e387a931c509c0ff — Merge pull request #2 from nsujith-creator/phase-1-implementation`
+- `main` is pushed to `origin/main`; `phase-1-implementation` is preserved.
+- PR #2 is merged and closed. Deployment remains unauthorized.
 
 ### 3.2 Supabase
 
@@ -711,7 +712,7 @@ tests/
 - ~~Replace flat palette image backgrounds.~~ **DONE** — blurred bg + overlay + sharp contained image
 - ~~Ensure all current uncommitted work is inventoried and preserved.~~ **DONE** — see Section 5
 - `00_READ_ME_FIRST.md` was named in the checkpoint request but exists neither in the working tree nor in HEAD. No substitute content was invented; `docs/PROJECT_STATUS.md` remains the explicit canonical source.
-- ~~Update PR #2 description and mark it ready for review.~~ **DONE** — the description records the verified Phase 1 scope, checks, shared-Supabase arrangement, Manual Test Round 3 result, and accepted limitations; PR #2 is open and ready for review.
+- ~~Update PR #2 description and mark it ready for review.~~ **DONE** — the description records the verified Phase 1 scope, checks, shared-Supabase arrangement, Manual Test Round 3 result, and accepted limitations; PR #2 is merged and closed.
 - PR #2 remains the accepted Phase 1 scope and does not require a split before review.
 - Confirm production Vercel runtime behaviour after deployment.
 
@@ -749,10 +750,9 @@ tests/
 ## 9. Current release decision
 
 **PHASE 1 ACCEPTANCE COMPLETE — no Pawpaw release blocker remains after automated verification, shared-project isolation verification, and fully passed Manual Test Round 3.**
-**PR #2 is open and ready for review after every required command exited 0. It is not merged.**
-**The four findings from the latest independent re-review are remediated; PR #2 is eligible for a fresh final independent merge review after the checkpoint commit is pushed.**
-**One commit and push are authorized on `origin/phase-1-implementation`; update only the PR description for accuracy and do not alter its ready/draft state.**
-**Do not merge or deploy.**
+**PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
+**The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
+**`phase-1-implementation` remains preserved. Do not deploy or begin Release 2 without separate explicit authorization.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -771,7 +771,7 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** blocker remediation is eligible for independent re-review after the single authorized commit/push; do not alter or merge PR #2, deploy, or make a cross-app change.
+15. ✓ **Release decision:** Phase 1 is merged into `main`; do not deploy, begin Release 2, or make a cross-app change without separate explicit authorization.
 
 ---
 
