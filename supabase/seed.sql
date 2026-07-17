@@ -1,0 +1,11 @@
+-- Development seed.
+-- This file contains no real credentials, user IDs, or private photographs.
+--
+-- After running migrations and creating Supabase Auth accounts for Sujith and Paru,
+-- insert their user IDs here for local development only. Never commit real IDs.
+--
+-- Example (replace with actual UUIDs from your Supabase Auth dashboard):
+--
+--   insert into public.admin_users (user_id, display_name) values
+--     ('00000000-0000-0000-0000-000000000001', 'Sujith'),
+--     ('00000000-0000-0000-0000-000000000002', 'Paru');
