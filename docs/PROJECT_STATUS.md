@@ -1,10 +1,10 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 17 July 2026 (Phase 1 implementation complete; shared-Supabase findings accepted and final checkpoint eligible)
+**Status date:** 17 July 2026 (Phase 1 implementation and manual acceptance complete; PR #2 eligible to be marked ready for review)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `phase-1-implementation`
-**Draft PR:** `#2 — Implement Phase 1 private Home flow`
-**Last committed branch head:** `23467de00fe8e75c948506c848fdab6d45feff08 — Verify live Supabase security and privileges`
+**PR:** `#2 — Implement Phase 1 private Home flow` (open and ready for review; not merged)
+**Last committed branch head:** `0f529a8b47b4a6bc34b3d371bdfb64bcab648ef9 — Complete Phase 1 admin, media, and family Home flow`
 **Purpose of this file:** Single self-contained source of truth for current work, completed work, pending tasks, active risks, verification status, and manual-testing policy.
 
 ---
@@ -17,7 +17,7 @@
 2. Manual testing happens only after a **major phase or major integrated milestone** is complete.
 3. Maximum manual-testing rounds for the Pawpaw project: **3 consolidated rounds total**.
 4. The earlier Phase 1 browser checks are consolidated as **Manual Test Round 1**.
-5. Remaining formal manual-test allowance: **1 round**.
+5. All **3 of 3** formal manual-test rounds have been used. Manual Test Round 3 completed with every check passed and no failed, unclear, or untested items.
 6. New findings discovered between formal rounds must be:
    - recorded in this file;
    - covered by automated tests wherever feasible;
@@ -50,9 +50,22 @@ Every implementation prompt sent to Claude must include:
 - Do not weaken Auth, active-admin checks, origin checks, RLS, private Storage, file validation, or signed delivery.
 - Do not amend migrations already applied remotely.
 - New database changes must be forward-only migrations and reviewed before remote push.
-- PR #2 remains draft until a major phase boundary is complete.
+- PR #2 may be marked ready for review after this acceptance-status update is pushed and every required verification command exits 0.
 - Restore `next-env.d.ts` after `next build` if Next.js regenerates it.
 - Do not merge Phase 1 while this file lists unresolved release blockers.
+
+### 1.4 Phase 1 acceptance summary
+
+- Manual Test Round 3: **completed — all checks passed**.
+- Formal manual-test rounds used: **3 of 3**.
+- Failed items: **0**.
+- Unclear items: **0**.
+- Untested items: **0**.
+- Phase 1 manual acceptance: **complete**.
+- Further manual testing: **not authorized unless Sujith explicitly requests it later**.
+- Shared Supabase arrangement, warnings, and limitations: **accepted as recorded in Sections 3.2 and 8**.
+- Release decision: **PR #2 was marked ready for review after every required automated verification command exited 0**.
+- Merge and deployment: **not authorized**.
 
 ---
 
@@ -114,8 +127,9 @@ Avoid:
   - `dc7e41c68659bdbbe8ae483bab2ce34619ce5711`
   - `5ce09b25a0846496b19b230bceb6e284be290193`
   - `23467de00fe8e75c948506c848fdab6d45feff08 — Verify live Supabase security and privileges`
+  - `0f529a8b47b4a6bc34b3d371bdfb64bcab648ef9 — Complete Phase 1 admin, media, and family Home flow`
 - Branch is pushed to `origin/phase-1-implementation`.
-- PR #2 exists and remains a draft.
+- PR #2 is open, marked ready for review, and cleanly mergeable. Merge remains unauthorized.
 
 ### 3.2 Supabase
 
@@ -194,7 +208,7 @@ Implemented:
 
 ### 3.5 Media flow
 
-Implemented in current uncommitted work:
+Implemented and committed:
 
 - direct browser-to-private-Supabase signed upload;
 - no image bytes through Vercel Server Actions;
@@ -222,7 +236,7 @@ Implemented in current uncommitted work:
 
 ### 3.6 Admin Dashboard, Content Library, Media Library, Premium UI work
 
-The full declared milestone is implemented and automatically verified as of 17 July 2026. All work remains uncommitted at the point of this status update. The linked Supabase findings are now classified as accepted shared-project state, Pawpaw isolation is verified, and the authorized final checkpoint is eligible to stage, commit, and push.
+The full declared milestone is implemented, committed, and automatically verified as of 17 July 2026. The linked Supabase findings are classified as accepted shared-project state, Pawpaw isolation is verified, and Phase 1 manual acceptance is complete.
 
 #### New files added this milestone
 
@@ -278,7 +292,7 @@ The full declared milestone is implemented and automatically verified as of 17 J
 
 **File changed:** `vitest.config.ts` — added `pool: 'forks'` explicitly to lock in the safe worker pool.
 
-#### Full verification results (17 July 2026 — final checkpoint audit)
+#### Full verification results (17 July 2026 — Phase 1 acceptance checkpoint)
 
 | Command | Exit | Result |
 |---|---|---|
@@ -288,13 +302,10 @@ The full declared milestone is implemented and automatically verified as of 17 J
 | `npm run test:integration:live` | 0 | 5 files passed; **37 tests passed**, 0 skipped (all live Supabase calls) |
 | `npm run test:e2e` | 0 | **21 passed, 3 skipped**, 0 failed; one worker protects the shared live Home singleton |
 | `npm run build` | 0 | 12 routes — clean |
-| `git diff --check` | 0 | LF/CRLF warnings only |
-| `git diff --stat` | 0 | 17 tracked files changed; untracked files are listed separately in Section 5 |
-| `git status --short` | 0 | 17 modified tracked files; 34 untracked files; generated `next-env.d.ts` change restored |
-| `npx supabase migration list` | 0 | Pawpaw local/remote match through `0006`; 3 later remote-only versions are accepted Paru Health/qtpi shared-project history |
-| `npx supabase db advisors --linked` | 0 | Accepted leaked-password warning plus isolated Paru Health `paru-health-assets` broad-listing warning; no Pawpaw bucket warning |
+| `git diff --check` | 0 | No whitespace errors; Windows LF/CRLF normalization warnings only |
+| `git status --short` | 0 | Only intended documentation/status files modified; generated `next-env.d.ts` change restored |
 
-All nine required commands exited 0. The returned Supabase state also satisfies the Pawpaw checkpoint gate under Sujith's explicit shared-project decision: Pawpaw migrations remain current through `0006`, the later entries touch only Paru Health/qtpi objects, and Pawpaw's private `media` bucket remains isolated.
+All eight required commands exited 0. No test failed. The live integration suite passed all 37 credential-gated tests with no skips. The accepted shared-project evidence remains: Pawpaw migrations are current through `0006`, later shared-project entries touch only Paru Health/qtpi objects, and Pawpaw's private `media` bucket remains isolated.
 
 **Skipped tests (intentional — require live credentials not available in default run):**
 - `tests/integration/admin-function-security.test.ts` — 6 skipped (requires real Supabase credentials; run via `test:integration:live`)
@@ -342,11 +353,11 @@ The exact historical browser state from Manual Test Round 2 was not captured, so
 
 ---
 
-## 4. Current major milestone — Admin information architecture, Media Library, and Round 2 defect fixes
+## 4. Completed major milestone — Phase 1 private Home flow
 
-**Status:** COMPLETE — declared Dashboard, Content Library, and Media Library requirements are implemented and automatically verified
-**Manual test required now:** No — Round 2 failed and was consumed; this implementation run is automatically verified and does not authorize Round 3
-**Formal manual round:** 2 of 3 used; Round 3 was not requested and is not authorized merely because commands pass
+**Status:** COMPLETE — declared Dashboard, Content Library, Media Library, Home editor, private media, and family Home requirements are implemented and verified
+**Manual test required now:** No — Round 3 completed with all checks passed; no further manual testing is authorized
+**Formal manual round:** 3 of 3 used
 
 ### 4.1 Admin dashboard
 
@@ -450,127 +461,36 @@ Replace the flat image-background colour with:
 
 ---
 
-## 5. Ongoing uncommitted work
+## 5. Current documentation-only work
 
-The following is the exact working-tree inventory verified by `git status --short --untracked-files=all` on 17 July 2026 during final checkpoint preparation.
+The Phase 1 implementation inventory previously recorded here was committed in `0f529a8b47b4a6bc34b3d371bdfb64bcab648ef9`. At the start of this acceptance update, the branch and `origin/phase-1-implementation` both pointed to that commit and the working tree was clean.
 
-### Modified tracked files (17 files — working-tree changes against HEAD)
+This checkpoint is limited to:
 
-```
- M README.md
- M next.config.ts
- M playwright.config.ts
- M src/app/(archive)/home.module.css
- M src/app/(archive)/page.tsx
- M src/app/admin/home/actions.ts
- M src/app/admin/home/home-editor.tsx
- M src/app/admin/home/page.tsx
- M src/app/admin/layout.tsx
- M src/app/admin/media/actions.ts
- M src/app/admin/media/upload-form.tsx
- M src/app/admin/page.tsx
- M src/components/home/home-carousel.tsx
- M src/lib/content/home.ts
- M tests/e2e/home-flow.spec.ts
- M tests/integration/publication-boundary.test.ts
- M vitest.config.ts
-```
+- recording the fully passed Manual Test Round 3 and completed Phase 1 manual acceptance in this file;
+- correcting README wording for the accepted shared-Supabase arrangement;
+- updating PR #2's description and marking it ready for review after required verification passed (completed);
+- creating and pushing one documentation/status commit.
 
-### Untracked files (34 files)
-
-```
-?? docs/DESIGN_SYSTEM.md
-?? docs/PROJECT_STATUS.md
-?? src/app/admin/content/page.tsx
-?? src/app/admin/media/attachment-list.tsx
-?? src/app/admin/media/media-library-client.tsx
-?? src/app/admin/media/page.tsx
-?? src/components/admin/admin-nav.module.css
-?? src/components/admin/admin-nav.tsx
-?? src/components/home/home-carousel.module.css
-?? src/components/home/leave-button.module.css
-?? src/components/home/leave-button.tsx
-?? src/lib/admin/library-view.ts
-?? src/lib/content/plain-text.ts
-?? src/lib/media/finalize-upload.ts
-?? src/lib/media/manage-media.ts
-?? src/lib/media/orphan-sweep.ts
-?? src/lib/media/upload-path.ts
-?? src/lib/media/validate-upload.ts
-?? tests/e2e/published-home-route.spec.ts
-?? tests/e2e/viewer-session.ts
-?? tests/integration/direct-upload.test.ts
-?? tests/integration/home-content-save.test.ts
-?? tests/integration/media-management.test.ts
-?? tests/unit/admin-dashboard.test.ts
-?? tests/unit/admin-library-behavior.test.ts
-?? tests/unit/content-library.test.ts
-?? tests/unit/home-content-loader.test.ts
-?? tests/unit/manage-media.test.ts
-?? tests/unit/media-library.test.ts
-?? tests/unit/orphan-sweep.test.ts
-?? tests/unit/plain-text.test.ts
-?? tests/unit/ui-acceptance.test.ts
-?? tests/unit/upload-limits.test.ts
-?? tests/unit/upload-path.test.ts
-```
-
-Note: `PAWPAW_PROJECT_STATUS.md` (root duplicate) was deleted in a prior session. `docs/PROJECT_STATUS.md` is the sole canonical control file.
-
-### git diff --stat (working tree vs HEAD, verified 17 July 2026 — final checkpoint preparation)
-
-```
- README.md                                      |   1 +
- next.config.ts                                 |   4 +
- playwright.config.ts                           |   3 +
- src/app/(archive)/home.module.css              |  32 ++-
- src/app/(archive)/page.tsx                     |  35 +++-
- src/app/admin/home/actions.ts                  |  43 +++-
- src/app/admin/home/home-editor.tsx             | 180 +++++++++++++----
- src/app/admin/home/page.tsx                    |  62 +++++-
- src/app/admin/layout.tsx                       |  12 +-
- src/app/admin/media/actions.ts                 | 230 ++++++++++++++++------
- src/app/admin/media/upload-form.tsx            | 121 ++++++++++--
- src/app/admin/page.tsx                         | 261 +++++++++++++++++++++++--
- src/components/home/home-carousel.tsx          |  71 ++++---
- src/lib/content/home.ts                        | 193 +++++++++++++-----
- tests/e2e/home-flow.spec.ts                    | 100 +++++++---
- tests/integration/publication-boundary.test.ts |  27 +++
- vitest.config.ts                               |   5 +
- 17 files changed, 1120 insertions(+), 260 deletions(-)
-```
-
-Note: all 34 untracked files, including the new Home loader, admin-library behavior helper/tests, and real-route regression tests, are not shown in `git diff --stat` but are present in the working tree.
-
-### git diff --check
-
-LF/CRLF line-ending warnings only (Windows normalization). No whitespace errors. Exit 0.
-
-### Before further implementation, Claude must
-
-1. inspect `git status --short`;
-2. inspect `git diff --stat`;
-3. identify all modified and untracked files against the inventory above;
-4. preserve all accepted security and upload work;
-5. avoid accidental duplicate implementations;
-6. update this file with the exact current working-tree inventory.
-
-The implementation and automated-test milestone is complete. The linked Supabase findings are classified as accepted shared-project state in Sections 3.2, 8, and 9, and final checkpoint verification is green. The authorized checkpoint commit/push is eligible.
+No application code, migration, Supabase state, deployment, or merge is authorized.
 
 ---
 
-## 6. Pending manual tests
+## 6. Manual acceptance record
 
 ### Policy status
 
-- Formal consolidated manual rounds used: **2 of 3**
-- Formal consolidated manual rounds remaining: **1**
+- Formal consolidated manual rounds used: **3 of 3**
+- Formal consolidated manual rounds remaining: **0**
 - Manual Test Round 2: **failed and consumed** — its published-Home finding is now verified and hardened (see Section 3.6)
-- Manual Test Round 3: **not requested in this run**; passing commands do not authorize it
+- Manual Test Round 3: **completed — every item passed**
+- Failed, unclear, or untested Round 3 items: **none**
+- Phase 1 manual acceptance: **complete**
+- Further manual testing: **not authorized unless Sujith explicitly requests it later**
 
-### Manual Test Round 3 — future consolidated scope (not authorized now)
+### Manual Test Round 3 — completed scope
 
-The next consolidated browser test must cover, in one session:
+Sujith confirmed that the following consolidated browser scope was fully tested and passed:
 
 #### Family access
 
@@ -655,9 +575,9 @@ The next consolidated browser test must cover, in one session:
 - no raw database errors;
 - non-admin paths remain blocked.
 
-### Findings after Round 3
+### Policy after Round 3
 
-After the third formal manual-testing round:
+The third and final formal manual-testing round is complete. From this point:
 
 - do not request another manual test;
 - add every new observation to Section 8;
@@ -746,7 +666,7 @@ tests/
   - **IMPORTANT 2 fixed** — Content Library had duplicate "Edit Home page" header link plus per-row "Open editor →". Removed header link from `src/app/admin/content/page.tsx`; per-row link retained as the single entry point.
 - 13 earlier regression assertions remain across `admin-dashboard.test.ts`, `content-library.test.ts`, `media-library.test.ts`, and `ui-acceptance.test.ts`.
 - Published Home closure adds 7 deterministic loader cases, 1 live loader case, and 1 real authenticated route lifecycle case.
-- Do not request Manual Test Round 3 in this run. Round 3 remains a future consolidated decision, not an automatic next step.
+- ~~Conduct Manual Test Round 3.~~ **DONE — all checks passed.** No failed, unclear, or untested items remain; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
 
 ### P1 — important
 
@@ -754,8 +674,8 @@ tests/
 - ~~Replace flat palette image backgrounds.~~ **DONE** — blurred bg + overlay + sharp contained image
 - ~~Ensure all current uncommitted work is inventoried and preserved.~~ **DONE** — see Section 5
 - `00_READ_ME_FIRST.md` was named in the checkpoint request but exists neither in the working tree nor in HEAD. No substitute content was invented; `docs/PROJECT_STATUS.md` remains the explicit canonical source.
-- Update PR #2 description after the major milestone.
-- Decide whether PR #2 remains Phase 1 scope or should be split before review.
+- ~~Update PR #2 description and mark it ready for review.~~ **DONE** — the description records the verified Phase 1 scope, checks, shared-Supabase arrangement, Manual Test Round 3 result, and accepted limitations; PR #2 is open and ready for review.
+- PR #2 remains the accepted Phase 1 scope and does not require a split before review.
 - Confirm production Vercel runtime behaviour after deployment.
 
 ### P2 — later enhancement
@@ -773,20 +693,28 @@ tests/
 
 ### Accepted limitations
 
+- The Supabase Free-plan project is shared with qtpi tracker and Paru Health. Pawpaw remains isolated through its own tables, RLS, owner-scoped paths, and private `media` bucket, but unrelated apps' remote migration history and advisor findings appear in the same Supabase project.
 - Supabase Free plan lacks leaked-password protection.
+- The Paru Health `paru-health-assets` public/anonymous-upload advisor warning remains a separate, bucket-scoped warning and is not changed by Pawpaw.
 - Family page currently requires refresh to see admin changes.
 - Detached media remains visible and reusable in the implemented Media Library core flow.
 - Alt text is accessibility metadata and is not a hover tooltip.
 - Caption is the visible family-facing description.
+- Copied private signed media URLs may remain usable until their short expiry.
+- Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
+- The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
+- Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
+- Production Vercel runtime behaviour is not verified because deployment remains unauthorized.
 
 ---
 
 ## 9. Current release decision
 
-**CHECKPOINT ELIGIBLE — no Pawpaw release blocker remains after the shared-project findings were classified and isolation was verified.**
-**Commit and push are authorized only for this checkpoint on `origin/phase-1-implementation`.**
-**Do not merge, deploy, mark PR #2 ready, or alter its title, body, or state.**
-**Manual Test Round 2 failed and remains consumed.** Its published-Home finding is proven closed on the current real route. Formal rounds used remain **2 of 3**. Manual Test Round 3 was not requested and is not authorized in this run. No further manual testing is required because the shared-project classification and Pawpaw isolation were verified through migration SQL inspection, live database/Storage checks, integration tests, E2E tests, build, and advisors.
+**PHASE 1 ACCEPTANCE COMPLETE — no Pawpaw release blocker remains after automated verification, shared-project isolation verification, and fully passed Manual Test Round 3.**
+**PR #2 is open and ready for review after every required command exited 0. It is not merged.**
+**Commit and push are authorized only for this documentation/status checkpoint on `origin/phase-1-implementation`.**
+**Do not merge or deploy.**
+**Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
 
@@ -803,8 +731,8 @@ Release boundary status after final checkpoint verification:
 11. ✓ `20260716231532` is Paru Health-only; `20260716235504` and `20260717040149` are qtpi-only; none changes Pawpaw objects.
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
-14. ✓ This file is current; Manual Test Round 2 remains consumed, formal rounds used are 2/3, and Round 3 was not requested.
-15. → **Release decision:** create the single authorized checkpoint commit and push only to `origin/phase-1-implementation`; make no PR, merge, deployment, or cross-app change.
+14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
+15. ✓ **Release decision:** PR #2 description is current and the PR is ready for review; create and push only the single documentation/status commit, and do not merge, deploy, or make a cross-app change.
 
 ---
 
