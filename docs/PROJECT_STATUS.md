@@ -1,10 +1,10 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 17 July 2026 (Phase 1 blocker remediation complete; final clean verification passed; checkpoint commit pending)
+**Status date:** 18 July 2026 (four final independent-review findings resolved; clean verification passed; checkpoint commit authorized)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `phase-1-implementation`
 **PR:** `#2 — Implement Phase 1 private Home flow` (open and ready for review; not merged)
-**Last committed branch head:** `0f529a8b47b4a6bc34b3d371bdfb64bcab648ef9 — Complete Phase 1 admin, media, and family Home flow`
+**Current branch checkpoint:** `Resolve final Phase 1 review findings` — the commit containing this status update; its exact SHA is recorded in PR #2 and the final handoff after commit creation
 **Purpose of this file:** Single self-contained source of truth for current work, completed work, pending tasks, active risks, verification status, and manual-testing policy.
 
 ---
@@ -128,6 +128,9 @@ Avoid:
   - `5ce09b25a0846496b19b230bceb6e284be290193`
   - `23467de00fe8e75c948506c848fdab6d45feff08 — Verify live Supabase security and privileges`
   - `0f529a8b47b4a6bc34b3d371bdfb64bcab648ef9 — Complete Phase 1 admin, media, and family Home flow`
+  - `a5efaaf89edba59f27478b8d56ed101bcfad46f6 — Finalize Phase 1 acceptance status`
+  - `c02d4c6fba6ab5acac5d6e10e287377f8e75a2c0 — Fix Phase 1 security and verification blockers`
+  - `Resolve final Phase 1 review findings` — current checkpoint commit containing this file; exact SHA is added to PR #2 after push
 - Branch is pushed to `origin/phase-1-implementation`.
 - PR #2 is open, marked ready for review, and cleanly mergeable. Merge remains unauthorized.
 
@@ -163,6 +166,8 @@ The five additional remote-only history versions were inspected and classified w
 - `20260717091406` — `drop_qtpi_assets_anon_insert`: removes only qtpi tracker's anonymous insert policy from `qtpi-assets`.
 
 None references or changes Pawpaw's tables, helper function, `media` bucket, media paths, privileges, policies, tests, or application runtime. They are accepted shared-project history and must not be copied into Pawpaw merely to make local and remote version columns symmetrical.
+
+The current Supabase CLI cannot push Pawpaw-only migrations from this repository while those five remote-only versions remain absent locally: both `npx supabase db push --linked --dry-run` and the same command with `--include-all` fail before producing a plan. The controlled alternative used for the seventh and eighth Pawpaw migrations is the official project-scoped Supabase MCP `apply_migration` operation, once per reviewed forward-only local file. It executes the exact SQL and records the remote migration version together. Do not use `execute_sql` plus manual history repair, and do not repair, revert, fetch, or import the five shared-app versions. Read-only verification confirms remote records `20260717102121 / phase1_security_hardening` and `20260717102133 / owner_scoped_atomic_media`. The executable procedure and validation query are documented in README Section 4.
 
 Verified:
 
@@ -303,9 +308,9 @@ The full declared milestone is implemented, committed, and automatically verifie
 |---|---|---|
 | `npm run type-check` | 0 | Passed |
 | `npm run lint` | 0 | Passed — no findings, full `eslint .` |
-| `npm test` | 0 | 18 files passed, 5 skipped; **238 tests passed**, 42 skipped |
+| `npm test` | 0 | 19 files passed, 5 skipped; **244 tests passed**, 42 skipped |
 | `npm run test:integration:live` | 0 | 6 files passed; **43 tests passed**, 0 skipped; global fixture reconciliation active |
-| Pawpaw fixture residue query | 0 | users 0, content 0, media 0, Storage objects 0, throttle rows 0 |
+| Pawpaw fixture residue query | 0 | users 0, content 0, media 0, associations 0, Storage objects 0, throttle rows 0 |
 | `npm run test:e2e` | 0 | **21 passed, 3 skipped**, 0 failed; one worker protects the shared live Home singleton |
 | Pawpaw server-process check | 0 | `PAWPAW_SERVER_PROCESSES_POST=0` |
 | `npm run build` | 0 | 12 routes — clean |
@@ -314,7 +319,7 @@ The full declared milestone is implemented, committed, and automatically verifie
 | `npx supabase db advisors --linked` | 0 | 3 accepted warnings: Paru public listing, qtpi public listing, leaked-password protection disabled |
 | `git status --short` | 0 | Only intended blocker-remediation files modified; generated `next-env.d.ts` change restored |
 
-Every required step exited 0 in one sequential run. No test failed. The live integration suite passed all 43 credential-gated tests with no skips. Pawpaw migrations are current through `20260717102133`; the five remote-only shared-project entries touch only Paru Health/qtpi objects, and Pawpaw's private `media` bucket remains isolated.
+Every required step exited 0 in one sequential run. No test failed. Across the default, live, and E2E suites, **308 tests passed, 45 were intentionally skipped, and 0 failed**. The live integration suite passed all 43 credential-gated tests with no skips. Pawpaw migrations are current through `20260717102133`; the five remote-only shared-project entries touch only Paru Health/qtpi objects, and Pawpaw's private `media` bucket remains isolated.
 
 **Skipped tests (intentional — require live credentials not available in default run):**
 - `tests/integration/admin-function-security.test.ts` — 6 skipped (requires real Supabase credentials; run via `test:integration:live`)
@@ -479,12 +484,13 @@ Root causes and closures:
 
 - **Viewer cookie fail-closed:** proxy code accepted an empty-string secret fallback and viewer-auth configuration lacked central validation. `src/lib/env.ts`, `src/lib/auth/viewer-cookie.ts`, and `src/proxy.ts` now reject missing, empty, weak, or invalid configuration without logging secret values; valid signed/versioned cookies continue to work.
 - **Test isolation and cleanup:** fixtures used timestamp-only legacy names, cleanup was suite-local, and the global cleanup process could not see live environment values. Live tests now use a run-scoped `pawpaw-test-*` ID plus fixture metadata, reconcile only conclusively tagged Pawpaw fixtures before and after the suite, paginate Auth users, and remove related content, associations, media, Storage objects, allowlist rows, and Auth users. The first effective reconciliation found 4 legacy Pawpaw users and ended at zero; subsequent residue checks are zero.
+- **Final cleanup hardening:** shared cleanup now fails on every database, Storage, Auth, exact-count, and Home-restoration error. It reconciles before and after both live integration and Playwright, counts associations and throttle rows, and scans real Home/admin owner folders while deleting only exact `pawpaw-test-*` object names. Current pre/post counts are zero for users, content, media, associations, Storage objects, and throttle rows.
 - **Windows E2E server lifecycle:** Playwright could leave a Pawpaw Next.js server after completion. `scripts/run-e2e.mjs` runs Playwright, terminates only command lines verified as this repository's Next dev/start server, and fails unless the post-run count is zero. `reuseExistingServer` is disabled.
 - **Home singleton and mutation safety:** Home mutations trusted a client ID and did not prove affected rows. Migration `20260717102121` adds the singleton index; server code resolves canonical `type='home'`/`slug='home'`, rejects mismatched IDs, checks returned rows, preserves Home content during unpublish, and distinguishes query errors from a genuine empty state.
 - **Atomic throttling:** read/increment/upsert could lose concurrent failures and datastore errors were not conservative. Migration `20260717102121` adds one atomic database function restricted to service role; login denies when throttle reads/writes/clears fail. A 10-way live concurrent test proves threshold blocking.
 - **Owner-scoped media:** earlier active-admin rules did not consistently enforce record/path ownership. Migration `20260717102133` aligns table and Storage policies and adds ownership-checking RPCs. Server actions verify the active admin and canonical owned Home; two-admin live tests prove cross-owner update, attach, reorder, detach, and delete denial.
 - **Image-byte verification:** finalization trusted reported MIME/metadata. Existing `sharp` now decodes the uploaded bytes, verifies actual format and dimensions, and rejects/removes truncated, mislabeled, or header-only data before registration.
-- **Transactional media operations:** max-plus-one append, multi-step reorder, and relational deletion were race-prone; orphan listing stopped at 100. Database RPCs serialize append/reorder and atomically delete relations, Storage deletion failures are explicit, and orphan cleanup paginates.
+- **Transactional media operations:** max-plus-one append, multi-step reorder, and relational deletion were race-prone; orphan listing stopped at 100. Database RPCs serialize append/reorder and atomically delete relations, Storage deletion failures are explicit, and orphan cleanup now lists before deleting with a 1,000-object scan cap and 100-object delete batches so deletion cannot invalidate later offsets.
 - **False-positive tests:** anonymous denial, protected response headers, and carousel assertions could pass without proving behavior. Tests now branch only between explicit permission denial and an empty result, inspect the real protected response, seed deterministic media, and require controls/dots on desktop and mobile.
 - **Node runtime floor:** `package.json` and README now require Node `>=20.9.0`, matching Next.js 16; no dependency was broadly upgraded and the installed Node version was not changed.
 
@@ -495,7 +501,7 @@ Files in this checkpoint:
 - Home: `src/lib/content/home.ts`, `src/lib/content/manage-home.ts`, `src/app/admin/home/actions.ts`, `src/app/admin/home/home-editor.tsx`, `src/app/admin/home/page.tsx`.
 - Media: `src/lib/media/finalize-upload.ts`, `src/lib/media/image-metadata.ts`, `src/lib/media/manage-media.ts`, `src/lib/media/orphan-sweep.ts`, `src/app/admin/media/actions.ts`.
 - Migrations: `supabase/migrations/20260717102121_phase1_security_hardening.sql`, `supabase/migrations/20260717102133_owner_scoped_atomic_media.sql`.
-- Tests: `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/home-flow.spec.ts`, `tests/integration/admin-function-security.test.ts`, `tests/integration/direct-upload.test.ts`, `tests/integration/fixture-names.ts`, `tests/integration/global-fixtures.ts`, `tests/integration/home-content-save.test.ts`, `tests/integration/media-management.test.ts`, `tests/integration/publication-boundary.test.ts`, `tests/integration/throttle-live.test.ts`, `tests/unit/manage-home.test.ts`, `tests/unit/manage-media.test.ts`, `tests/unit/media-library.test.ts`, `tests/unit/orphan-sweep.test.ts`, `tests/unit/throttle.test.ts`, `tests/unit/viewer-cookie.test.ts`.
+- Tests: `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/global-cleanup.ts`, `tests/e2e/home-flow.spec.ts`, `tests/integration/admin-function-security.test.ts`, `tests/integration/direct-upload.test.ts`, `tests/integration/fixture-names.ts`, `tests/integration/global-fixtures.ts`, `tests/integration/home-content-save.test.ts`, `tests/integration/media-management.test.ts`, `tests/integration/publication-boundary.test.ts`, `tests/integration/throttle-live.test.ts`, `tests/support/fixture-cleanup.ts`, `tests/unit/fixture-cleanup.test.ts`, `tests/unit/manage-home.test.ts`, `tests/unit/manage-media.test.ts`, `tests/unit/media-library.test.ts`, `tests/unit/orphan-sweep.test.ts`, `tests/unit/throttle.test.ts`, `tests/unit/viewer-cookie.test.ts`.
 - Documentation: `README.md`, `docs/PROJECT_STATUS.md`.
 
 No new package was added. `sharp` was already installed. No Paru Health or qtpi data, policies, or migrations were modified. Manual testing remains closed at 3/3.
@@ -683,7 +689,11 @@ tests/
 - ~~Complete Content Library requirements in Section 4.2.~~ **DONE** — case-insensitive title search, combined filters, deterministic ordering, clear/no-results/error states, and disabled Release 2 Create New decision implemented without a second Home action.
 - ~~Complete Media Library requirements in Section 4.3.~~ **DONE** — creation metadata, safe filename, accurate usage titles/counts, cross-field search, MIME/attachment filters, deterministic newest/oldest sorting, and explicit query errors implemented.
 - ~~Ensure detached media remains visible and reusable.~~ **DONE** — "Move to Media Library" detaches only content_media row; asset and Storage object survive; media appears in /admin/media
-- ~~Re-run complete automated verification after integration.~~ **DONE** — all required commands exit 0: type-check, full `eslint .`, `npm test` (238 passed, 42 skipped), `test:integration:live` (43 passed, 0 skipped), `test:e2e` (21 passed, 3 expected skips), build (12 routes), zero fixture residue, and zero Pawpaw server processes.
+- ~~Re-run complete automated verification after integration.~~ **DONE** — all required commands exit 0: type-check, full `eslint .`, `npm test` (244 passed, 42 skipped), `test:integration:live` (43 passed, 0 skipped), `test:e2e` (21 passed, 3 expected skips), build (12 routes), zero fixture residue, and zero Pawpaw server processes.
+- ~~Fix deletion-invalidated orphan pagination.~~ **DONE** — each sweep lists up to 1,000 objects before removing candidates in 100-object batches; a mutable 150-orphan test proves every eligible object is visited and removed.
+- ~~Make cleanup fail loudly and reconcile E2E residue.~~ **DONE** — live integration and Playwright run idempotent pre/post reconciliation; exact-count, database, Storage, Auth, Home-restoration, association, object, and throttle failures are surfaced. Current residue is users 0, content 0, media 0, associations 0, objects 0, throttle 0.
+- ~~Document a working shared-Supabase migration procedure.~~ **DONE** — README records the tested CLI limitation and the controlled project-scoped `apply_migration` alternative used for migrations 7 and 8, with read-only history verification and explicit prohibitions on shared-history repair/import.
+- ~~Synchronize canonical status and PR #2 description.~~ **DONE** — current counts, eight Pawpaw migrations, five remote-only shared migrations, three accepted advisor warnings, Manual Test Round 3 at 3/3 passed, and production Vercel unverified are recorded without claiming plain linked `db push` works.
 - ~~Diagnose and stabilize Tinypool crash and ESLint crash.~~ **DONE** — crashes were transient; `pool: 'forks'` made explicit in vitest.config.ts; root causes documented in Section 3.6
 - ~~Conduct Manual Test Round 2.~~ **DONE — Round 2 failed and consumed.** Five defects confirmed and fixed (17 Jul 2026):
   - **BLOCKER 1 fixed** — Media Library showed 0 files. Root cause: `content_media(id)` in PostgREST embed; `content_media` has no `id` column (composite PK only). Fixed in `src/app/admin/media/page.tsx` and `src/app/admin/media/actions.ts`. Client refactored to Attached/Unattached sections.
@@ -740,8 +750,8 @@ tests/
 
 **PHASE 1 ACCEPTANCE COMPLETE — no Pawpaw release blocker remains after automated verification, shared-project isolation verification, and fully passed Manual Test Round 3.**
 **PR #2 is open and ready for review after every required command exited 0. It is not merged.**
-**The independently reported blockers and important findings are remediated; PR #2 is eligible for a fresh independent re-review after the checkpoint commit is pushed.**
-**One commit and push are authorized on `origin/phase-1-implementation`; PR metadata must remain unchanged.**
+**The four findings from the latest independent re-review are remediated; PR #2 is eligible for a fresh final independent merge review after the checkpoint commit is pushed.**
+**One commit and push are authorized on `origin/phase-1-implementation`; update only the PR description for accuracy and do not alter its ready/draft state.**
 **Do not merge or deploy.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 

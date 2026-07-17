@@ -1,8 +1,9 @@
-import { randomUUID } from 'node:crypto'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { test, expect, type Page } from '@playwright/test'
 import sharp from 'sharp'
 import { loadEnvLocal, makeViewerCookieValue } from './viewer-session'
+import { fixtureRunId } from '../integration/fixture-names'
+import { deleteRowsByIds, removeStoragePaths } from '../support/fixture-cleanup'
 
 const skip = process.env.PLAYWRIGHT_SKIP_AUTH === '1'
 
@@ -14,6 +15,16 @@ let fixture: {
   originalStatus: string
   originalPublishedAt: string | null
 } | null = null
+
+async function removeHomeFlowFixture(
+  db: SupabaseClient,
+  ids: string[],
+  paths: string[],
+): Promise<void> {
+  await deleteRowsByIds(db, 'content_media', 'media_id', ids, 'E2E Home association')
+  await deleteRowsByIds(db, 'media_assets', 'id', ids, 'E2E Home media')
+  await removeStoragePaths(db, paths)
+}
 
 test.beforeAll(async () => {
   cookie = await makeViewerCookieValue()
@@ -28,7 +39,7 @@ test.beforeAll(async () => {
     .select('id, created_by, status, published_at').eq('type', 'home').eq('slug', 'home').single()
   if (homeError || !home) throw homeError ?? new Error('Canonical Home missing')
 
-  const runId = process.env.PAWPAW_TEST_RUN_ID ?? `pawpaw-test-e2e-${randomUUID().slice(0, 8)}`
+  const runId = fixtureRunId()
   const bytes = await sharp({
     create: { width: 3, height: 2, channels: 3, background: '#7c3aed' },
   }).png().toBuffer()
@@ -64,11 +75,7 @@ test.beforeAll(async () => {
       originalStatus: home.status, originalPublishedAt: home.published_at,
     }
   } catch (error) {
-    if (ids.length) {
-      await db.from('content_media').delete().in('media_id', ids)
-      await db.from('media_assets').delete().in('id', ids)
-    }
-    await db.storage.from('media').remove(paths)
+    await removeHomeFlowFixture(db, ids, paths)
     throw error
   }
 })
@@ -80,14 +87,22 @@ test.afterAll(async () => {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error('Missing E2E cleanup configuration')
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
-  await db.from('content_media').delete().in('media_id', fixture.ids)
-  await db.from('media_assets').delete().in('id', fixture.ids)
-  await db.storage.from('media').remove(fixture.paths)
-  if (fixture.originalStatus !== 'published') {
-    await db.from('content_items').update({
+  await removeHomeFlowFixture(db, fixture.ids, fixture.paths)
+
+  const { data: restored, error: restoreError } = await db.from('content_items').update({
       status: fixture.originalStatus, published_at: fixture.originalPublishedAt,
-    }).eq('id', fixture.homeId)
+    })
+    .eq('id', fixture.homeId)
+    .eq('type', 'home')
+    .eq('slug', 'home')
+    .select('id, status, published_at')
+    .single()
+  if (restoreError || !restored) {
+    throw new Error('E2E Home restoration failed', { cause: restoreError ?? undefined })
   }
+  expect(restored.id).toBe(fixture.homeId)
+  expect(restored.status).toBe(fixture.originalStatus)
+  expect(restored.published_at).toBe(fixture.originalPublishedAt)
 })
 
 async function seedViewerSession(page: Page) {

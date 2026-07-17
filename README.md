@@ -50,16 +50,35 @@ Run twice — use one value for each secret. They must be different.
 
 ### 4. Apply database migrations
 
-```
-supabase db push
-```
-
-Or for local development:
+#### Local development
 
 ```
 supabase start
 supabase db reset
 ```
+
+#### Linked shared project
+
+The hosted Supabase project is intentionally shared with QtPi and Paru Health. Pawpaw's eight migration files in `supabase/migrations/` are authoritative for Pawpaw only. Five additional remote-only migration versions are authoritative for QtPi or Paru Health and must remain absent from this repository.
+
+Do **not** run `supabase db push --linked` for this project. Supabase CLI 2.109.1 rejects both the plain command and `--include-all` because the five legitimate shared-app versions are not present locally. Do not follow the CLI suggestion to repair, revert, fetch, or copy those versions; doing so would rewrite or import another application's migration history.
+
+The controlled procedure used for Pawpaw's seventh and eighth migrations is:
+
+1. Create one forward-only local Pawpaw migration with `npx supabase migration new <pawpaw_change_name>` and review the SQL for Pawpaw objects only.
+2. Validate it locally with `npx supabase db reset` and the complete Pawpaw automated test suite.
+3. With separate explicit authorization for that migration, use the official, project-scoped Supabase MCP `apply_migration` operation once, passing the migration name and the exact reviewed SQL from that committed local file. `apply_migration` executes the SQL and records its version in remote migration history together; do not substitute `execute_sql` followed by manual history repair.
+4. Verify the result read-only with `npx supabase migration list`, a read-only query of `supabase_migrations.schema_migrations`, the live integration suite, and `npx supabase db advisors --linked`.
+
+The current seventh and eighth Pawpaw migrations are recorded remotely as:
+
+```
+npx supabase db query --linked "select version, name from supabase_migrations.schema_migrations where version in ('20260717102121','20260717102133') order by version;"
+```
+
+Expected rows are `20260717102121 / phase1_security_hardening` and `20260717102133 / owner_scoped_atomic_media`. This query and `npx supabase migration list` are the harmless read-only validation for the current arrangement. No CLI dry-run can preview a future Pawpaw-only push while the remote-only shared history remains absent locally; if the project-scoped `apply_migration` operation is unavailable, stop rather than changing shared migration history.
+
+Supabase documents [`apply_migration` as an official MCP database operation](https://supabase.com/docs/guides/ai-tools/mcp) and documents that ordinary [`db push` compares local files with remote migration history](https://supabase.com/docs/reference/cli/supabase-db-push).
 
 ### 5. Seed admin users
 

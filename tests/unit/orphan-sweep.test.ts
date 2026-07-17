@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { findOrphans, ORPHAN_MAX_AGE_MS, sweepOrphans } from '@/lib/media/orphan-sweep'
+import {
+  findOrphans,
+  ORPHAN_MAX_AGE_MS,
+  SWEEP_MAX_OBJECTS,
+  sweepOrphans,
+} from '@/lib/media/orphan-sweep'
 
 const ADMIN = '123e4567-e89b-12d3-a456-426614174000'
 const NOW = Date.parse('2026-07-16T12:00:00Z')
@@ -59,5 +64,45 @@ describe('sweepOrphans pagination', () => {
     await sweepOrphans(db, ADMIN)
     expect(list).toHaveBeenNthCalledWith(1, ADMIN, expect.objectContaining({ limit: 100, offset: 0 }))
     expect(list).toHaveBeenNthCalledWith(2, ADMIN, expect.objectContaining({ limit: 100, offset: 100 }))
+  })
+
+  it('collects and removes every eligible object before mutable pages can shift', async () => {
+    const objects = Array.from({ length: 150 }, (_, index) => ({
+      name: `old-orphan-${index.toString().padStart(3, '0')}.jpg`,
+      created_at: hoursAgo(48),
+    }))
+    const visited = new Set<string>()
+    const list = vi.fn(async (_folder: string, options: { offset: number; limit: number }) => {
+      const page = objects.slice(options.offset, options.offset + options.limit)
+      page.forEach(object => visited.add(object.name))
+      return { data: page, error: null }
+    })
+    const remove = vi.fn(async (paths: string[]) => {
+      const names = new Set(paths.map(path => path.slice(`${ADMIN}/`.length)))
+      for (let index = objects.length - 1; index >= 0; index--) {
+        if (names.has(objects[index].name)) objects.splice(index, 1)
+      }
+      return { data: paths, error: null }
+    })
+    const db = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        like: vi.fn().mockResolvedValue({ data: [], error: null }),
+      })),
+      storage: { from: vi.fn(() => ({ list, remove })) },
+    } as unknown as SupabaseClient
+
+    await sweepOrphans(db, ADMIN)
+
+    expect(visited).toHaveLength(150)
+    expect(objects).toEqual([])
+    expect(remove).toHaveBeenCalledTimes(2)
+    expect(list).toHaveBeenNthCalledWith(1, ADMIN, expect.objectContaining({ offset: 0 }))
+    expect(list).toHaveBeenNthCalledWith(2, ADMIN, expect.objectContaining({ offset: 100 }))
+  })
+
+  it('keeps each sweep bounded', () => {
+    expect(SWEEP_MAX_OBJECTS).toBe(1000)
+    expect(SWEEP_MAX_OBJECTS % 100).toBe(0)
   })
 })

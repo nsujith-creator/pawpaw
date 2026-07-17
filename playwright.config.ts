@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-cleanup.ts',
   timeout: 30_000,
   retries: 0,
   // E2E uses one real Home singleton. Run serially so the publish/unpublish

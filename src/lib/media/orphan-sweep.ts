@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const ORPHAN_MAX_AGE_MS = 24 * 60 * 60 * 1000
 export const SWEEP_LIST_LIMIT = 100
+export const SWEEP_MAX_OBJECTS = 1000
 
 export interface StoredObject { name: string; created_at: string | null }
 
@@ -30,8 +31,8 @@ export async function sweepOrphans(db: SupabaseClient, adminId: string): Promise
     if (rowsError) return
 
     const registered = new Set((rows ?? []).map(row => row.storage_path as string))
-    let offset = 0
-    while (true) {
+    const candidates: string[] = []
+    for (let offset = 0; offset < SWEEP_MAX_OBJECTS; offset += SWEEP_LIST_LIMIT) {
       const { data: objects, error: listError } = await db.storage
         .from('media')
         .list(adminId, {
@@ -41,13 +42,17 @@ export async function sweepOrphans(db: SupabaseClient, adminId: string): Promise
         })
       if (listError || !objects) return
 
-      const orphans = findOrphans(objects, registered, adminId)
-      if (orphans.length > 0) {
-        const { error: removeError } = await db.storage.from('media').remove(orphans)
-        if (removeError) return
-      }
-      if (objects.length < SWEEP_LIST_LIMIT) return
-      offset += SWEEP_LIST_LIMIT
+      candidates.push(...findOrphans(objects, registered, adminId))
+      if (objects.length < SWEEP_LIST_LIMIT) break
+    }
+
+    // Listing completes before deletion so removing page one cannot shift page
+    // two behind an offset. Both the scan and each removal request are bounded.
+    for (let start = 0; start < candidates.length; start += SWEEP_LIST_LIMIT) {
+      const { error: removeError } = await db.storage
+        .from('media')
+        .remove(candidates.slice(start, start + SWEEP_LIST_LIMIT))
+      if (removeError) return
     }
   } catch (error) {
     console.error('sweepOrphans failed (non-fatal):', error)
