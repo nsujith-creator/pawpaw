@@ -3,6 +3,8 @@
 Private family archive for Varada. Read the canonical documents before touching any code.
 
 - [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) — **read this first**: current build status, working-tree inventory, pending work, and manual-testing policy
+- [docs/PRODUCT_PHILOSOPHY.md](docs/PRODUCT_PHILOSOPHY.md) — Release 2 product principles and feature decision tests
+- [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — proposed implementation-ready visual system and current UI audit
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md)
 - [CLAUDE_PROJECT_INSTRUCTIONS.md](CLAUDE_PROJECT_INSTRUCTIONS.md)
 - [PHASE_1_IMPLEMENTATION_DECLARATION.md](PHASE_1_IMPLEMENTATION_DECLARATION.md)
@@ -130,10 +132,18 @@ Photographs are stored in the Supabase private `media` bucket. Download them fro
 
 ## Deployment
 
+**Current production:** [https://www.heyvarada.in](https://www.heyvarada.in)
+
+**Short entry domain:** [https://heyvarada.in](https://heyvarada.in), redirected to `www`
+
+**Legacy/fallback URL:** [https://pawpaw-lemon.vercel.app](https://pawpaw-lemon.vercel.app)
+
+Wix is the registrar and DNS host. Vercel hosts the `pawpaw` application. Production uses `NEXT_PUBLIC_SITE_URL=https://www.heyvarada.in`.
+
 1. Push to GitHub.
 2. Connect the repository to a dedicated Pawpaw Vercel project.
 3. Add all environment variables from `.env.example` in Vercel project settings.
-4. Confirm production hostname, then set `NEXT_PUBLIC_SITE_URL` in Vercel.
+4. Set `NEXT_PUBLIC_SITE_URL` to the canonical production hostname.
 5. Verify Vercel Hobby plan limits before deploying (bandwidth, function duration, image optimization).
 
-Domain registration (`varada.in` or `varadanair.in`) is manual and not required for local development.
+Phase 1 is complete, merged, deployed, and production verified. Release 2 is open at the documentation-only design-foundation milestone. UI implementation remains blocked until Sujith approves `docs/PRODUCT_PHILOSOPHY.md` and `docs/DESIGN_SYSTEM.md`.
