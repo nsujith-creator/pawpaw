@@ -1,6 +1,6 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 18 July 2026 (Phase 1 merged into `main`; post-merge verification passed)
+**Status date:** 18 July 2026 (Phase 1 deployed to Vercel production and production verification passed)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -65,7 +65,7 @@ Every implementation prompt sent to Claude must include:
 - Further manual testing: **not authorized unless Sujith explicitly requests it later**.
 - Shared Supabase arrangement, warnings, and limitations: **accepted as recorded in Sections 3.2 and 8**.
 - Release decision: **PR #2 was marked ready for review after every required automated verification command exited 0**.
-- Merge and deployment: **not authorized**.
+- Merge and deployment: **complete**. Phase 1 is merged into `main` and production verified on Vercel; Release 2 remains unauthorized and not started.
 
 ---
 
@@ -133,7 +133,7 @@ Avoid:
   - `Resolve final Phase 1 review findings` — current checkpoint commit containing this file; exact SHA is added to PR #2 after push
   - `93e464f30bdb95975bbac5d9e387a931c509c0ff — Merge pull request #2 from nsujith-creator/phase-1-implementation`
 - `main` is pushed to `origin/main`; `phase-1-implementation` is preserved.
-- PR #2 is merged and closed. Deployment remains unauthorized.
+- PR #2 is merged and closed. Phase 1 production deployment is complete.
 
 ### 3.2 Supabase
 
@@ -366,6 +366,58 @@ Fix and regression proof:
 - the required real update cycle advanced the Home row's normal `updated_at` audit timestamp; no content, status, attachment, or Storage-path drift remains.
 
 The exact historical browser state from Manual Test Round 2 was not captured, so it is not honest to classify that past observation as proven browser cache or proven pre-publish state. Current caching, data, session, and fresh-request evidence rules out a retained Next.js server/data cache in the reproduced path. The published-Home rendering issue is proven closed for the current application path.
+
+### 3.7 Vercel Phase 1 production deployment (18 July 2026)
+
+Production configuration:
+
+- Vercel project: `pawpaw` under `nsujith-creator's projects` (`nsujith-creators-projects`)
+- production URL: `https://pawpaw-lemon.vercel.app`
+- deployed Phase 1 application Git SHA: `ab554df19e5867b7c0b4e09ffc6fd69e3b8cfc07`
+- production branch: `main`
+- Git integration: connected to `nsujith-creator/pawpaw`
+- automatic production deployments from `main`: enabled
+- preview deployments: normal Vercel defaults; no Preview environment variables were added
+- framework/root/build/output: Next.js, repository root, Vercel default Next.js build, Vercel default Next.js output
+- Node.js: `24.x`, compatible with the repository requirement `>=20.9.0`
+- custom domain: not configured; the domain decision remains open
+- cost gate: existing free Hobby resources; incremental project/deployment cost is INR 0
+
+Production environment-variable presence (values are not recorded):
+
+| Variable | Production status |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | added, encrypted |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | added, encrypted |
+| `SUPABASE_SERVICE_ROLE_KEY` | added, encrypted |
+| `VIEWER_PASSPHRASE_HASH` | added, encrypted |
+| `VIEWER_COOKIE_SECRET` | added, encrypted; application validator accepted it |
+| `VIEWER_SESSION_VERSION` | added, encrypted; application validator accepted it |
+| `THROTTLE_KEY_SECRET` | added, encrypted |
+| `NEXT_PUBLIC_SITE_URL` | added, encrypted; final value points to the production URL above |
+
+Final production deployment `dpl_51k28VjWtSRV6F97BmDYVGBUaMxS` is `READY`, records branch `main` and exact Git SHA `ab554df19e5867b7c0b4e09ffc6fd69e3b8cfc07`, and has no dirty-worktree marker. The final build compiled Next.js 16.2.10, completed TypeScript, generated 12/12 static pages, emitted every declared static/dynamic route plus Proxy, and completed deployment with exit 0. The native `sharp` dependency installed and bundled without build failure; runtime image decoding/upload was not exercised because production smoke testing did not modify permanent family content.
+
+Production smoke result: **passed within the credential limitations explicitly allowed by the deployment request**.
+
+- `/` redirects unauthenticated viewers to `/family-login`; the family login page returns 200.
+- one wrong passphrase was rejected with `Incorrect passphrase.`; this may create the expected hashed failed-login throttle record, but no schema, migration, policy, bucket, family content, media, QtPi, or Paru Health state was changed.
+- the raw family passphrase was unavailable to automation, so positive production login and Leave/logout were not fabricated; positive passphrase and logout behavior remain supported by the fully passed Manual Test Round 3.
+- `/admin`, `/admin/content`, `/admin/media`, and `/admin/home` all redirect unauthenticated users to `/admin/login`; the admin login page returns 200.
+- administrator credentials were unavailable locally, so authenticated production Dashboard, Content, Media, and Home-editor navigation was not exercised; no content mutation was attempted.
+- a real private media record produced a short-lived `/object/sign/media/` URL that returned 200; the corresponding `/object/public/media/` request was blocked; the `media` bucket remains `public = false`.
+- 19 delivered CSS/JavaScript assets returned successfully; no ChunkLoadError, hydration failure, missing asset, Pawpaw browser-console warning/error, raw database error, runtime error cluster, production warning/fatal log, or 5xx response was found.
+- family and admin login pages had no horizontal overflow at desktop and 375 px mobile widths.
+- actual server-only values were absent from rendered login HTML and fetched client bundles.
+- linked migration history still contains all 8 Pawpaw migrations and the same 5 classified QtPi/Paru remote-only migrations. No migration or database command that changes state was run.
+
+Production-only warnings and accepted limitations:
+
+- Vercel warns that the open-ended Node engine `>=20.9.0` can automatically adopt future major Node versions; the configured runtime is currently `24.x`.
+- positive family and administrator production sessions were not automation-testable without raw credentials. This is recorded as a credential limitation, not reported as fabricated proof.
+- custom domain, DNS, Release 2, and every non-Home content surface remain outside this deployment.
+
+**Phase 1 production verification: complete.** This verdict combines the exact-SHA clean build, live unauthenticated/auth-failure boundaries, live private-media/Supabase checks, asset/secret/runtime-log checks, and the already completed Manual Test Round 3 for positive credential flows.
 
 ---
 
@@ -714,7 +766,7 @@ tests/
 - `00_READ_ME_FIRST.md` was named in the checkpoint request but exists neither in the working tree nor in HEAD. No substitute content was invented; `docs/PROJECT_STATUS.md` remains the explicit canonical source.
 - ~~Update PR #2 description and mark it ready for review.~~ **DONE** — the description records the verified Phase 1 scope, checks, shared-Supabase arrangement, Manual Test Round 3 result, and accepted limitations; PR #2 is merged and closed.
 - PR #2 remains the accepted Phase 1 scope and does not require a split before review.
-- Confirm production Vercel runtime behaviour after deployment.
+- ~~Confirm production Vercel runtime behaviour after deployment.~~ **DONE** — see Section 3.7.
 
 ### P2 — later enhancement
 
@@ -743,7 +795,7 @@ tests/
 - Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
 - The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
 - Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
-- Production Vercel runtime behaviour is not verified because deployment remains unauthorized.
+- Production positive family/admin sessions were not re-exercised because raw credentials were unavailable; allowed surrounding-boundary verification and Manual Test Round 3 evidence are recorded in Section 3.7.
 
 ---
 
@@ -752,7 +804,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — no Pawpaw release blocker remains after automated verification, shared-project isolation verification, and fully passed Manual Test Round 3.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Do not deploy or begin Release 2 without separate explicit authorization.**
+**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified; do not begin Release 2 without separate explicit authorization.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -771,7 +823,7 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 is merged into `main`; do not deploy, begin Release 2, or make a cross-app change without separate explicit authorization.
+15. ✓ **Release decision:** Phase 1 is merged into `main`, deployed to Vercel production, and production verified; do not begin Release 2 or make a cross-app change without separate explicit authorization.
 
 ---
 
