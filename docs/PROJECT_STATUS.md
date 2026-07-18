@@ -419,6 +419,42 @@ Production-only warnings and accepted limitations:
 
 **Phase 1 production verification: complete.** This verdict combines the exact-SHA clean build, live unauthenticated/auth-failure boundaries, live private-media/Supabase checks, asset/secret/runtime-log checks, and the already completed Manual Test Round 3 for positive credential flows.
 
+### 3.8 Production logout remediation (18 July 2026)
+
+Two authenticated production controls were confirmed broken on deployment `dpl_4gpzdcWTUZSMVYM4odRRNZwLbMmA`:
+
+- family `Leave` submitted `POST /logout/viewer`; the handler cleared `pawpaw_viewer` and returned the default `NextResponse.redirect` status 307 to `/family-login`. The browser correctly preserved POST across the 307 and `POST /family-login` returned 405.
+- admin `Sign out` submitted `POST /logout/admin`; the handler called Supabase `auth.signOut()` and returned the same default 307 to `/admin/login`. The browser preserved POST and `POST /admin/login` returned 405.
+
+The controls, POST route handlers, and Proxy routing were otherwise correct. This was not a GET mutation, form-method mismatch, Proxy interception, or Supabase failure. The exact defect was using a method-preserving 307 after successful logout mutations when both destinations are GET-only pages.
+
+Fix:
+
+- both POST logout handlers now use HTTP 303 See Other, which tells the browser to follow the redirect with GET;
+- viewer cookie deletion and Supabase admin sign-out remain unchanged;
+- no GET logout endpoint, migration, policy, dependency, content change, or cross-app change was introduced.
+
+Regression proof:
+
+- `tests/e2e/auth-boundaries.spec.ts` creates only a tagged temporary active-admin fixture, signs in through the real admin form, clicks the real Sign out control, and proves the destination request is GET/200 and `/admin` stays blocked; it also uses a valid signed viewer session, clicks the real Leave control, proves GET/200, exercises Back/reload, and proves `/` stays blocked.
+- `tests/e2e/home-flow.spec.ts` additionally asserts the existing real family Leave flow follows with GET/200 before checking the cleared-session boundary.
+- temporary Auth/allowlist fixtures are deleted and the shared cleanup proves users, content, media, associations, Storage objects, and throttle rows all return to zero.
+
+Final local verification after the last test change:
+
+| Command | Exit | Result |
+|---|---|---|
+| `git status --short` | 0 | Only the two logout handlers and two E2E files were modified before this status update |
+| `npm run type-check` | 0 | Passed |
+| `npm run lint` | 0 | Passed, no findings |
+| `npm test` | 0 | 244 passed, 42 intentionally skipped |
+| `npm run test:integration:live` | 0 | 43 passed, 0 skipped; zero fixture residue |
+| `npm run test:e2e` | 0 | 25 passed, 3 intentionally skipped; zero fixture residue and zero Pawpaw server processes |
+| `npm run build` | 0 | Next.js 16.2.10 production build passed; 12 routes generated |
+| `git diff --check` | 0 | No whitespace errors; Windows line-ending warnings only |
+
+Production verification used code-identical deployment `dpl_4Vr9zw4QNYfuGyAguY69PKspgVre` (`READY`) before the release commit was created so this result could be recorded in the same requested commit. Eight production authentication-boundary browser tests passed. An authenticated derived viewer session clicked Leave; `/family-login` returned 200 by GET, Back/reload did not restore access, and `/` remained blocked. A tagged temporary active administrator signed in through the real form and clicked Sign out; `/admin/login` returned 200 by GET and `/admin` remained blocked. The temporary administrator and allowlist row were deleted; residue was zero and no permanent family content changed. Deployment-scoped Vercel logs recorded `POST /logout/viewer 303` and `POST /logout/admin 303`, with no 405 or 5xx. Both live login pages produced no browser-console warning or error, and no secret exposure or ChunkLoadError was observed. The final Git-integrated production deployment and its exact SHA are verified after this commit is pushed.
+
 ---
 
 ## 4. Completed major milestone — Phase 1 private Home flow
@@ -795,7 +831,7 @@ tests/
 - Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
 - The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
 - Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
-- Production positive family/admin sessions were not re-exercised because raw credentials were unavailable; allowed surrounding-boundary verification and Manual Test Round 3 evidence are recorded in Section 3.7.
+- Production positive family/admin logout sessions were re-exercised with derived/tagged test sessions and zero residue in Section 3.8; raw household/admin credentials remain unavailable to automation and were not exposed.
 
 ---
 

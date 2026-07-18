@@ -128,7 +128,13 @@ test.describe('Home page carousel (requires viewer session)', () => {
     await page.goto('/')
     const leave = page.getByRole('button', { name: 'Leave' })
     await expect(leave).toBeVisible()
+    const loginResponsePromise = page.waitForResponse(
+      response => response.url().endsWith('/family-login'),
+    )
     await leave.click()
+    const loginResponse = await loginResponsePromise
+    expect(loginResponse.request().method()).toBe('GET')
+    expect(loginResponse.status()).toBe(200)
     await expect(page).toHaveURL(/\/family-login/)
     await page.goto('/')
     await expect(page).toHaveURL(/\/family-login/)
