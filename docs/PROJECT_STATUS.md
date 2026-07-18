@@ -1,6 +1,6 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 18 July 2026 (Phase 1 deployed to Vercel production and production verification passed)
+**Status date:** 18 July 2026 (family logout history correction locally verified; exact Git-integrated production verification pending)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -491,6 +491,52 @@ Final local verification:
 
 Code-identical production candidate deployment `dpl_78VfHsWcriZNt2554JuC9YLjoEkq` reached `READY` and was aliased to `pawpaw-lemon.vercel.app`. All 18 production authentication-boundary cases passed across desktop and mobile. Both real logout controls produced POST -> 303 -> GET/200; immediate Back before reload exposed neither private surface nor protected controls; reload and direct protected navigation remained blocked. Protected production responses included `private, no-store`; login responses did not. Temporary users/allowlist rows and all other fixture categories returned to zero. Deployment-scoped logs recorded four logout POSTs with 303, no 405, no 5xx, and no error/fatal entries. The admin login page had no console warning/error; the family login page had only the existing missing `favicon.ico` 404 and no application/runtime error. No permanent content, migration, shared-Supabase object, domain, dependency, secret, Release 2 feature, or unrelated application was changed. The final Git-integrated deployment and exact commit SHA are verified after this commit is pushed.
 
+### 3.10 Natural family-history correction (18 July 2026)
+
+Sujith's subsequent real production test superseded the synthetic/automated conclusion in Section 3.9: commit `3ac6a6c1296f92667d54597efd622175480bbc35` fixed the Admin Back behaviour, but one natural Back after family Leave could still make the private family Home visible. Admin remains passing and was not modified in this correction. Phase 1 was reopened only for the family logout-history privacy boundary.
+
+Route ownership was verified rather than assumed. Next's generated route manifest maps `/(archive)/page` to production `/`; the compiled server chunk contains `src/app/(archive)/layout.tsx`, `PrivateHistoryGuard`, and `data-private-surface="family"`. Therefore, the archive layout does wrap the real family page. The guard was not placed in an unused route.
+
+Natural local and production-safe derived-session instrumentation recorded the failing design before this correction:
+
+| Evidence | Result |
+|---|---|
+| URL before Leave | `/` |
+| URL after Leave | `/family-login` after POST -> 303 -> GET/200 |
+| URL after automated Back handling completed | `/family-login` |
+| private response cache header | production `private, no-cache, no-store, max-age=0, must-revalidate`; local dev `no-cache, must-revalidate` |
+| navigation / BFCache | history traversal; `pageshow.persisted = false` |
+| private DOM and guard | family wrapper and guard script both present in the private document |
+| lifecycle | submit/pagehide applied `data-pawpaw-private-hidden`; pagehide handlers ran; viewer cookie was absent after logout |
+| Back network | Back initiated `/`; guard revalidation then requested `/family-login` |
+| replace evidence | the immediate inspection context was destroyed by the guard-triggered navigation |
+
+Because the viewer cookie was absent, any private family DOM seen after Back could not be newly authenticated server output; it was the old private history document becoming paintable before the reactive guard completed its replacement navigation. The exact family-only root cause was therefore not missing route ownership, missing cache headers, BFCache, or newly authorized output. It was that the implementation left the private family document in browser history and depended on restored HTML/lifecycle JavaScript running before the browser displayed it. Chromium automation completed that reaction quickly enough to appear safe; Sujith's browser exposed the timing window. Admin's real flow remained safe, while the family login and private Home are separate route-layout documents and retained the vulnerable private history entry.
+
+Family-only correction:
+
+- the real Leave form still targets the POST-only `/logout/viewer` handler;
+- the hydrated control performs that POST with same-origin credentials, follows the existing 303, verifies the final same-origin `/family-login` GET/200 response, and then uses `window.location.replace('/family-login')`;
+- replacing the current navigation removes the private Home entry, so one Back returns to the earlier family-login document and never starts a request for `/`;
+- the private document is hidden synchronously while logout runs;
+- if fetch is unavailable or the response is unexpected, the unchanged native form POST is submitted as the fallback while the private document remains hidden;
+- the existing no-store header and history guard remain defence in depth; Admin code and shared guard code are unchanged.
+
+The corrected E2E starts naturally at `/family-login`, establishes only a production-safe derived viewer session, loads the real `/`, clicks the actual Leave control, proves POST 303 and GET 200, marks the post-logout lifecycle, presses Back exactly once, and immediately proves all of the following before reload: URL remains `/family-login`; no `/` request occurred; no visible family wrapper was observed; private headings/text/images and Leave are absent; and the passphrase form is visible. Reload and direct `/` navigation are verified separately. The same test runs in desktop Chromium and mobile Chrome. The existing Admin regression remains unchanged and passed in both projects.
+
+Final local verification for this correction:
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run type-check` | 0 | Passed |
+| `npm run lint` | 0 | Passed, no findings |
+| `npm test` | 0 | 244 passed, 42 intentionally skipped |
+| `npm run test:integration:live` | 0 | 43 passed, 0 skipped; zero fixture residue |
+| `npm run test:e2e` | 0 | 27 passed, 3 intentionally skipped; natural family and unchanged Admin logout passed on desktop/mobile; zero fixture residue and zero Pawpaw server processes |
+| `npm run build` | 0 | Next.js 16.2.10 production build passed; `/` dynamic and both login pages static |
+
+No dependency, migration, Supabase structure, permanent content, QtPi/Paru state, domain, secret, Release 2 feature, or unrelated UI changed. The Git-integrated production deployment of this correction must be verified after the requested commit is pushed before the family production blocker is declared closed.
+
 ---
 
 ## 4. Completed major milestone — Phase 1 private Home flow
@@ -867,13 +913,13 @@ tests/
 - Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
 - The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
 - Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
-- Production positive family/admin logout sessions, including immediate Back before reload, were re-exercised with derived/tagged test sessions and zero residue in Section 3.9; raw household/admin credentials remain unavailable to automation and were not exposed.
+- Admin Back remains verified. The natural family correction and its local derived-session proof are recorded in Section 3.10; its Git-integrated production deployment must pass before the family production blocker is closed. Raw household/admin credentials remain unavailable to automation and were not exposed.
 
 ---
 
 ## 9. Current release decision
 
-**PHASE 1 ACCEPTANCE COMPLETE — no Pawpaw release blocker remains after automated verification, shared-project isolation verification, and fully passed Manual Test Round 3.**
+**PHASE 1 IMPLEMENTATION AND MANUAL ACCEPTANCE ARE COMPLETE; the family logout history correction is locally verified and remains the only open production verification gate until its exact Git-integrated deployment passes.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
 **`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified; do not begin Release 2 without separate explicit authorization.**
@@ -895,7 +941,7 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 is merged into `main`, deployed to Vercel production, and production verified; do not begin Release 2 or make a cross-app change without separate explicit authorization.
+15. ⚠ **Release decision:** Phase 1 is merged into `main`; Admin logout history is production verified, while the family-only history correction requires exact Git-integrated production verification after push. Do not begin Release 2 or make a cross-app change without separate explicit authorization.
 
 ---
 

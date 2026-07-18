@@ -86,25 +86,59 @@ test.describe('family login page', () => {
     test.skip(skip, 'Skipping: no server available')
     const viewerCookie = await makeViewerCookieValue()
     test.skip(!viewerCookie, 'Skipping: no viewer cookie could be derived')
+    await page.addInitScript(() => {
+      const exposureKey = 'pawpaw-private-family-exposed-after-logout'
+      const detectExposure = () => {
+        if (sessionStorage.getItem('pawpaw-logout-complete') !== '1') return
+        const privateSurface = document.querySelector('[data-private-surface="family"]')
+        if (privateSurface && getComputedStyle(document.body).visibility !== 'hidden') {
+          sessionStorage.setItem(exposureKey, '1')
+        }
+      }
+      window.addEventListener('pageshow', detectExposure)
+      new MutationObserver(detectExposure).observe(document, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+      })
+    })
+
+    await page.goto('/family-login')
+    await expect(page.getByLabel('Passphrase')).toBeVisible()
     await page.context().addCookies([{
       name: 'pawpaw_viewer',
       value: viewerCookie!,
       url: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     }])
     await page.goto('/')
+    await expect(page.locator('[data-private-surface="family"]')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Leave' })).toBeVisible()
 
+    const logoutResponsePromise = page.waitForResponse(
+      response => response.url().endsWith('/logout/viewer') && response.request().method() === 'POST',
+    )
     const loginResponsePromise = page.waitForResponse(
-      response => response.url().endsWith('/family-login'),
+      response => response.url().endsWith('/family-login') && response.request().method() === 'GET',
     )
     await page.getByRole('button', { name: 'Leave' }).click()
+    const logoutResponse = await logoutResponsePromise
     const loginResponse = await loginResponsePromise
+    expect(logoutResponse.status()).toBe(303)
     expect(loginResponse.request().method()).toBe('GET')
     expect(loginResponse.status()).toBe(200)
     await expect(page).toHaveURL(/\/family-login/)
+    await page.evaluate(() => sessionStorage.setItem('pawpaw-logout-complete', '1'))
 
+    const protectedRequestsAfterLogout: string[] = []
+    page.on('request', request => {
+      if (new URL(request.url()).pathname === '/') protectedRequestsAfterLogout.push(request.url())
+    })
     await page.goBack()
     await expect(page).toHaveURL(/\/family-login/)
+    expect(protectedRequestsAfterLogout).toEqual([])
+    expect(await page.evaluate(() => sessionStorage.getItem('pawpaw-private-family-exposed-after-logout'))).toBeNull()
     expect(await page.locator('[data-private-surface="family"]').count()).toBe(0)
+    expect(await page.locator('[data-private-surface="family"] h1, [data-private-surface="family"] p, [data-private-surface="family"] img').count()).toBe(0)
     expect(await page.getByRole('button', { name: 'Leave' }).count()).toBe(0)
     await expect(page.getByLabel('Passphrase')).toBeVisible()
 
