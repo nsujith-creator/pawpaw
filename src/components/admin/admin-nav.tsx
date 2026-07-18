@@ -13,6 +13,8 @@ const links = [
 export default function AdminNav() {
   const pathname = usePathname()
 
+  if (pathname === '/admin/login') return null
+
   return (
     <nav className={styles.nav} aria-label="Admin navigation">
       {links.map(({ href, label, exact }) => {

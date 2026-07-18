@@ -103,6 +103,11 @@ test.describe('family login page', () => {
     await expect(page).toHaveURL(/\/family-login/)
 
     await page.goBack()
+    await expect(page).toHaveURL(/\/family-login/)
+    expect(await page.locator('[data-private-surface="family"]').count()).toBe(0)
+    expect(await page.getByRole('button', { name: 'Leave' }).count()).toBe(0)
+    await expect(page.getByLabel('Passphrase')).toBeVisible()
+
     await page.reload()
     await expect(page).toHaveURL(/\/family-login/)
     await page.goto('/')
@@ -126,6 +131,10 @@ test.describe('admin login page', () => {
     await page.getByLabel('Password').fill(adminPassword)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(page).toHaveURL(/\/admin$/)
+    // Add a same-document Dashboard history entry so the genuine Back action
+    // after sign-out targets the private DOM that the browser could restore.
+    await page.evaluate(() => window.history.pushState({}, '', '/admin?history=logout-test'))
+    await expect(page).toHaveURL(/\/admin\?history=logout-test$/)
 
     const loginResponsePromise = page.waitForResponse(
       response => response.url().endsWith('/admin/login'),
@@ -136,6 +145,15 @@ test.describe('admin login page', () => {
     expect(loginResponse.status()).toBe(200)
     await expect(page).toHaveURL(/\/admin\/login/)
 
+    await page.goBack()
+    await expect(page).toHaveURL(/\/admin\/login/)
+    expect(await page.getByRole('heading', { name: 'Dashboard' }).count()).toBe(0)
+    expect(await page.getByRole('navigation', { name: 'Admin navigation' }).count()).toBe(0)
+    expect(await page.getByRole('button', { name: 'Sign out' }).count()).toBe(0)
+    await expect(page.getByLabel('Email')).toBeVisible()
+
+    await page.reload()
+    await expect(page).toHaveURL(/\/admin\/login/)
     await page.goto('/admin')
     await expect(page).toHaveURL(/\/admin\/login/)
   })
@@ -152,5 +170,23 @@ test.describe('security headers', () => {
     })
     expect(res.status()).toBe(200)
     expect(res.headers()['x-robots-tag']).toBe('noindex, nofollow, noarchive')
+    const cacheControl = res.headers()['cache-control']
+    if (process.env.PLAYWRIGHT_BASE_URL) {
+      expect(cacheControl).toContain('private')
+      expect(cacheControl).toContain('no-store')
+    } else {
+      // Next.js dev mode intentionally overwrites all page cache headers.
+      expect(cacheControl).toBe('no-cache, must-revalidate')
+    }
+  })
+
+  test('public login pages remain cacheable static GET destinations', async ({ request }) => {
+    test.skip(skip, 'Skipping: no server available')
+    for (const path of ['/family-login', '/admin/login']) {
+      const res = await request.get(path)
+      expect(res.status()).toBe(200)
+      expect(res.headers()['cache-control']).not.toContain('private')
+      expect(res.headers()['cache-control']).not.toContain('no-store')
+    }
   })
 })

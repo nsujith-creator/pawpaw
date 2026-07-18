@@ -455,6 +455,42 @@ Final local verification after the last test change:
 
 Production verification used code-identical deployment `dpl_4Vr9zw4QNYfuGyAguY69PKspgVre` (`READY`) before the release commit was created so this result could be recorded in the same requested commit. Eight production authentication-boundary browser tests passed. An authenticated derived viewer session clicked Leave; `/family-login` returned 200 by GET, Back/reload did not restore access, and `/` remained blocked. A tagged temporary active administrator signed in through the real form and clicked Sign out; `/admin/login` returned 200 by GET and `/admin` remained blocked. The temporary administrator and allowlist row were deleted; residue was zero and no permanent family content changed. Deployment-scoped Vercel logs recorded `POST /logout/viewer 303` and `POST /logout/admin 303`, with no 405 or 5xx. Both live login pages produced no browser-console warning or error, and no secret exposure or ChunkLoadError was observed. The final Git-integrated production deployment and its exact SHA are verified after this commit is pushed.
 
+### 3.9 Corrective logout history-restoration remediation (18 July 2026)
+
+Commit `0f5c90d84f9f045b80df14a4bfe9d79aafd67cd7` fixed only the method-preserving redirect defect: both logout mutations correctly remained POST-only and began returning 303 followed by GET/200 login pages. It did not close the browser-history privacy boundary. Real production testing subsequently proved that one immediate browser Back action could restore the previously rendered private family Home or Admin Dashboard.
+
+The Section 3.8 Back claim and its tests were incomplete. The family test called `page.goBack()` but did not inspect the restored page until after `page.reload()`, which revalidated authentication and masked the transient private restoration. The admin test did not call Back at all. Neither test proved the immediate post-Back DOM state.
+
+Instrumented local reproduction identified the exact mechanism in both flows as a normal browser history-cache restoration, not BFCache and not a Next.js client-router transition:
+
+- family Back returned the prior `/` response as HTTP 200 with `Cache-Control: no-cache, must-revalidate`, `PerformanceNavigationTiming.type = back_forward`, and `pageshow.persisted = false`;
+- admin Back returned the prior `/admin` response with the same status/header/navigation evidence and `pageshow.persisted = false`.
+
+The corrective implementation is intentionally limited to authenticated private surfaces:
+
+- production responses for `/`, `/admin`, `/admin/content`, `/admin/home`, and `/admin/media` now send `Cache-Control: private, no-store, no-cache, max-age=0, must-revalidate`;
+- an early private-history guard runs before private children render, hides the document during logout and `pagehide`, and forces a same-URL authentication revalidation for `back_forward` or persisted `pageshow` restorations while the private DOM remains hidden;
+- `/family-login` and `/admin/login` are excluded from the private cache header and remain statically prerendered;
+- the admin navigation is no longer rendered on the public admin login page;
+- POST-only logout handlers, 303 responses, viewer-cookie invalidation, Supabase `signOut`, Proxy enforcement, and existing security controls are unchanged.
+
+Corrected regression tests click the real Leave and Sign out controls, prove the destination request is GET/200, press browser Back once, and immediately assert that the private family surface/Dashboard/navigation/logout controls are absent before any explicit reload. Reload and direct protected-route navigation are then tested separately. The tests execute in desktop Chromium and mobile Chrome.
+
+Final local verification:
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run type-check` | 0 | Passed |
+| `npm run lint` | 0 | Passed, no findings |
+| `npm test` | 0 | 244 passed, 42 intentionally skipped |
+| `npm run test:integration:live` | 0 | 43 passed, 0 skipped; zero fixture residue |
+| `npm run test:e2e` | 0 | 27 passed, 3 intentionally skipped; both immediate-Back cases passed on desktop/mobile, zero fixture residue, zero Pawpaw server processes |
+| `npm run build` | 0 | Next.js 16.2.10 production build passed; protected pages dynamic and both login pages static |
+| `npx supabase migration list` | 0 | Eight Pawpaw versions remain aligned; the same five documented shared-project versions remain remote-only; no mutation run |
+| `git diff --check` | 0 | No whitespace errors; Windows line-ending warnings only |
+
+Code-identical production candidate deployment `dpl_78VfHsWcriZNt2554JuC9YLjoEkq` reached `READY` and was aliased to `pawpaw-lemon.vercel.app`. All 18 production authentication-boundary cases passed across desktop and mobile. Both real logout controls produced POST -> 303 -> GET/200; immediate Back before reload exposed neither private surface nor protected controls; reload and direct protected navigation remained blocked. Protected production responses included `private, no-store`; login responses did not. Temporary users/allowlist rows and all other fixture categories returned to zero. Deployment-scoped logs recorded four logout POSTs with 303, no 405, no 5xx, and no error/fatal entries. The admin login page had no console warning/error; the family login page had only the existing missing `favicon.ico` 404 and no application/runtime error. No permanent content, migration, shared-Supabase object, domain, dependency, secret, Release 2 feature, or unrelated application was changed. The final Git-integrated deployment and exact commit SHA are verified after this commit is pushed.
+
 ---
 
 ## 4. Completed major milestone — Phase 1 private Home flow
@@ -831,7 +867,7 @@ tests/
 - Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
 - The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
 - Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
-- Production positive family/admin logout sessions were re-exercised with derived/tagged test sessions and zero residue in Section 3.8; raw household/admin credentials remain unavailable to automation and were not exposed.
+- Production positive family/admin logout sessions, including immediate Back before reload, were re-exercised with derived/tagged test sessions and zero residue in Section 3.9; raw household/admin credentials remain unavailable to automation and were not exposed.
 
 ---
 
