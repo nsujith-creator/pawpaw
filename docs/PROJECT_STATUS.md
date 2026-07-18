@@ -1,6 +1,6 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 18 July 2026 (family logout history correction locally verified; exact Git-integrated production verification pending)
+**Status date:** 18 July 2026 (family logout history correction deployed and production verified)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -535,7 +535,9 @@ Final local verification for this correction:
 | `npm run test:e2e` | 0 | 27 passed, 3 intentionally skipped; natural family and unchanged Admin logout passed on desktop/mobile; zero fixture residue and zero Pawpaw server processes |
 | `npm run build` | 0 | Next.js 16.2.10 production build passed; `/` dynamic and both login pages static |
 
-No dependency, migration, Supabase structure, permanent content, QtPi/Paru state, domain, secret, Release 2 feature, or unrelated UI changed. The Git-integrated production deployment of this correction must be verified after the requested commit is pushed before the family production blocker is declared closed.
+No dependency, migration, Supabase structure, permanent content, QtPi/Paru state, domain, secret, Release 2 feature, or unrelated UI changed.
+
+Production closure: Git-integrated deployment `dpl_GKk3Ye7kra4CHXs88dMXkS6g6RF9` reached `READY`, records exact fix SHA `c5ce42e7655a54a3f9b36c5116226f356ffd64b6`, and serves the production alias. The same natural family test passed on desktop and mobile: Leave produced POST 303 followed by GET 200; one immediate Back remained on `/family-login`; no request for `/` occurred; no family wrapper, title/text/image, or Leave control was present or observed visible; and the passphrase form remained visible. Reload and direct `/` navigation remained blocked. The unchanged Admin regression also passed on desktop and mobile. Production fixtures started and ended at zero. Deployment-scoped logs recorded both viewer and Admin logout POSTs as 303 and contained no 405, 5xx, error, or fatal entry. The family production blocker is closed.
 
 ---
 
@@ -913,13 +915,13 @@ tests/
 - Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
 - The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
 - Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
-- Admin Back remains verified. The natural family correction and its local derived-session proof are recorded in Section 3.10; its Git-integrated production deployment must pass before the family production blocker is closed. Raw household/admin credentials remain unavailable to automation and were not exposed.
+- Admin Back remains verified. The natural family correction, exact Git-integrated deployment, and desktop/mobile production proof are recorded in Section 3.10. Raw household/admin credentials remain unavailable to automation and were not exposed.
 
 ---
 
 ## 9. Current release decision
 
-**PHASE 1 IMPLEMENTATION AND MANUAL ACCEPTANCE ARE COMPLETE; the family logout history correction is locally verified and remains the only open production verification gate until its exact Git-integrated deployment passes.**
+**PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
 **`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified; do not begin Release 2 without separate explicit authorization.**
@@ -941,7 +943,7 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ⚠ **Release decision:** Phase 1 is merged into `main`; Admin logout history is production verified, while the family-only history correction requires exact Git-integrated production verification after push. Do not begin Release 2 or make a cross-app change without separate explicit authorization.
+15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Do not begin Release 2 or make a cross-app change without separate explicit authorization.
 
 ---
 
