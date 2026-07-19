@@ -82,42 +82,16 @@ The product must provide:
 - separate secure admin authentication;
 - private Supabase Storage;
 - signed image delivery;
-- a premium, quiet, editorial family experience;
+- a cinematic illustrated storybook family experience built around truthful photographs, chapters, chronology, and family voices;
 - a complete owner-facing content and media management workflow;
 - clear separation between drafts, published content, Home-page configuration, and reusable media;
 - a maintainable admin dashboard that remains usable when content grows.
 
 ### Visual direction
 
-The interface must feel:
+The active selected direction is **Direction B-led with selected Direction C energy**. Direction B supplies a cinematic illustrated storybook structure: truthful photography, chapter-based visual worlds, chronology, authorship, and family voices. Direction C supplies present-day vivid controlled colour, humour, expressive characters, contemporary energy, playful annotations, and baby-girlish personality without cliché.
 
-- quiet;
-- premium;
-- warm;
-- editorial;
-- spacious;
-- modern;
-- highly readable.
-
-Use:
-
-- restrained translucent surfaces;
-- subtle backdrop blur;
-- layered gradients;
-- softened photo-derived accent colours;
-- elegant spacing;
-- subtle borders and shadows;
-- accessible contrast;
-- responsive mobile layouts.
-
-Avoid:
-
-- flat sampled-colour blocks;
-- dated 1990s/Aero-like treatment;
-- loud glassmorphism;
-- generic SaaS-dashboard styling;
-- cropped baby photos as the default;
-- excessive empty space without information hierarchy.
+The interface must be premium, modern, highly readable, imaginative, and age-aware. Illustration is coherent and first-class around documentary photographs; colour is vivid and controlled; baby-girlish never means pink-only, princess-only, generic nursery styling, or clutter. Avoid quiet/editorial-only, cream-and-ink-only, dark-cosmos-default, generic SaaS, trend-heavy sticker-collage, and conventional luxury-family-album treatments.
 
 ---
 
@@ -548,7 +522,7 @@ No dependency, migration, Supabase structure, permanent content, QtPi/Paru state
 
 Release 2 is authorized and opened with a documentation-only milestone:
 
-- `docs/PRODUCT_PHILOSOPHY.md` defines Pawpaw as Varada's private, long-lived family archive and publishing system, including privacy, editorial restraint, childhood dignity, family voice, anti-social-media rules, AI truth boundaries, and feature decision tests.
+- `docs/PRODUCT_PHILOSOPHY.md` defines Pawpaw as Varada's private, long-lived family archive and publishing system, including privacy, truth, dignity, childhood protection, family voice, anti-social-media rules, AI truth boundaries, and feature decision tests.
 - `docs/DESIGN_SYSTEM.md` defines implementation-ready visual, typography, colour, layout, responsive, component, photography, motion, and accessibility rules. It also records a code-based audit of family login, family Home, Admin login, Dashboard, Content Library, Media Library, and Home editor.
 - `README.md` records the canonical production domain, Wix DNS arrangement, Vercel host/project, legacy fallback URL, and current Release 2 approval gate.
 - No application source, CSS, component, route, dependency, migration, authentication, Supabase, DNS, Vercel configuration, QtPi, or Paru Health change occurred.
@@ -557,6 +531,18 @@ Release 2 is authorized and opened with a documentation-only milestone:
 **Approval gate:** UI implementation must not begin until Sujith reviews and approves both foundation documents. Approval authorizes design implementation planning only; stories, letters, galleries, timeline, new routes, and new features remain separate decisions.
 
 Production closure: Git-integrated deployment `dpl_GKk3Ye7kra4CHXs88dMXkS6g6RF9` reached `READY`, records exact fix SHA `c5ce42e7655a54a3f9b36c5116226f356ffd64b6`, and serves the production alias. The same natural family test passed on desktop and mobile: Leave produced POST 303 followed by GET 200; one immediate Back remained on `/family-login`; no request for `/` occurred; no family wrapper, title/text/image, or Leave control was present or observed visible; and the passphrase form remained visible. Reload and direct `/` navigation remained blocked. The unchanged Admin regression also passed on desktop and mobile. Production fixtures started and ended at zero. Deployment-scoped logs recorded both viewer and Admin logout POSTs as 303 and contained no 405, 5xx, error, or fatal entry. The family production blocker is closed.
+
+### 3.12 Independent design-audit identity reconciliation (19 July 2026)
+
+**Audit verdict:** Pawpaw is **not ready for UI implementation**. The audit confirmed an identity split: the original playful `PROJECT_BRIEF.md` is the emotional authority, while the prior quieter visual translation in subordinate Release 2 documents is rejected.
+
+- Sujith selected **Direction B-led with selected Direction C energy**: a cinematic illustrated storybook of Varada's real life, built on truthful photographs, chapter structure, chronology, authorship, and family voices; animated by vivid controlled colour, humour, expressive characters, contemporary energy, and newborn baby-girlish personality.
+- The direction-selection blocker is resolved. This is not a 50/50 hybrid, quiet/editorial-only, cream-and-ink-only, or generic baby-site direction.
+- The current bounded task is the `docs/PRODUCT_PHILOSOPHY.md` correction. `docs/DESIGN_SYSTEM.md` remains unapproved and must not govern UI implementation yet.
+- UI implementation remains blocked. No stories, letters, gallery, moments, timeline, new route, or other feature is authorised.
+- No manual test is requested, and a fourth formal manual-test round is not authorised.
+
+**Exact next gate — typography visual test:** Fraunces + Manrope is the first candidate only, not a decided or approved pairing. Test it against one real Varada photograph with “Varada” at 72px, real English family prose, and real Malayalam text or a name where available, rendered on desktop and at 375px mobile. Sujith must approve or reject the actual visual result before any UI implementation can proceed.
 
 ---
 
@@ -989,6 +975,25 @@ Before returning, Claude must update this file with:
 - newly discovered issues;
 - next major milestone;
 - whether manual testing is required now.
+
+## Non-negotiable Pawpaw quality gate
+
+Pawpaw is Varada’s website. Design quality is not approved through compromise scoring.
+
+No product philosophy, design system, visual direction, component system, visual prototype, or UI implementation may advance while any relevant assessed category is below the project’s required excellence standard.
+
+For audit scoring:
+
+- 10/10 means exceptional, distinctive, coherent, evidenced, implementable, accessible, and explicitly approved by Sujith.
+- Anything below 10/10 means the area remains unfinished.
+- “Approve with revisions,” “good enough,” “tasteful,” “professional,” “industry standard,” or a high average score does not satisfy this gate.
+- Strong scores in privacy, scope control, or documentation cannot compensate for weak distinctiveness, typography, colour, illustration, components, motion, emotional coherence, or visual execution.
+- Scores must not be inflated. Every 10/10 requires concrete evidence, including visual proof where the category is visual.
+- Documentation alone cannot establish a 10/10 visual score.
+- UI coding must not begin until the selected visual direction and its required proof are approved by Sujith.
+- Sujith may explicitly override this gate, but no agent may silently lower it for convenience, speed, cost, or implementation simplicity.
+
+The objective is not perfection through endless documentation. The objective is an unmistakably Pawpaw result: childlike imagination with adult-level art direction, backed by visual evidence.
 
 Claude's report must state:
 

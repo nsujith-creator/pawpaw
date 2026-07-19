@@ -59,3 +59,22 @@ HOW TO TEST: [exact command]
 EXPECTED OUTPUT: [success description]
 WHAT THIS CANNOT DO: [scope limit]
 NEXT STEP IF THIS PASSES: [one sentence]
+
+## Non-negotiable Pawpaw quality gate
+
+Pawpaw is Varada’s website. Design quality is not approved through compromise scoring.
+
+No product philosophy, design system, visual direction, component system, visual prototype, or UI implementation may advance while any relevant assessed category is below the project’s required excellence standard.
+
+For audit scoring:
+
+- 10/10 means exceptional, distinctive, coherent, evidenced, implementable, accessible, and explicitly approved by Sujith.
+- Anything below 10/10 means the area remains unfinished.
+- “Approve with revisions,” “good enough,” “tasteful,” “professional,” “industry standard,” or a high average score does not satisfy this gate.
+- Strong scores in privacy, scope control, or documentation cannot compensate for weak distinctiveness, typography, colour, illustration, components, motion, emotional coherence, or visual execution.
+- Scores must not be inflated. Every 10/10 requires concrete evidence, including visual proof where the category is visual.
+- Documentation alone cannot establish a 10/10 visual score.
+- UI coding must not begin until the selected visual direction and its required proof are approved by Sujith.
+- Sujith may explicitly override this gate, but no agent may silently lower it for convenience, speed, cost, or implementation simplicity.
+
+The objective is not perfection through endless documentation. The objective is an unmistakably Pawpaw result: childlike imagination with adult-level art direction, backed by visual evidence.

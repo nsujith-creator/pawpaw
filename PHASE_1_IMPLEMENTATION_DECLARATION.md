@@ -1,6 +1,6 @@
 # Pawpaw — Phase 1 Implementation Declaration
 
-**Status:** Approved corrections applied — awaiting final ChatGPT review
+**Status:** Historical Phase 1 declaration; superseded for current release sequencing by `docs/PROJECT_STATUS.md`
 **Scope authority:** `PROJECT_BRIEF.md`
 **Implementation agent:** Claude
 **Review agent:** ChatGPT
@@ -39,7 +39,7 @@ Phase 1 will not create Her Story, Gallery, Letters, Moments, vault, finance, an
 
 ### Supabase configuration
 
-- `supabase/config.toml` — Supabase CLI project configuration required for local development, reproducible migrations, and `supabase db push`
+- `supabase/config.toml` — Supabase CLI project configuration required for local development and reproducible Pawpaw migrations; the linked shared-project `db push` limitation is governed by README
 
 ### Application shell and request gate
 
@@ -308,7 +308,7 @@ At 375 px and normal desktop width:
 
 These do not block the code scaffold, but they block a complete working deployment:
 
-- a new Supabase project dedicated to Pawpaw;
+- access to the intentionally shared Supabase project `voorknvdvfweahsnjvne`; Pawpaw isolation through its own tables, RLS, policies, owner-scoped paths, private `media` bucket, credentials, and application logic remains mandatory;
 - Supabase URL and keys stored locally and later in Vercel environment settings;
 - Supabase user accounts for Sujith and Paru;
 - their user IDs inserted into `admin_users` through a documented one-time procedure;

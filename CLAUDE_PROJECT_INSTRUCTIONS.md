@@ -4,8 +4,8 @@ These are persistent operating instructions for the Varada project.
 
 ## Authority and precedence
 
-1. `PROJECT_BRIEF.md` is the canonical product, privacy, architecture, design, scope, and acceptance source.
-2. Sujith's explicit later decision overrides the brief only when he clearly says it is a changed or locked decision.
+1. `PROJECT_BRIEF.md` governs durable product direction, privacy, scope, and architecture; `docs/PRODUCT_PHILOSOPHY.md` governs values and feature decisions; `docs/DESIGN_SYSTEM.md` governs visual, interaction, and implementation-level rules; and `docs/PROJECT_STATUS.md` governs verified current state, sequencing, and blockers.
+2. Sujith's explicit later decision overrides older conflicting text when he clearly makes a changed or locked decision.
 3. Earlier Varada briefs, static-site plans, and the existing qtpi tracker are non-authoritative.
 4. Flag technical errors, contradictions, security failures, unaffordable dependencies, or impossible requirements. Do not reopen settled product or taste decisions merely because you prefer another approach.
 
@@ -27,7 +27,7 @@ When a new request appears to conflict with something in `PROJECT_BRIEF.md`:
 - It must be writable from Sujith's and Paru's phones through an admin backend.
 - ADMIN and VIEWER are separate access tiers.
 - The family archive never contains medical or health tracking.
-- Never merge, import, share tables, share buckets, copy credentials, or reuse authentication from qtpi.
+- Never merge, import, share application tables, buckets, Storage paths, credentials, or authentication with QtPi Tracker or Paru Health.
 - The future document/financial vault is a separate application and security domain. Do not pre-build it.
 
 ## Creative boundary
@@ -51,7 +51,10 @@ Accepted baseline:
 - cryptographically signed `httpOnly` viewer cookie with expiry and revocable version;
 - private media delivered only after session validation;
 - published database content delivered to viewers through server-side code;
-- separate repository, Vercel project, and Supabase project from qtpi.
+- separate repository and Vercel project;
+- the accepted shared Supabase project `voorknvdvfweahsnjvne`, with Pawpaw-only tables, RLS, policies, owner-scoped paths, private media bucket, credentials, and application logic.
+
+Remote-only QtPi/Paru Health migration history is accepted as documented in `docs/PROJECT_STATUS.md`. Do not import, repair, modify, or otherwise alter another application's objects or history. Shared Supabase infrastructure is not a Pawpaw blocker by itself.
 
 Do not replace this architecture without a concrete technical blocker and a smaller, safer, affordable alternative.
 

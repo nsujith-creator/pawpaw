@@ -6,21 +6,43 @@
 
 **Decision owner:** Sujith
 
+## Role and precedence
+
+This document governs Pawpaw's values, truth, dignity, authorship, memory, and feature decisions. `PROJECT_BRIEF.md` governs durable product direction, privacy, scope, and architecture; `docs/DESIGN_SYSTEM.md` governs visual and interaction rules; `docs/PROJECT_STATUS.md` governs verified state, sequencing, and blockers. A later explicit product-owner decision supersedes older conflicting text.
+
 ## Purpose
 
-Pawpaw helps Varada's family preserve and publish a truthful record of her life for the people who belong in it. It is a private place where photographs, stories, letters, quotations, and small moments can remain understandable and meaningful across decades.
+Pawpaw helps Varada's family preserve and publish a truthful record of her life for people who belong in it. It is a private place where photographs, stories, letters, quotations, and small moments can remain understandable and meaningful across decades.
 
-It must work in two timescales: now, when close family want a warm and simple way to share; and later, when Varada should be able to encounter a dignified account of her own life. Technology serves that continuity. It must make care, context, privacy, and retrieval easier without turning family life into content production.
+It must work in two timescales: now, when close family want a warm, joyful, imaginative way to share infancy; and later, when Varada should be able to encounter a dignified account of her own life. Technology serves that continuity. It must make care, context, privacy, and retrieval easier without turning family life into content production.
 
-## Emotional intent
+## Present-day emotional intent
 
-Pawpaw should feel intimate, calm, warm, and alive. Its emotion comes from real photographs, exact memories, distinct family voices, and thoughtful sequence—not decorative sentiment or manufactured drama.
+Varada is a newborn. Pawpaw should presently feel youthful, joyful, intelligent, imaginative, baby-girlish, modern, elegant, premium, colourful, playful, cartoon-friendly, superhero-friendly, fantasy-friendly, and illustration-rich. It is photograph-led, not photograph-only.
 
-The experience may be playful where a memory is playful and quiet where it is quiet. It must not prescribe one emotional register for Varada's life. Restraint is an act of care: the interface gives memories room, adds context, and recedes.
+This is a place for affection, wonder, fantasy, humour, play, colour, original characters, imaginative worlds, playful typography, polished motion, and photograph-plus-illustration compositions. Real photographs, exact memories, and distinct family voices remain the emotional centre.
+
+Controlled art direction protects hierarchy, readability, and coherence without reducing imagination. Chapter structure, authorship, chronology, and readability are narrative tools—not instructions for a sombre visual mood. Colourful does not mean uncontrolled; playful does not mean cheap; baby-girlish does not mean pink-only or princess-only. Pawpaw must not become beige minimalism, a museum, adult literary styling, sterile luxury, generic SaaS, generic nursery clip art, random emoji decoration, low-quality AI illustration, copyrighted-character imitation, or clutter without hierarchy.
+
+The standard is **childlike imagination with adult-level art direction**.
+
+## Ethical seriousness, lived joy
+
+Pawpaw's ethical seriousness does not require visual seriousness. Truth, dignity, and privacy form the guardrails; joy, colour, illustration, humour, and imagination form the lived experience. Varada is currently a newborn, and the present product may celebrate that stage unapologetically.
+
+> Joy does not conflict with truth. Colour does not conflict with dignity. Illustration does not conflict with privacy.
+
+## Selected visual direction
+
+Pawpaw is **a cinematic, illustrated storybook of Varada's real life—built around truthful photographs, chapters, chronology and family voices, but animated by vivid colour, humour, expressive characters, contemporary energy and childlike imagination.**
+
+Direction B provides the durable chapter and story structure: real documentary photographs, chronology, authorship, family voices, and visual worlds that can evolve from infancy through adulthood. Direction C contributes present-day energy: vivid confident colour, immediate joy, humour, expressive character reactions, playful annotations, occasional sticker-like details, bold scale, controlled asymmetry, and an unmistakably newborn, baby-girlish personality.
+
+This is Direction B-led with selected Direction C energy, not a 50/50 hybrid. Real photographs remain documentary truth. Illustration is a first-class imaginative layer, visually distinguishable from documentary evidence. Premium does not mean visually muted, and longevity means age-aware evolution—not designing infancy as adulthood.
 
 ## Who Pawpaw serves
 
-1. **Varada**, now and in adulthood, as the subject and eventual inheritor of the archive.
+1. **Varada**, now and eventually as subject, reader, and inheritor of the archive.
 2. **Sujith and Paru**, as accountable editors, publishers, and guardians of family context.
 3. **Invited family**, as trusted readers of material intended for that circle.
 
@@ -28,29 +50,19 @@ These groups do not have identical rights. Editorial control stays with accounta
 
 ## What Pawpaw is not
 
-Pawpaw is not:
+Pawpaw is not a public profile, personal brand, social feed, baby-product ecommerce site, performance of ideal family life, sole photo backup, clinical record, surveillance system, engagement product, or generic CMS exposed to family readers. It never presents invented quotations, events, emotions, or memories as fact.
 
-- a public profile, personal brand, or social feed;
-- a baby-product, parenting, or family ecommerce site;
-- a performance of ideal family life;
-- a substitute for the family's master photo backup;
-- a clinical record, surveillance system, or engagement product;
-- a generic CMS exposed to family readers;
-- a place for invented quotations, events, emotions, or memories;
-- a permanent “baby” identity Varada must later outgrow.
+Pawpaw must not freeze Varada permanently at one age. Infancy may nevertheless be represented fully, joyfully, and unapologetically while she is an infant; later stages may evolve without erasing earlier visual worlds. It does not require a fixed adult interface for twenty years.
 
-## Longevity: infancy through adulthood
+## Age-aware evolution
 
-Childhood is the beginning of the archive, not its permanent visual category.
+Pawpaw's visual identity may evolve as Varada grows. The current system may be infant-focused, magical, colourful, playful, and baby-girlish. Childhood may expand into stories, characters, adventures, and imagination. Adolescence may become more self-directed and less parent-authored. Adulthood may introduce quieter archival modes where appropriate.
 
-- Language must not talk down to Varada or freeze her as a baby.
-- Navigation and content types must remain intelligible across decades.
-- Dates, authorship, chronology, and relationships must be explicit rather than inferred from layout.
-- Visual motifs may evolve without making older material feel embarrassing or discarded.
-- Durable content, export, correction, removal, and access control matter more than short-lived trends.
-- Varada's own preferences, consent, corrections, and privacy should carry increasing weight as she grows.
+No fixed twenty-year visual theme is required. Historic content may retain the visual character of the period in which it was created; it need not be visually rewritten to match a later taste.
 
-A feature that delights at age two but becomes demeaning at age sixteen is not durable.
+| Permanent foundations | Evolvable expression |
+|---|---|
+| privacy, truthfulness, dignity, accessibility, readability, photograph integrity, secure publishing, coherent interaction patterns, maintainability, authorship, chronology | colour, illustration, characters, themes, typography accents, motion, fantasy, visual worlds, age-specific art direction |
 
 ## Memory, family, and technology
 
@@ -58,11 +70,9 @@ Memory is selective and relational. Different relatives may remember the same da
 
 Technology may store, order, retrieve, present, and protect material. It must not claim to know what a moment meant. Automation may perform mechanical work—format checks, ordering assistance, duplicate detection, or accessibility prompts—but emotional and factual interpretation remains a human responsibility.
 
-Good stewardship means identifying who supplied material, keeping dates exact when known and honestly approximate when not, separating drafts from published material, preserving meaningful original wording, and allowing factual correction.
+Good stewardship identifies who supplied material, keeps dates exact when known and honestly approximate when not, separates drafts from published material, preserves meaningful original wording, and allows factual correction.
 
-## Privacy principles
-
-Privacy is a product property, not a notice added after design.
+## Privacy and secure publishing
 
 1. The archive is private by default.
 2. Public discovery, indexing, permanent public image URLs, and public profiles conflict with the product.
@@ -91,7 +101,7 @@ Prefer the detail that makes a memory real over a generic declaration that could
 
 Record enough for a future reader to understand who, where, when, and why. Do not bury the memory under interpretation.
 
-### Restraint
+### Selection, not pressure
 
 Not every photograph needs publication and not every event needs a story. Selection gives the archive shape and prevents family life becoming a production obligation.
 
@@ -99,15 +109,19 @@ Not every photograph needs publication and not every event needs a story. Select
 
 Retain natural language, humour, contradictions, and ordinary moments. Dignity does not require false perfection.
 
-## Treatment of childhood
+## Childhood, illustration, and AI
 
 - Show childhood with affection and dignity, never as a commodity or spectacle.
 - Avoid humiliating, intimate, medically sensitive, or predictably embarrassing material unless there is a compelling reason and explicit approval.
 - Do not make appearance, achievement, gender stereotype, or “cuteness” the measure of a memory's worth.
 - Do not narrate Varada's inner feelings as fact unless expressed or clearly attributed as an adult's observation.
-- Preserve play and imagination without constructing a fictional identity for her.
+- Preserve play, fantasy, cartoons, superheroes, and imagination without constructing a false documentary identity for her.
 
-## Treatment of family voices
+Illustration is a first-class imaginative layer. It can add original characters, archetypes, costumes, worlds, humour, and a playful relation to a real photograph. It must be coherent, premium, clearly imaginative, and must never obscure, alter, or falsify documentary memory.
+
+Original characters and broad superhero/adventure archetypes are allowed. Protected Marvel, DC, Disney, Pixar, Studio Ghibli, or other copyrighted character identity must not become Pawpaw's permanent visual system. AI must not generate or imply Varada's feelings, family quotations, remembered dialogue, factual events, milestones, relationships, or documentary photographs. AI-assisted artwork is allowed only when clearly imaginative, labelled as such where a reader could mistake it for memory, consistent with the approved illustration grammar, and approved by Sujith. It must never be represented as a real event, real photograph, quotation, milestone, or memory. When AI output is smoother than the family's real voice, the real voice wins.
+
+## Family voices, writing, and chronology
 
 - Attribute letters, quotations, recollections, and captions when authorship matters.
 - Do not rewrite every contributor into one polished house voice.
@@ -115,53 +129,31 @@ Retain natural language, humour, contradictions, and ordinary moments. Dignity d
 - Distinguish direct quotation from remembered paraphrase.
 - Do not publish words in another person's name without approval.
 - Resolve differing accounts through attribution, not silent synthesis.
+- Write for a future Varada as well as today's family; use plain, specific, phone-readable language.
+- Preserve Malayalam, English, and other family language accurately.
+- Store event date separately from upload and publication dates, and make approximate dates explicit.
+- Do not imply newer material is more important.
 
 The archive can hold more than one perspective without pretending all perspectives are identical.
 
-## No social-media mechanics or engagement metrics
+## Photograph integrity
 
-Pawpaw must not use likes, reactions, follower or view counts, streaks, rankings, infinite scroll, algorithmic feeds, public comments, engagement notifications, viral sharing, trending content, suggested connections, or gamified contribution targets.
-
-Success is not time on site, visits per week, upload volume, or reactions. Useful measures are operational and private: whether the archive is available, protected, backed up, accessible, understandable, and maintainable. A quiet archive can be a healthy archive.
-
-If family responses are ever considered, they must be durable correspondence with clear authorship and moderation—not engagement counters.
-
-## No AI-generated emotional falseness
-
-AI must not generate or imply Varada's feelings, family quotations, remembered dialogue, factual events, milestones, relationships, or documentary photographs. It may assist with mechanical drafts such as formatting, tentative alt-text suggestions, or organisation, but a family editor must verify every factual and emotional claim.
-
-Clearly imaginative illustration, if ever used, must be identified as imagination, visually distinct from documentary photography, and approved by Sujith. When AI output is smoother than the family's real voice, the real voice wins.
-
-## Writing principles
-
-- Write for a future Varada as well as today's family.
-- Use plain, specific language and phone-readable passages.
-- Record names, places, dates, ages, and relationships when they add future context.
-- Keep uncertainty visible: use “around June 2026” rather than inventing a date.
-- Preserve Malayalam, English, and other family language accurately.
-- Use affectionate language sparingly enough to remain credible.
-- Keep interface copy calm and exact; publishing controls say what they do.
-
-## Photography principles
-
-- Treat the photograph as evidence and emotional centre, not raw material for a decorative crop.
+- Treat each photograph as evidence and emotional centre, not raw material for a decorative crop.
 - Show the whole image by default. Crop only by deliberate editorial choice while preserving the original.
 - Never cover faces or important details with controls, illustration, gradients, or text.
 - Use captions for visible context and alt text for equivalent non-visual meaning.
 - Preserve portrait, landscape, and square images without forcing one shape.
-- Avoid publishing near-duplicates when a smaller sequence tells the story better.
 - Never represent AI imagery as a real family photograph.
 
-## Chronology principles
+## No social mechanics; operational-alert distinction
 
-- Store event date separately from upload and publication dates.
-- Allow approximate dates with explicit precision.
-- Keep ordering deliberate and stable.
-- Allow thematic stories and letters alongside chronological browsing.
-- Do not imply newer material is more important.
-- Preserve authorship and edit history where a correction changes factual meaning.
+Pawpaw must not use likes, reactions, follower or view counts, streaks, rankings, infinite scroll, algorithmic feeds, public comments, engagement notifications, viral sharing, trending content, suggested connections, or gamified contribution targets.
 
-Chronology supports future understanding; it must not become a social feed.
+No notification feature is authorised now. A narrowly necessary private operational alert may later be considered for security failure, publishing failure, backup failure, or account administration only. Each alert requires separate scope, privacy, cost, and maintenance approval. Success is operational and private: the archive is available, protected, backed up, accessible, understandable, and maintainable.
+
+## Varada's increasing authority
+
+Varada's consent, correction rights, privacy preferences, and veto authority increase as she grows. She may eventually receive editorial or administrative control. No age, role model, access design, or technical implementation is decided now, and no future access is pre-built in this release.
 
 ## Principles for future features
 
@@ -170,12 +162,10 @@ A future feature must strengthen at least one core job:
 1. preserve a truthful memory;
 2. add useful family context;
 3. help trusted people publish responsibly;
-4. help Varada find and understand her archive later;
+4. help Varada find and understand her archive later; or
 5. improve privacy, accessibility, portability, or long-term stewardship.
 
 Use existing content, media, privacy, and publishing patterns where possible. New services, subscriptions, automation, or data collection require a demonstrated need, affordable cost, and an operating burden Sujith can manage alone.
-
-## Feature decision tests
 
 Before accepting a feature, answer:
 
@@ -184,16 +174,16 @@ Before accepting a feature, answer:
 3. **Dignity:** Would Varada reasonably welcome this material and framing as an adult?
 4. **Privacy:** Who gains access, what data leaves the archive, and can access be revoked?
 5. **Voice:** Does it preserve authorship or flatten family voices?
-6. **Restraint:** Does it create pressure to publish or engage?
+6. **Expression:** Does it serve the appropriate age and preserve coherent art direction without becoming clutter?
 7. **Longevity:** Will it remain understandable, exportable, and respectful in ten years?
 8. **Accessibility:** Can family use it without relying on one sense, device, or interaction?
 9. **Operations:** Can Sujith afford and maintain it alone within INR 10,000 per month?
 10. **Reversibility:** Can the family remove, correct, export, or stop it without losing the archive?
 11. **Fit:** Can an existing pattern or smaller change meet the need?
-12. **Approval:** Is the factual, emotional, and privacy impact clear enough for informed approval?
+12. **Approval:** Is the factual, emotional, visual, and privacy impact clear enough for informed approval?
 
 Reject or defer the feature if any critical answer is unknown. Novelty and industry convention are not evidence of fit.
 
 ## Product north star
 
-Pawpaw succeeds when Varada can one day recognise a truthful family record—carefully kept, clearly voiced, privately shared, and never engineered to turn her childhood into content.
+Pawpaw succeeds when Varada can one day recognise a truthful family record—carefully kept, clearly voiced, privately shared, and still able to show the wonder and imagination of the life stage in which it was made.

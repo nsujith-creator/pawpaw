@@ -4,10 +4,38 @@
 **Owner:** Sujith  
 **Implementation:** Claude  
 **Product direction and review:** ChatGPT  
-**Date:** 15 July 2026
-**Version:** 3.0 — dynamic private app + premium playful creative direction
+**Date:** 19 July 2026
+**Version:** 3.1 — dynamic private app + premium playful, age-aware creative direction
 
 This file replaces every earlier Varada website brief, especially the static Markdown/JSON and edit-and-redeploy direction. If another note conflicts with this file, this file wins unless Sujith explicitly changes a locked decision.
+
+## Canonical document hierarchy
+
+- `PROJECT_BRIEF.md` governs durable product direction, privacy, scope, and architecture.
+- `docs/PRODUCT_PHILOSOPHY.md` governs values, truth, dignity, authorship, memory, and feature decisions.
+- `docs/DESIGN_SYSTEM.md` governs visual, interaction, and implementation-level design rules.
+- `docs/PROJECT_STATUS.md` governs the verified current state, release sequencing, and blockers.
+
+A later explicit product-owner decision supersedes older conflicting text. Historical release descriptions preserve valid long-term ideas, but current execution authority is `docs/PROJECT_STATUS.md`.
+
+## Non-negotiable Pawpaw quality gate
+
+Pawpaw is Varada’s website. Design quality is not approved through compromise scoring.
+
+No product philosophy, design system, visual direction, component system, visual prototype, or UI implementation may advance while any relevant assessed category is below the project’s required excellence standard.
+
+For audit scoring:
+
+- 10/10 means exceptional, distinctive, coherent, evidenced, implementable, accessible, and explicitly approved by Sujith.
+- Anything below 10/10 means the area remains unfinished.
+- “Approve with revisions,” “good enough,” “tasteful,” “professional,” “industry standard,” or a high average score does not satisfy this gate.
+- Strong scores in privacy, scope control, or documentation cannot compensate for weak distinctiveness, typography, colour, illustration, components, motion, emotional coherence, or visual execution.
+- Scores must not be inflated. Every 10/10 requires concrete evidence, including visual proof where the category is visual.
+- Documentation alone cannot establish a 10/10 visual score.
+- UI coding must not begin until the selected visual direction and its required proof are approved by Sujith.
+- Sujith may explicitly override this gate, but no agent may silently lower it for convenience, speed, cost, or implementation simplicity.
+
+The objective is not perfection through endless documentation. The objective is an unmistakably Pawpaw result: childlike imagination with adult-level art direction, backed by visual evidence.
 
 ## 1. Product
 
@@ -55,7 +83,9 @@ Invited family and friends receive one shared family passphrase and read-only ac
 
 A shared passphrase is household-grade shared access, not identity-bound authorization. Anyone who receives it can enter until it is rotated. This accepted limitation must never carry into the future document vault.
 
-## 3. Releases
+## 3. Releases (historical product sequencing)
+
+The following remains the long-term product direction. It is not permission to begin the listed work now; current approved sequencing and blockers are recorded in `docs/PROJECT_STATUS.md`.
 
 ### Release 1
 
@@ -115,9 +145,9 @@ The Release 1 repo contains no vault routes, tables, bucket, financial schema, p
 Permanently excluded from the family archive:
 
 - feeding, medication, weight, sleep, reflux, health, or medical tracking;
-- any merge, import, shared database, or shared Storage with qtpi;
+- shared Pawpaw application tables, buckets, Storage paths, authentication, or credentials with QtPi Tracker or Paru Health;
 - public comments, likes, followers, or feeds;
-- notifications;
+- likes, engagement notifications, social notifications, streaks, or contribution-pressure reminders;
 - product analytics or behavioural tracking;
 - face recognition;
 - AI-generated memories presented as fact;
@@ -125,6 +155,10 @@ Permanently excluded from the family archive:
 - public access to photographs or private story content.
 
 Medical documents may exist only in the future separately authenticated vault. They must never appear in the family archive shared with friends and relatives.
+
+The Supabase project itself is intentionally shared with QtPi Tracker and Paru Health as an accepted Free-plan constraint. Pawpaw remains isolated through its own tables, RLS, policies, owner-scoped paths, private `media` bucket, credentials, and application logic. Do not import another application's migrations or modify its tables, policies, buckets, data, or migration history. Shared-project remote history is not a Pawpaw blocker by itself.
+
+No notification feature is authorised now. A narrowly necessary private operational alert may be considered later only for security, publishing, backup, or account-administration failure, with separate scope, privacy, cost, and maintenance approval.
 
 ## 5. Product personality and design direction
 
@@ -135,6 +169,10 @@ This is not a sombre editorial archive, restrained luxury catalogue, newspaper, 
 The emotional test is:
 
 > It should feel magical enough for a child, intelligent enough for her parents, and beautiful enough to remain meaningful when she grows up.
+
+### Selected Release 2 visual direction
+
+Direction B-led with selected Direction C energy: Pawpaw is a cinematic illustrated storybook built around real photographs as documentary truth, chapter-based visual worlds, chronology, and family voices. Direction C contributes vivid controlled colour, humour, expressive characters, contemporary energy, and an unmistakably newborn, baby-girlish spirit. This is not a 50/50 hybrid, quiet/editorial-only, or cream-and-ink-only direction. It must evolve age-appropriately over time. No UI implementation is authorised yet.
 
 ### 5.1 Core creative direction
 
@@ -253,6 +291,8 @@ Implementation rules:
 - preserve visual continuity while moving between photographs.
 
 Ambient theming should make each memory feel individually art-directed, not merely recoloured by an algorithm.
+
+Automatic ambient theming remains required. Its exact implementation constraints must use an approved named colour space (OKLCH), bounded lightness/chroma/alpha tokens, a neutral text layer, contrast verification, an approved fallback, failure behaviour, reduced-motion behaviour, and non-flashing transitions. The existing system does not justify inventing those numeric bounds: implementation of automatic theming is blocked until Sujith approves the exact numeric token specification in `docs/DESIGN_SYSTEM.md`; the requirement itself is not deferred or removed.
 
 ### 5.5 Illustration system
 
@@ -415,6 +455,14 @@ The standard is:
 **childish imagination with adult-level art direction.**
 
 Final refinement happens against actual Home, Her Story, Gallery, login, and admin screens using Varada's real photographs. A technically clean but emotionally restrained result does not satisfy the brief.
+
+### 5.11 Age-aware evolution and future authority
+
+Pawpaw's permanent foundations are privacy, truthfulness, dignity, accessibility, readability, photograph integrity, secure publishing, coherent interaction patterns, maintainability, authorship, and chronology. Its expression may evolve: colour, illustration, characters, themes, typography accents, motion, fantasy, visual worlds, and age-specific art direction.
+
+Infancy may be magical, colourful, playful, and baby-girlish; childhood may expand into stories, characters, adventures, and imagination; adolescence may become more self-directed and less parent-authored; adulthood may introduce quieter archival modes where appropriate. Older content may retain the visual character of its period. No fixed twenty-year visual theme is required.
+
+Varada's consent, correction rights, privacy preferences, and veto authority must increase as she grows. She may eventually receive editorial or administrative control, but no age, role model, access design, or technical implementation is decided or pre-built now.
 ## 6. Architecture decision
 
 **Accepted, with the corrections below:**
@@ -424,7 +472,8 @@ Final refinement happens against actual Home, Her Story, Gallery, login, and adm
 - Supabase Auth;
 - Supabase Postgres;
 - Supabase private Storage bucket;
-- separate repo, Vercel project, and Supabase project from qtpi.
+- separate Pawpaw repository and Vercel project;
+- the accepted shared Supabase project `voorknvdvfweahsnjvne`, with mandatory Pawpaw-only logical and security isolation.
 
 No further architecture-selection round is required before Phase 1.
 
