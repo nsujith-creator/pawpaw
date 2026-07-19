@@ -11,17 +11,70 @@ import { join } from 'node:path'
 const SRC = join(__dirname, '../../src')
 const read = (p: string) => readFileSync(join(SRC, p), 'utf8')
 
+const rootLayout  = read('app/layout.tsx')
+const globals     = read('app/globals.css')
+const familyLogin = read('app/family-login/page.tsx')
 const editor      = read('app/admin/home/home-editor.tsx')
 const uploadForm  = read('app/admin/media/upload-form.tsx')
 const viewerPage  = read('app/(archive)/page.tsx')
+const archiveLayout = read('app/(archive)/layout.tsx')
+const familyHeader = read('components/archive/family-header.tsx')
 const leaveBtn    = read('components/home/leave-button.tsx')
 const attachments = read('app/admin/media/attachment-list.tsx')
 const adminPage   = read('app/admin/home/page.tsx')
 const carousel    = read('components/home/home-carousel.tsx')
 const carouselCss = read('components/home/home-carousel.module.css')
+const ambient     = read('components/home/ambient-frame.tsx')
 
 const ERROR_COLOR   = '#dc2626'
 const SUCCESS_COLOR = '#16a34a'
+
+describe('Release 2 visual foundation', () => {
+  it('loads the three approved font families through the installed Next font support', () => {
+    expect(rootLayout).toContain("import { Fraunces, Manrope, Noto_Sans_Malayalam } from 'next/font/google'")
+    expect(rootLayout).toContain("weight: '500'")
+    expect(rootLayout).toContain("weight: ['400', '600', '700']")
+    expect(rootLayout).toContain("subsets: ['malayalam']")
+    expect(rootLayout).toContain('preload: false')
+    expect(rootLayout).toContain('fraunces.variable')
+    expect(rootLayout).toContain('manrope.variable')
+    expect(rootLayout).toContain('notoSansMalayalam.variable')
+  })
+
+  it('declares each approved Batch 1 global token exactly once', () => {
+    const expected = {
+      '--color-canvas': '#fff8ee',
+      '--color-surface': '#fffdf7',
+      '--color-paper': '#fffef8',
+      '--color-ink': '#2a1f14',
+      '--color-ink-secondary': '#5c4e3d',
+      '--color-home-primary': '#e8526a',
+      '--color-home-soft': '#fceaed',
+      '--color-home-on-soft': '#8b1a2f',
+      '--motion-fast': '120ms',
+      '--motion-standard': '240ms',
+      '--motion-ease-out': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+    }
+
+    for (const [token, value] of Object.entries(expected)) {
+      const declarations = globals.match(new RegExp(`${token.replaceAll('-', '\\-')}\\s*:\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')) ?? []
+      expect(declarations, token).toHaveLength(1)
+    }
+  })
+
+  it('applies Malayalam only through the language selector', () => {
+    expect(globals).toContain('[lang="ml"]')
+    expect(globals).toContain('var(--font-malayalam)')
+    expect(familyLogin).not.toContain('lang="ml"')
+  })
+
+  it('reduces every nonessential transition to an immediate static result', () => {
+    expect(globals).toContain('@media (prefers-reduced-motion: reduce)')
+    expect(globals).toContain('transition-duration: 0ms !important')
+    expect(globals).toContain('animation-duration: 0ms !important')
+    expect(carouselCss).toContain('transition: none')
+  })
+})
 
 describe('editor and upload message states', () => {
   it('editor tracks error and success separately', () => {
@@ -242,67 +295,79 @@ describe('family photo presentation', () => {
     expect(carousel).toContain('{item.caption && (')
   })
 
-  it('shows exactly one main photo at a time with a blurred background layer', () => {
-    // Two <img> elements per slide: the aria-hidden blurred background and
-    // the main accessible image. Not a grid of all items simultaneously.
-    expect(carousel.match(/<img/g)).toHaveLength(2)
-    expect(carousel).toContain('aria-hidden="true"')
+  it('shows exactly one main photo at a time without a duplicate blurred image', () => {
+    expect(carousel.match(/<img/g)).toHaveLength(1)
+    expect(carousel).not.toContain('styles.blurredBg')
+    expect(carousel).not.toContain('styles.overlay')
     expect(carousel).toContain('const item = items[index]')
   })
 
   it('the media frame is height-bounded and never crops or overflows', () => {
     expect(carouselCss).toContain('object-fit: contain')
     expect(carouselCss).toContain('object-position: center')
-    expect(carouselCss).toContain('height: min(55vh, 520px)')
-    expect(carouselCss).toContain('height: min(70vh, 760px)')
+    expect(carouselCss).toContain('aspect-ratio: 16 / 10')
+    expect(carouselCss).toContain('aspect-ratio: var(--media-aspect)')
+    expect(carouselCss).toContain('max-height: min(68vh, 48rem)')
     // max-width/max-height with auto dimensions: any aspect ratio (portrait,
     // landscape, square) fits inside the frame without overflow or upscaling.
     expect(carouselCss).toContain('max-width: 100%')
     expect(carouselCss).toContain('max-height: 100%')
     expect(carouselCss).toContain('width: auto')
     expect(carouselCss).toContain('height: auto')
-    // The main .image class uses contain. (.blurredBg uses cover intentionally
-    // for the background fill; we scope this assertion to the .image block.)
     const imageBlock = carouselCss.slice(carouselCss.indexOf('.image {'))
     expect(imageBlock).not.toContain('object-fit: cover')
   })
 
-  it('carousel controls stay inside the frame and the caption sits below it', () => {
+  it('carousel controls and caption sit below rather than over the primary photograph', () => {
     const framePos   = carousel.indexOf('styles.frame')
+    const frameClose = carousel.indexOf('</div>', framePos)
     const controlsPos = carousel.indexOf('<CarouselControls')
-    const frameClose = carousel.indexOf('</div>', controlsPos)
     const captionPos = carousel.indexOf('styles.caption')
-    expect(controlsPos).toBeGreaterThan(framePos)
-    expect(captionPos).toBeGreaterThan(frameClose)
+    expect(frameClose).toBeGreaterThan(framePos)
+    expect(controlsPos).toBeGreaterThan(frameClose)
+    expect(captionPos).toBeGreaterThan(controlsPos)
   })
 })
 
-describe('premium carousel background', () => {
-  it('uses a layered background instead of a flat sampled colour', () => {
-    // Old approach: style={{ background: frameBackground }} — a single hex string.
-    // New approach: blurred background image + translucent overlay on top.
-    expect(carousel).not.toContain('background: frameBackground')
-    expect(carousel).toContain('styles.blurredBg')
-    expect(carousel).toContain('styles.overlay')
+describe('bounded carousel ambient surface', () => {
+  it('keeps sampled colour in one subtle frame without the oversized blurred chamber', () => {
+    expect(carouselCss).toContain('var(--ambient-surface)')
+    expect(carouselCss).toContain('var(--ambient-accent)')
+    expect(carouselCss).not.toContain('.blurredBg')
+    expect(carouselCss).not.toContain('.overlay')
+    expect(carouselCss).not.toContain('filter: blur(')
+  })
+})
+
+describe('Release 2 bounded Home treatment', () => {
+  it('uses only the approved Wonder character as a decorative Home asset', () => {
+    expect(viewerPage).toContain('/illustrations/varada/varada-wonder.png')
+    expect(viewerPage).not.toContain('varada-delight.png')
+    expect(viewerPage).not.toContain('varada-sleepy.png')
+    expect(viewerPage).toMatch(/src="\/illustrations\/varada\/varada-wonder\.png"[\s\S]*?alt=""/)
+    expect(familyLogin).not.toContain('/illustrations/varada/')
   })
 
-  it('blurred background image is hidden from assistive technology', () => {
-    expect(carousel).toContain('aria-hidden="true"')
+  it('derives ambient colour from the active item and confines it to AmbientFrame', () => {
+    expect(carousel).toContain('createAmbientTheme(item.extractedPalette)')
+    expect(carousel).toContain('<AmbientFrame theme={ambientTheme}>')
+    expect(ambient).toContain("'--ambient-surface': theme.surface.css")
+    expect(ambient).toContain("'--ambient-accent': theme.accent.css")
+    expect(ambient).toContain('data-ambient-fallback')
   })
 
-  it('the CSS defines a blurred background layer and a gradient overlay', () => {
-    expect(carouselCss).toContain('filter: blur(')
-    expect(carouselCss).toContain('.blurredBg')
-    expect(carouselCss).toContain('.overlay')
-    expect(carouselCss).toContain('rgba(')
+  it('keeps ambient transitions bounded and uses the approved motion values', () => {
+    expect(carouselCss).toContain('background-color var(--motion-standard) var(--motion-ease-out)')
+    expect(carouselCss).toContain('var(--ambient-surface)')
+    expect(carouselCss).toContain('var(--ambient-accent)')
+    expect(carouselCss).not.toMatch(/body[\s\S]*--ambient-/)
   })
 
-  it('blurredBg and overlay are absolutely positioned so they stay behind the main image', () => {
-    // blurredBg and overlay are position:absolute; image is position:relative.
-    // All share z-index: 0 — DOM order within the stacking context determines
-    // paint order, so the main image appears above both background layers.
-    expect(carouselCss).toContain('position: absolute')
-    expect(carouselCss).toContain('position: relative')
+  it('keeps controls outside the photograph and gives arrows and dots 44px targets', () => {
+    expect(carouselCss).toContain('width: 3rem')
+    expect(carouselCss).toContain('height: 3rem')
+    expect(carouselCss).toContain('width: 2.75rem')
+    expect(carouselCss).toContain('height: 2.75rem')
   })
 })
 
@@ -312,16 +377,11 @@ describe('viewer logout control', () => {
     expect(leaveBtn).toContain('method="post"')
   })
 
-  it('the empty "being prepared" state renders the Leave control', () => {
-    const emptyBranch = viewerPage.slice(
-      viewerPage.indexOf("result.state === 'empty'"),
-      viewerPage.indexOf('styles.home'),
-    )
-    expect(emptyBranch).toContain('<LeaveButton />')
-  })
-
-  it('the published-content state renders the Leave control', () => {
-    const publishedBranch = viewerPage.slice(viewerPage.indexOf('styles.home'))
-    expect(publishedBranch).toContain('<LeaveButton />')
+  it('renders Home, First Days, and Leave in the shared archive header', () => {
+    expect(archiveLayout).toContain('<FamilyHeader />')
+    expect(familyHeader).toContain("{ href: '/', label: 'Home' }")
+    expect(familyHeader).toContain("{ href: '/first-days', label: 'First Days' }")
+    expect(familyHeader).toContain('<LeaveButton />')
+    expect(familyHeader).toContain("aria-current={current ? 'page' : undefined}")
   })
 })

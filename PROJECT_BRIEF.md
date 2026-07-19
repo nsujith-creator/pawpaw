@@ -172,7 +172,7 @@ The emotional test is:
 
 ### Selected Release 2 visual direction
 
-Direction B-led with selected Direction C energy: Pawpaw is a cinematic illustrated storybook built around real photographs as documentary truth, chapter-based visual worlds, chronology, and family voices. Direction C contributes vivid controlled colour, humour, expressive characters, contemporary energy, and an unmistakably newborn, baby-girlish spirit. This is not a 50/50 hybrid, quiet/editorial-only, or cream-and-ink-only direction. It must evolve age-appropriately over time. No UI implementation is authorised yet.
+Direction B-led with selected Direction C energy: Pawpaw is a cinematic illustrated storybook built around real photographs as documentary truth, chapter-based visual worlds, chronology, and family voices. Direction C contributes vivid controlled colour, humour, expressive characters, contemporary energy, and an unmistakably newborn, baby-girlish spirit. This is not a 50/50 hybrid, quiet/editorial-only, or cream-and-ink-only direction. It must evolve age-appropriately over time. Batch 1 is implemented in the uncommitted working tree and its automated evidence gate is complete; explicit visual review remains. Batch 2 remains unauthorised.
 
 ### 5.1 Core creative direction
 
@@ -204,6 +204,14 @@ Cartoons must be visually sophisticated and intentional—not generic clip art, 
 Original characters and superhero archetypes are preferred. Do not build the site's permanent visual identity from unlicensed Marvel, DC, Disney, Pixar, Studio Ghibli, or other protected characters.
 
 AI-assisted or AI-generated artwork may be used as clearly imaginative illustration. It must never be presented as a photograph, actual event, quotation, milestone, or factual memory. Sujith approves every illustration before publication.
+
+### Documentary photograph enhancement
+
+A documentary photograph may be manually or AI-assistedly enhanced without ceasing to be documentary. Permitted presentation edits include exposure and white-balance correction, colour correction, contrast adjustment, denoising, sharpening, mild deblurring or resolution enhancement, straightening, deliberate cropping, and minor cleanup that does not change the factual content of the scene. These edits do not require an “AI-generated” label.
+
+A photograph ceases to qualify as unaltered documentary evidence when an edit invents, removes, composites or materially changes a person, expression, body, clothing, object, background, location, event or other factual content. Such altered imagery must not be presented as an unchanged real photograph.
+
+Sujith explicitly approved the six mildly enhanced Home photographs as final presentation assets. Pawpaw may use similarly enhanced genuine photographs in future, and untouched camera originals are not required as website presentation assets. Full-frame presentation, privacy, dignity, alt-text and no-face-obstruction rules remain unchanged.
 
 ### 5.2 Visual character
 
@@ -292,7 +300,7 @@ Implementation rules:
 
 Ambient theming should make each memory feel individually art-directed, not merely recoloured by an algorithm.
 
-Automatic ambient theming remains required. Its exact implementation constraints must use an approved named colour space (OKLCH), bounded lightness/chroma/alpha tokens, a neutral text layer, contrast verification, an approved fallback, failure behaviour, reduced-motion behaviour, and non-flashing transitions. The existing system does not justify inventing those numeric bounds: implementation of automatic theming is blocked until Sujith approves the exact numeric token specification in `docs/DESIGN_SYSTEM.md`; the requirement itself is not deferred or removed.
+Automatic ambient theming remains required. Its exact implementation constraints use the approved OKLCH bounds, lightness/chroma/alpha tokens, neutral text layer, contrast verification, fallback, failure behaviour, reduced-motion behaviour, and non-flashing transitions recorded in `docs/DESIGN_SYSTEM.md`. Sujith approved that numeric contract for Batch 1, and the bounded Home implementation and automated evidence are complete in the uncommitted working tree.
 
 ### 5.5 Illustration system
 
@@ -602,6 +610,7 @@ The site is a presentation archive, not the only master photo backup.
 
 - Original photographs remain in Sujith and Paru's normal photo backup system.
 - Release 1 stores optimized presentation copies, not unlimited camera originals.
+- Presentation copies may use the approved documentary enhancements above; untouched camera originals are not required in Pawpaw itself.
 - Supported Release 1 formats: JPEG, PNG, and WebP.
 - Unsupported files produce a clear error, not silent failure.
 

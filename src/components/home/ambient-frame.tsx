@@ -1,21 +1,31 @@
 'use client'
 
+import type { AmbientTheme } from '@/lib/media/ambient-color'
+import styles from './home-carousel.module.css'
+
 interface Props {
-  initialPalette: string[] | null
-  children:       React.ReactNode
+  theme:    AmbientTheme
+  children: React.ReactNode
 }
 
-// Applies the first colour from the active photograph's palette as a subtle
-// ambient background tint behind the carousel. Falls back to a neutral colour.
-export default function AmbientFrame({ initialPalette, children }: Props) {
-  const accent = initialPalette?.[0] ?? '#1a1a2e'
+type AmbientStyle = React.CSSProperties & {
+  '--ambient-surface': string
+  '--ambient-accent': string
+}
+
+// The active photo drives only this bounded decorative surface. Readable text,
+// controls, semantic states, and the page background keep approved fixed tokens.
+export default function AmbientFrame({ theme, children }: Props) {
+  const ambientStyle: AmbientStyle = {
+    '--ambient-surface': theme.surface.css,
+    '--ambient-accent': theme.accent.css,
+  }
 
   return (
     <div
-      style={{
-        background: `linear-gradient(to bottom, ${accent}22 0%, transparent 100%)`,
-        transition: 'background 0.6s ease',
-      }}
+      className={styles.ambient}
+      style={ambientStyle}
+      data-ambient-fallback={theme.isFallback ? 'true' : 'false'}
     >
       {children}
     </div>

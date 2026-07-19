@@ -1,6 +1,6 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 19 July 2026 (Release 2 visual foundation and proof approved; documentation reconciliation in progress)
+**Status date:** 19 July 2026 (Release 2 Batch 1 fully approved at 10/10 and authorised for production release)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -67,8 +67,8 @@ Every implementation prompt sent to Claude must include:
 - Release decision: **PR #2 was marked ready for review after every required automated verification command exited 0**.
 - Merge and deployment: **complete**. Phase 1 is merged into `main`, deployed, and production verified.
 - Release 2: **opened**. Typography, colour, character, Home, Her Story chapter-header, and Admin dashboard visual gates are approved.
-- Current milestone: **documentation-only approved-design reconciliation**. No source code or production UI changed.
-- Next gate: **a bounded UI implementation declaration and plan**. UI implementation is not authorised by this run.
+- Current milestone: **Release 2 Batch 1 final approval complete**. Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, responsive layouts, accessibility, reduced-motion/degraded-media states, family navigation, and Leave placement/behaviour are explicitly approved and locked at 10/10.
+- Next gate: execute the authorised Batch 1 commit, push, exact-commit Vercel production deployment, and read-only production smoke test. Batch 2 remains unauthorised.
 - Manual testing for this milestone: **not required and not requested**; all 3 of 3 formal rounds remain consumed.
 
 ---
@@ -546,13 +546,132 @@ Approved gates:
 - **Her Story:** approved text-led chapter-header concept for desktop and a deliberately recomposed 375px mobile layout.
 - **Admin:** approved “author's studio” dashboard concept with real counts, list-first records, semantic states, desktop sidebar, and 375px single-column mobile.
 
-The approved artefacts are present under `docs/visual-proof/` as the repository proof pack. They remain uncommitted in this working tree because this documentation-reconciliation run is explicitly prohibited from committing or pushing. `docs/DESIGN_SYSTEM.md` is the approved canonical Release 2 visual foundation and links every supplied proof file.
+The approved artefacts are present under `docs/visual-proof/` as the repository proof pack and were committed with the reconciled documentation at `bb06d2ebe27f73c9483d12da3448c3c4eeb8d2e6`. `docs/DESIGN_SYSTEM.md` is the approved canonical Release 2 visual foundation and links every supplied proof file.
 
 This reconciliation changes documentation and adds approved proof artefacts only. It changes no application source, CSS, component, route, test, package, lockfile, migration, configuration, Supabase state, Vercel state, DNS, authentication, production content, QtPi Tracker, or Paru Health state. Documentation approval does not mean the production UI implements the approved system.
 
 All 3 of 3 formal manual-test rounds remain consumed. No further manual test is required or requested.
 
-**Exact next gate — bounded UI implementation declaration and plan:** define the exact existing routes, components, CSS, assets, font-loading method, unresolved ambient-colour values, unresolved motion values, accessibility proofs, and verification boundary before any UI code is written. This run does not authorise implementation.
+### 3.13 Release 2 bounded UI implementation declaration (19 July 2026)
+
+`RELEASE_2_UI_IMPLEMENTATION_DECLARATION.md` was created against committed HEAD `bb06d2ebe27f73c9483d12da3448c3c4eeb8d2e6`. It declares no more than two future execution batches covering only existing Family login, authenticated Home, Admin login, Admin shell/navigation, Dashboard, Content Library, Media Library, and Home editor surfaces. UI implementation has not begun.
+
+**Resource gate:** installed Next.js `16.2.10` supports the verified imports `Fraunces`, `Manrope`, and `Noto_Sans_Malayalam` through built-in `next/font/google`. The declared method needs no new npm dependency, paid service, proprietary font, or runtime Google request. It has INR 0 package and recurring service cost. Production builds will need build-time access to download and emit self-hosted font files.
+
+**Validity gate:** the evidence plan is defined, including deterministic behaviour tests, contrast calculations, keyboard/responsive/reduced-motion checks, and Playwright screenshots. The implementation gate remains open because no Release 2 UI or implementation screenshot set exists, the ambient and motion numbers are only proposed, and no isolated production character asset is available.
+
+**Identified blockers:**
+
+- the repository has no production-ready illustration asset outside the proof pack; the approved character board is a fully opaque composite and cannot be used or cropped as a website asset;
+- the proposed numeric OKLCH ambient-colour contract requires Sujith's approval;
+- the proposed motion durations/easing require Sujith's approval;
+- the verified font-loading mechanics and exact weights/subsets require Sujith's approval;
+- each bounded batch requires separate explicit execution authorization.
+
+**Batch readiness:** Batch 1 is **not ready** because the separate isolated character-asset gate and the font/ambient/motion approvals are incomplete. Batch 2 is **not ready** because the shared font/motion mechanics and the batch declaration are not approved; it does not require a production character asset in its restrained Admin scope.
+
+**Approvals still required:** approve the declaration boundary; approve the font-loading mechanics; approve every proposed ambient-colour value; approve every proposed motion value; complete and approve the separate character-asset gate with exact path, format, dimensions, alpha, ownership, hash, and placement rules; then explicitly authorize Batch 1 and, after its evidence boundary passes, Batch 2.
+
+No manual testing is required or requested. Formal manual-test rounds remain **3 of 3 used**.
+
+The planning/readiness statements above are retained as the historical declaration state and are superseded by Section 3.14.
+
+### 3.14 Batch 1 implementation, production Home repair and evidence gate (19 July 2026)
+
+This section records the earlier temporary crop checkpoint and is superseded for current Home media/evidence status by Section 3.15.
+
+Sujith approved the declaration, exact two-batch boundary, `next/font/google` mechanics, ambient-colour numeric contract, motion contract, three isolated production character assets, Batch 1 execution, and deterministic extraction of the six approved Home photographs from the committed stress-test board. The current uncommitted working tree implements the bounded visual foundation, Family login, authenticated Home, carousel treatment, Wonder placement, bounded active-photo ambient colour, reduced motion and associated tests. Batch 2 remains unauthorised.
+
+The source `docs/visual-proof/typography-six-photo-stress-test.png` was verified as a 1600 x 1200 PNG. Its worktree Git blob exactly matched committed HEAD blob `ff64b0222ec56eb233e3d7d84f561c98a70481b4`; SHA-256 remained `360C6F3DD4B99087165B8174D57BFB2C1A1103795D4BBFDF09307A61DC90D85A`. The authorised left/top/right/bottom rectangles were extracted without regeneration, correction, sharpening, upscaling or inner recropping:
+
+| Order | Temporary filename | Rectangle | Dimensions | SHA-256 | Created media ID |
+|---:|---|---|---:|---|---|
+| 1 | `01-noolukettu.png` | `67,162,522,492` | 455 x 330 | `AD0C8FE803A5398E08EC5DEF3A730B0A937F0D9B330236BC35CE593B9E3E975D` | `6a84c9d2-330a-453a-8d9c-d7a6bae2219d` |
+| 2 | `02-sleepy-close-up.png` | `573,162,1027,492` | 454 x 330 | `02A99EDF73C826DA81336F1939708387BC1DF637CEC75D586898EABBF54EFB10` | `78fa8062-3f04-474f-aad0-d3f5129b71c0` |
+| 3 | `03-natural-phone-photo.png` | `1075,162,1530,492` | 455 x 330 | `08B0F4C5D8B21CEDE431F4F37632BC086F536EE4A38BA470A39989D4CB2432F8` | `4fd3b0b6-3cec-4066-9e09-4b5d0da33b6c` |
+| 4 | `04-one-month-cake.png` | `67,680,522,1010` | 455 x 330 | `2B7246EBB6874C6ED2B8D19D4E676C6CC8BCE73AE7BD9C56CC0E617DE357F53B` | `aa32626e-e635-4fec-9459-cfec1bea91b2` |
+| 5 | `05-ducks-and-gold.png` | `573,680,1027,1010` | 454 x 330 | `58378E1A484999C3C449257438DFABB5A1BBC9E1BE777609B5EEE4C85AE18BC3` | `ccf6b76a-4257-4695-840f-9179e3b45032` |
+| 6 | `06-green-towel-sleep.png` | `1075,680,1530,1010` | 455 x 330 | `1A9E5A9C6D41295BEFAB965A7A6BCCF6B739EAF6672148CC0616B79B1A779845` | `40f539c9-ba59-4887-b091-069c8d44dd61` |
+
+Raw-pixel comparison proved every output pixel-exact to its source rectangle. Visual inspection proved six distinct intended photographs in the locked order, with no neighbouring photograph, board heading, slide pill, caption or card border. Rounded photograph corners from the source pixels were preserved.
+
+All six files were uploaded through Pawpaw's existing signed-upload/finalisation functions into six distinct Pawpaw-owned media records and attached to canonical published Home `44bade5e-315f-4890-986c-9233abf346d6` at sort orders 1–6 in the table order. The two prior Home associations were detached but their media records were not deleted. The unrelated Sattva record and obsolete duplicates remain unattached and unchanged. No schema, migration, RLS, Storage policy, authentication or cross-application change occurred.
+
+Home title is exactly `Varada`. Its one paragraph is exactly:
+
+> this is our pawpaw. call her varada if you will. 7 weeks and 2 days to the day today. the 1st pic is V on her noolukettu day (28th day of birth). we are yet undecided on what to call her at home, though she was named Varada officially on her noolukettu. pawpaw lives with her amma, acchan, acchachan, ammama - 4 things out of an infinite number of things shes yet to utter! her maushi visits her everyday to massage her, bathe herm swadle her etc. she's uniquely co-operative with her maushi, the brat! pawpaw is her online term of endearment her acchan came up with and she was pupu on her 1 month birthday cake, she is chakku, chundaramutthu, pupu, shanku to her mumma.
+
+A read-only post-E2E call to the existing `getPublishedHomeContent()` loader returned `published`, `mediaState: complete`, zero media issues, exact title/prose, the six exact IDs in order, six distinct byte hashes equal to the extracted files, recorded dimensions 455/454 x 330, and HTTP 200 from every signed URL. No unrelated or duplicated slide returned.
+
+The automated boundary passes: `git diff --check`, type-check, lint, 266 default tests with 42 intentional credential-gated skips, production build, and full Playwright with 36 passed/8 intentional project skips. Playwright fixture reconciliation was zero before and after for users, content, media, associations, objects and throttle rows; server-process residue was zero. Evidence is under `test-results/release-2-family-evidence/` for family login 1440/375, Home 1440/375, all six slides, widest genuine slide, long prose, reduced motion, and degraded media with prose retained. No fourth formal manual-test round is requested; formal rounds remain 3 of 3.
+
+All six locked crops are landscape rectangles at 454–455 x 330. That extracted resolution is a known non-blocking presentation limitation. No square or portrait source was fabricated because the approved bounds prohibit recropping; future higher-resolution or differently oriented genuine versions may replace these files through the ordinary Media Library without changing Home behaviour or design.
+
+**Historical next gate:** this gate was superseded when Sujith supplied and approved the full-size import pack and authorised the bounded continuation recorded in Section 3.15.
+
+### 3.15 Full-size Home replacement and First Days bounded continuation (19 July 2026)
+
+Pre-flight passed on branch `main` at committed HEAD `bb06d2ebe27f73c9483d12da3448c3c4eeb8d2e6` with the exact expected uncommitted Batch 1 tree and untouched untracked `.claude/`. The approved import pack contained 6 Home, 9 First Days and 5 alternate traceability files. SHA-256 verification passed for all 20 files before mutation and again after implementation; source bytes were never edited, resized, recompressed, cropped, sharpened, recoloured or renamed during upload. The five alternates were not imported.
+
+The canonical published Home remains `44bade5e-315f-4890-986c-9233abf346d6`, owned by Sujith's active Pawpaw admin. Its six temporary 454–455 x 330 associations were detached. Their six media rows and private Storage objects remain present and unchanged. The following full-size records now occupy Home sort orders 1–6:
+
+| Order | Source file | Dimensions | Media ID | SHA-256 |
+|---:|---|---:|---|---|
+| 1 | `01-noolukettu-enhanced.png` | 1254 x 1254 | `d7092bde-2fa6-4513-824b-adb658cf31b9` | `72e55d6dde8ebf593136cb5759529365a7dcfc2cffed8e5f561d1819b157212e` |
+| 2 | `02-sleepy-close-up-enhanced.png` | 1122 x 1402 | `6100b5f8-ab7e-44c8-92bd-62c96ab29f8e` | `60b9865f7988554bd73ba3a8413971b813fb43fe87d88e4812fde86244984b8d` |
+| 3 | `03-natural-phone-photo-enhanced.png` | 1088 x 1445 | `a8b3aad4-2766-4598-9329-a50fdd582a2f` | `4da0a0e9561786728149446b084a1959d8a99e7848a5db62e4e79668dfcbaf80` |
+| 4 | `04-one-month-cake.jpg` | 864 x 1536 | `82122c79-b888-4eec-bcfb-cc3636ff38c7` | `359d67adbee33e810c8d61dd04fc4707b3a9df02df4e64050defe8963ab7b28f` |
+| 5 | `05-ducks-and-gold-enhanced.png` | 1254 x 1254 | `c90dcae7-d768-4d8d-85b6-43380c0730c0` | `eb9a1bbcadab3c6141ec2b60850332ae2e93fd7b2de0f9f3533dd5fca1168e33` |
+| 6 | `06-green-towel-sleep-enhanced.png` | 1086 x 1448 | `967b1dbf-8001-4bf6-a948-c37322d8a38f` | `9451bfe472a9fd060ebe697440492deb0ef1fb1450276f857f4fcb464c9f9462` |
+
+Published story `bfa8d2ca-4237-49df-af1b-5e73ad9f5b9e`, slug `first-days`, uses the existing generic content/media architecture with no schema change. Its nine Pawpaw-owned records preserve manifest order, captions and factual alt text:
+
+| Order | Source file | Dimensions | Media ID | SHA-256 |
+|---:|---|---:|---|---|
+| 1 | `01-about-one-hour-old-with-acchan.png` | 1088 x 1445 | `b73d7cc3-572c-4c23-94e5-3bdba47d78ef` | `520443bdec88d95d6c6a8eb71ef0adf614c709f70c970c7662ca03f61c5c1a8d` |
+| 2 | `02-first-hours-green-swaddle.png` | 1086 x 1448 | `1fd67783-86f4-4e22-aaef-351a18fe2129` | `a54fc430c3594be76f8005b773206ca3626b846eff0d64c29e50a2442ce32812` |
+| 3 | `03-first-hours-green-swaddle-close.png` | 1086 x 1448 | `a793f9d6-1214-48e3-aab9-1d02ac69b69c` | `08739668cb6e21a77db7a4b2fbc1efc705ea6ea837d88327c7f8ee98b39260a7` |
+| 4 | `04-two-days-old-pink-flowers-awake.jpg` | 1536 x 1024 | `e1a1d270-87e4-460c-a372-86980dc6f660` | `45f50d4cc99879a3f1be201da92cad98fff9fea809ca829119db6eabed380aed` |
+| 5 | `05-two-days-old-pink-flowers-sleeping.jpg` | 1536 x 1024 | `7457b3e2-c107-4e65-a6a2-76521ec11024` | `7ca7e54af99dc6efe3e617b5f5b43e6ea2bb1319b0d6bdaec88a6db89a27d1d8` |
+| 6 | `06-hospital-studio-flower-basket.jpg` | 2048 x 1365 | `0a66f7ca-aaa1-4fe0-9d7f-8bb7709388c3` | `ee13f3fbff15b3055cd20ccdbc11435a8f546571d673947a0e02257d5d9dd6a1` |
+| 7 | `07-ten-tiny-toes-and-a-butterfly.jpg` | 1365 x 2048 | `751997ac-2abb-4b16-bd06-2103bc243ede` | `588e34c7e2a45a49520a606ff951acbd69b5e403e0bc397f997075ed2854f7f7` |
+| 8 | `08-two-day-old-sleeping-profile.jpg` | 1365 x 2048 | `5ceb9b5f-c696-4bd4-a445-3861ae2f8ee8` | `18742a676e58f6c475edee89e39f28153ec278e3406ce5556ffc21dd92880a65` |
+| 9 | `09-one-small-foot.png` | 1086 x 1448 | `ee2261be-2438-4c8b-9d63-87720ac79381` | `d087f256156560e2dccbc1574d551ee240075f02b9c8137b6d51863764f7f826` |
+
+Post-write audit proved 15 byte-identical private objects, 15 HTTP 200 signed deliveries, 15 distinct new media records, exact 6+9 association order, exact captions/alt text, zero temporary Home associations, and continued presence of all six temporary records and objects. QtPi Tracker and Paru Health were not queried or changed; all writes were confined to Pawpaw's existing owner, content, media, association and private `media` bucket paths.
+
+The authenticated archive now has a shared Home / First Days / Leave header. Home removes the oversized blurred duplicate-image chamber, uses one dominant contained photograph and compact controls, keeps Wonder outside the photograph, retains prose under media degradation, and preserves no-autoplay, arrows, tabs, keyboard and swipe. `/first-days` is protected by the existing viewer boundary and presents nine semantic figures in chronological order with varied desktop rhythm and one clear mobile flow. A signing failure keeps the chapter, figure position and caption intact.
+
+Verification is complete: `git diff --check`, type-check, lint, 266 default tests passed with 42 intentional credential-gated skips, 43/43 live integration tests passed, production build passed with `/first-days` emitted as a dynamic route, and full Playwright passed 42 tests with 12 intentional project skips. Pre/post fixture residue was zero for users, content, media, associations, objects and throttle; Pawpaw dev-server residue was zero. Home evidence is under `test-results/release-2-family-evidence/`; First Days evidence is under `test-results/release-2-first-days-evidence/`. Visual inspection confirms desktop/mobile/zoom/degraded completeness, but screenshots do not grant the required 10/10 approval.
+
+**Historical next gate:** Home and Family Login subsequently passed explicit final review. First Days findings and the bounded repair are recorded in Section 3.16.
+
+### 3.16 First Days final-review repair (19 July 2026)
+
+Sujith explicitly approved Family Login, authenticated Home desktop/mobile, all six Home slides, degraded media, reduced motion, long prose, Home navigation/Leave placement, captions and alt text at 10/10. Those surfaces and their evidence are locked and were not reopened.
+
+First Days' initial visual review found four bounded defects: its chapter treatment read as Home rose/pink instead of the locked Story orchid system; the text-led header lacked its approved Varada character zone; desktop vertical rhythm was overly sparse; and captions were undersized/muted. Functionality, chronological order, photographs, exact captions/alt text and the mobile image flow were already approved and remained unchanged.
+
+The First Days-only repair:
+
+- applies Story accent `#9B5FC0`, soft `#F2EBF8` and on-soft `#4E1A6E` to the chapter eyebrow and restrained decorative fields while keeping readable neutral ink for captions/body text;
+- integrates the existing approved `varada-sleepy.png` decoratively with empty alt text in a dedicated responsive header zone, approximately 190–240 CSS pixels on desktop and 105–135 CSS pixels in compact/mobile composition;
+- keeps the title, character and first photograph geometrically separate at desktop, 320/375px and 200% zoom;
+- reduces desktop figure gaps by approximately one quarter while retaining the opening hero, alternating left/right/centred sequence and non-masonry editorial flow;
+- renders captions at 15–17px with at least 1.45 line-height, neutral ink-secondary colour and WCAG AA contrast;
+- preserves exact route/data/media associations/order/bytes/captions/alt text, semantic figures, degraded-media truthfulness, reduced-motion completeness, shared navigation and the approved mobile photographic flow.
+
+Only the First Days page/CSS, First Days visual assertions and the two status documents changed. Evidence was regenerated only under `test-results/release-2-first-days-evidence/` during the bounded review cycle. Home/Login source and evidence baselines, character hashes, packages, configuration, schema, migrations, Admin, authentication and database state remain unchanged. Formal manual-testing rounds remain 3 of 3 and no fourth round is requested.
+
+Verification passes: `git diff --check`, type-check, lint, 266 default tests with 42 intentional credential-gated skips, production build, and full Playwright with 42 passed/12 intentional project skips. Playwright fixture residue and Pawpaw server-process residue are zero. A final read-only audit confirms canonical published Home still has six media, published First Days still has nine media with exact manifest order/captions/alt text, and every import-pack hash remains unchanged. The unavoidable full Playwright run regenerated the approved Home/Login evidence byte-identically; the locked source diff and all three character hashes also remain identical to their pre-repair baselines.
+
+Sujith subsequently reviewed the regenerated First Days evidence and explicitly approved the repaired First Days surface, all nine chronological photographs, captions/alt text, desktop/375px/320px layouts, 200% zoom, reduced-motion and degraded-media states at 10/10. Family Login, Home and First Days are now all locked; every Batch 1 visual gate is closed. Formal manual-testing rounds remain 3 of 3, and no fourth round was requested.
+
+### 3.17 Release 2 Batch 1 production authorisation (19 July 2026)
+
+Sujith authorised the complete approved Batch 1 set for one exact-scope commit, push to `origin/main`, deployment through the repository's existing Git-linked Vercel project `pawpaw`, and read-only production smoke testing. The approved release includes active full-size Home media (six distinct photographs in locked order) and published First Days media (nine distinct chronological photographs with exact captions and alt text). Responsive, accessibility, 200% zoom, reduced-motion, degraded-media, navigation and secure Leave evidence are approved.
+
+Canonical production is `https://www.heyvarada.in`; the fallback remains `https://pawpaw-lemon.vercel.app`. The final release commit SHA and successful production date are recorded in the release report after those facts exist, avoiding an inaccurate circular SHA or an unnecessary second documentation-only commit. Batch 2 and Admin redesign remain unauthorised.
 
 ---
 
@@ -895,8 +1014,8 @@ tests/
 
 ### P1 — important
 
-- ~~Apply Phase 1 visual conventions.~~ **DONE** — the Phase 1 layered carousel background remains implemented. The approved Release 2 visual system is now documented separately and is not yet implemented in production UI.
-- ~~Replace flat palette image backgrounds.~~ **DONE** — blurred bg + overlay + sharp contained image
+- ~~Apply Phase 1 visual conventions.~~ **SUPERSEDED BY RELEASE 2 BATCH 1** — the uncommitted family surfaces now implement the approved Release 2 visual system while preserving Phase 1 behaviour.
+- ~~Replace flat palette image backgrounds.~~ **SUPERSEDED BY FULL-SIZE HOME REPAIR** — one sharp contained image now sits in a restrained active-palette frame; the oversized blurred duplicate-image layer and overlay were removed.
 - ~~Ensure all current uncommitted work is inventoried and preserved.~~ **DONE** — see Section 5
 - `00_READ_ME_FIRST.md` was named in the checkpoint request but exists neither in the working tree nor in HEAD. No substitute content was invented; `docs/PROJECT_STATUS.md` remains the explicit canonical source.
 - ~~Update PR #2 description and mark it ready for review.~~ **DONE** — the description records the verified Phase 1 scope, checks, shared-Supabase arrangement, Manual Test Round 3 result, and accepted limitations; PR #2 is merged and closed.
@@ -929,7 +1048,7 @@ tests/
 - Copied private signed media URLs may remain usable until their short expiry.
 - Home is the only editable Phase 1 content type; Create New and editors for story, gallery, letter, and moment remain Release 2 work.
 - The default automated suite intentionally skips credential-gated integration cases that are exercised by `npm run test:integration:live`.
-- Three E2E cases are intentionally skipped: two family-passphrase cases because the raw passphrase is unavailable to automation, and one mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton.
+- Eight full-suite E2E project cases are intentionally skipped: the family-passphrase case in both projects because the raw passphrase is unavailable to automation; the mobile duplicate of the live Home mutation lifecycle to avoid racing the shared singleton; and the five family visual-evidence cases in the mobile project because each Chromium case itself captures both declared desktop/mobile viewports deterministically.
 - Admin Back remains verified. The natural family correction, exact Git-integrated deployment, and desktop/mobile production proof are recorded in Section 3.10. Raw household/admin credentials remain unavailable to automation and were not exposed.
 
 ---
@@ -939,7 +1058,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 is open at its documentation-only approved-design reconciliation milestone.**
+**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 Batch 1 Family Login, Home and First Days are explicitly approved at 10/10 and locked; every Batch 1 visual gate is closed and the production release is authorised. Batch 2 is unauthorised.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -947,7 +1066,7 @@ Release boundary status after final checkpoint verification:
 1. ✓ Admin Dashboard complete with owner-scoped data, signed thumbnails, timestamps, usage count, search, filters, deterministic order, and error state.
 2. ✓ Content Library complete for Phase 1; title search and combined filters work, and Create New is honestly disabled until Release 2 without touching Home.
 3. ✓ Media Library complete with metadata, usage titles/counts, combined discovery filters, deterministic sorting, and reusable unattached media.
-4. ✓ Phase 1 visual conventions remain implemented; Release 2's approved visual foundation and proof pack are documented but not yet implemented in production UI.
+4. ✓ Phase 1 behaviour remains preserved; Family Login, Home and First Days are locked at 10/10, including all 15 photographs, exact prose/captions/alt text and responsive/accessibility/degraded/reduced-motion evidence.
 5. ✓ Full application verification suite green — every required command exits 0.
 6. ✓ Dashboard stat cards are navigation links; media count is scoped to the active admin.
 7. ✓ Upload/publish workflow UI clarity: message and guidance note explain attach versus publish.
@@ -958,10 +1077,10 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 visual direction and proof are approved, while UI implementation remains unauthorised until a bounded implementation declaration and plan is approved.
+15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 Batch 1 received Sujith's explicit final 10/10 approval and is authorised for exact-scope commit, push and production release. Batch 2 remains unauthorised.
 16. ✓ Canonical production is `https://www.heyvarada.in`; Wix hosts registrar/DNS, the apex redirects to `www`, Vercel project `pawpaw` hosts the application, and `https://pawpaw-lemon.vercel.app` remains the legacy/fallback URL.
 17. ✓ No coding, UI, CSS, component, route, dependency, migration, authentication, data, DNS, hosting-configuration, or cross-application change occurred in the design-foundation milestone.
-18. ✓ No manual testing is required or requested for this documentation-only milestone. The exact next gate is a bounded UI implementation declaration and plan; implementation has not begun.
+18. ✓ No fourth manual-testing round is required or requested. The exact next gate is the authorised Batch 1 production release; Batch 2 requires separate authorization.
 
 ---
 

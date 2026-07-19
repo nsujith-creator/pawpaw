@@ -82,6 +82,13 @@ test.describe('family login page', () => {
     await expect(page).toHaveURL(/\/family-login/)
   })
 
+  test('/first-days redirects to /family-login when no viewer cookie is present', async ({ page }) => {
+    test.skip(skip, 'Skipping: no server available')
+    await page.context().clearCookies()
+    await page.goto('/first-days')
+    await expect(page).toHaveURL(/\/family-login/)
+  })
+
   test('authenticated Leave redirects with GET and keeps the family route closed', async ({ page }) => {
     test.skip(skip, 'Skipping: no server available')
     const viewerCookie = await makeViewerCookieValue()
@@ -198,19 +205,21 @@ test.describe('security headers', () => {
     test.skip(skip, 'Skipping: no server available')
     const cookie = await makeViewerCookieValue()
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
-    const res = await request.get('/', {
-      headers: { cookie: `pawpaw_viewer=${cookie}` },
-      maxRedirects: 0,
-    })
-    expect(res.status()).toBe(200)
-    expect(res.headers()['x-robots-tag']).toBe('noindex, nofollow, noarchive')
-    const cacheControl = res.headers()['cache-control']
-    if (process.env.PLAYWRIGHT_BASE_URL) {
-      expect(cacheControl).toContain('private')
-      expect(cacheControl).toContain('no-store')
-    } else {
-      // Next.js dev mode intentionally overwrites all page cache headers.
-      expect(cacheControl).toBe('no-cache, must-revalidate')
+    for (const path of ['/', '/first-days']) {
+      const res = await request.get(path, {
+        headers: { cookie: `pawpaw_viewer=${cookie}` },
+        maxRedirects: 0,
+      })
+      expect(res.status()).toBe(200)
+      expect(res.headers()['x-robots-tag']).toBe('noindex, nofollow, noarchive')
+      const cacheControl = res.headers()['cache-control']
+      if (process.env.PLAYWRIGHT_BASE_URL) {
+        expect(cacheControl).toContain('private')
+        expect(cacheControl).toContain('no-store')
+      } else {
+        // Next.js dev mode intentionally overwrites all page cache headers.
+        expect(cacheControl).toBe('no-cache, must-revalidate')
+      }
     }
   })
 

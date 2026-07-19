@@ -1,4 +1,5 @@
-/* Global reset and base styles. Visual polish is deferred to post-Phase-1 design work. */
+/* Approved Release 2 visual foundation. Route-specific composition stays in
+   local CSS modules; these are the single canonical semantic token values. */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -7,20 +8,71 @@
 }
 
 :root {
-  --color-ink:        #1a1a2e;
-  --color-paper:      #fefcf8;
-  --color-accent:     #c084fc;
-  --color-muted:      #6b7280;
-  --radius-md:        0.5rem;
-  --font-display:     'Georgia', serif;
-  --font-body:        system-ui, sans-serif;
+  --color-canvas: #fff8ee;
+  --color-surface: #fffdf7;
+  --color-surface-deep: #f7f1e4;
+  --color-paper: #fffef8;
+  --color-ink: #2a1f14;
+  --color-ink-secondary: #5c4e3d;
+  --color-ink-muted: #8c7e6d;
+  --color-border: #e0d5c4;
+  --color-border-strong: #c4b8a6;
+
+  --color-home-primary: #e8526a;
+  --color-home-soft: #fceaed;
+  --color-home-on-soft: #8b1a2f;
+  --color-story-primary: #9b5fc0;
+  --color-story-soft: #f2ebf8;
+  --color-story-on-soft: #4e1a6e;
+  --color-letter-primary: #4590cc;
+  --color-letter-soft: #e6f1fa;
+  --color-letter-on-soft: #1a4878;
+  --color-gallery-primary: #e35f45;
+  --color-gallery-soft: #fdeee9;
+  --color-gallery-on-soft: #7a2c15;
+  --color-moment-primary: #359575;
+  --color-moment-soft: #e5f4ef;
+  --color-moment-on-soft: #185c40;
+  --color-neutral-primary: #5f5e8a;
+  --color-neutral-soft: #eeeefc;
+  --color-neutral-on-soft: #2a2950;
+
+  --color-success: #23633b;
+  --color-success-soft: #e5f2eb;
+  --color-success-on-soft: #0f3d22;
+  --color-warning: #7a5511;
+  --color-warning-soft: #fef6e4;
+  --color-warning-on-soft: #4a3208;
+  --color-error: #b33535;
+  --color-error-soft: #fdeaea;
+  --color-error-on-soft: #6e1a1a;
+  --color-information: #315f7a;
+  --color-information-soft: #e4eef5;
+  --color-information-on-soft: #163347;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.5rem;
+  --motion-fast: 120ms;
+  --motion-standard: 240ms;
+  --motion-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 html {
-  font-family: var(--font-body);
-  background: var(--color-paper);
+  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-canvas);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-width: 320px;
+  background: var(--color-canvas);
+}
+
+[lang="ml"] {
+  font-family: var(--font-malayalam), var(--font-body), sans-serif;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -34,9 +86,16 @@ button {
   background: none;
 }
 
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 3px solid var(--color-home-primary);
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
   }
 }

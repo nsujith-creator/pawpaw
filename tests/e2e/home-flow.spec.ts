@@ -1,108 +1,12 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { test, expect, type Page } from '@playwright/test'
-import sharp from 'sharp'
-import { loadEnvLocal, makeViewerCookieValue } from './viewer-session'
-import { fixtureRunId } from '../integration/fixture-names'
-import { deleteRowsByIds, removeStoragePaths } from '../support/fixture-cleanup'
+import { makeViewerCookieValue } from './viewer-session'
 
 const skip = process.env.PLAYWRIGHT_SKIP_AUTH === '1'
 
 let cookie: string | null = null
-let fixture: {
-  ids: string[]
-  paths: string[]
-  homeId: string
-  originalStatus: string
-  originalPublishedAt: string | null
-} | null = null
-
-async function removeHomeFlowFixture(
-  db: SupabaseClient,
-  ids: string[],
-  paths: string[],
-): Promise<void> {
-  await deleteRowsByIds(db, 'content_media', 'media_id', ids, 'E2E Home association')
-  await deleteRowsByIds(db, 'media_assets', 'id', ids, 'E2E Home media')
-  await removeStoragePaths(db, paths)
-}
 
 test.beforeAll(async () => {
   cookie = await makeViewerCookieValue()
-  if (!cookie) return
-
-  const env = loadEnvLocal()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return
-  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
-  const { data: home, error: homeError } = await db.from('content_items')
-    .select('id, created_by, status, published_at').eq('type', 'home').eq('slug', 'home').single()
-  if (homeError || !home) throw homeError ?? new Error('Canonical Home missing')
-
-  const runId = fixtureRunId()
-  const bytes = await sharp({
-    create: { width: 3, height: 2, channels: 3, background: '#7c3aed' },
-  }).png().toBuffer()
-  const paths = [`${home.created_by}/${runId}-carousel-a.png`, `${home.created_by}/${runId}-carousel-b.png`]
-  const ids: string[] = []
-
-  try {
-    for (const [index, path] of paths.entries()) {
-      const upload = await db.storage.from('media').upload(path, bytes, {
-        contentType: 'image/png', upsert: false,
-      })
-      if (upload.error) throw upload.error
-      const inserted = await db.from('media_assets').insert({
-        storage_path: path, mime_type: 'image/png', byte_size: bytes.length,
-        width: 3, height: 2, alt_text: `Pawpaw carousel fixture ${index + 1}`,
-        processing_status: 'ready', created_by: home.created_by,
-      }).select('id').single()
-      if (inserted.error || !inserted.data) throw inserted.error ?? new Error('Fixture insert failed')
-      ids.push(inserted.data.id)
-      const attached = await db.rpc('attach_owned_media', {
-        p_admin_id: home.created_by, p_content_id: home.id, p_media_id: inserted.data.id,
-      })
-      if (attached.error) throw attached.error
-    }
-    if (home.status !== 'published') {
-      const published = await db.from('content_items').update({
-        status: 'published', published_at: new Date().toISOString(),
-      }).eq('id', home.id)
-      if (published.error) throw published.error
-    }
-    fixture = {
-      ids, paths, homeId: home.id,
-      originalStatus: home.status, originalPublishedAt: home.published_at,
-    }
-  } catch (error) {
-    await removeHomeFlowFixture(db, ids, paths)
-    throw error
-  }
-})
-
-test.afterAll(async () => {
-  if (!fixture) return
-  const env = loadEnvLocal()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Missing E2E cleanup configuration')
-  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
-  await removeHomeFlowFixture(db, fixture.ids, fixture.paths)
-
-  const { data: restored, error: restoreError } = await db.from('content_items').update({
-      status: fixture.originalStatus, published_at: fixture.originalPublishedAt,
-    })
-    .eq('id', fixture.homeId)
-    .eq('type', 'home')
-    .eq('slug', 'home')
-    .select('id, status, published_at')
-    .single()
-  if (restoreError || !restored) {
-    throw new Error('E2E Home restoration failed', { cause: restoreError ?? undefined })
-  }
-  expect(restored.id).toBe(fixture.homeId)
-  expect(restored.status).toBe(fixture.originalStatus)
-  expect(restored.published_at).toBe(fixture.originalPublishedAt)
 })
 
 async function seedViewerSession(page: Page) {
@@ -112,13 +16,14 @@ async function seedViewerSession(page: Page) {
 }
 
 test.describe('Home page carousel (requires viewer session)', () => {
-  test('carousel previous and next buttons are visible', async ({ page }) => {
+  test('all six photographs retain visible arrows and position controls', async ({ page }) => {
     test.skip(skip, 'Skipping: no server available in CI')
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
     await seedViewerSession(page)
     await page.goto('/')
     await expect(page.getByRole('button', { name: 'Previous photo' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Next photo' })).toBeVisible()
+    await expect(page.getByRole('tab')).toHaveCount(6)
   })
 
   test('viewer page offers a Leave control that ends the session', async ({ page }) => {
@@ -140,9 +45,10 @@ test.describe('Home page carousel (requires viewer session)', () => {
     await expect(page).toHaveURL(/\/family-login/)
   })
 
-  test('family page never overflows and carousel dots are visible', async ({ page }) => {
+  test('family page never overflows at 320px and all controls meet 44px', async ({ page }) => {
     test.skip(skip, 'Skipping: no server available in CI')
     test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
+    await page.setViewportSize({ width: 320, height: 800 })
     await seedViewerSession(page)
     await page.goto('/')
     const overflow = await page.evaluate(
@@ -150,6 +56,51 @@ test.describe('Home page carousel (requires viewer session)', () => {
     )
     expect(overflow).toBeLessThanOrEqual(0)
     await expect(page.getByRole('tablist', { name: 'Photo position' })).toBeVisible()
+    const controls = page.locator('main button')
+    for (let index = 0; index < await controls.count(); index += 1) {
+      const box = await controls.nth(index).boundingBox()
+      expect(box?.width ?? 0).toBeGreaterThanOrEqual(44)
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
+    }
+  })
+
+  test('dots, keyboard arrows, and swipe each change the active photograph', async ({ page }) => {
+    test.skip(skip, 'Skipping: no server available in CI')
+    test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
+    await seedViewerSession(page)
+    await page.goto('/')
+
+    const gallery = page.locator('section[aria-label$="photo gallery"]')
+    const selected = page.locator('[role="tab"][aria-selected="true"]')
+    await page.getByRole('tab', { name: 'Photo 2' }).click()
+    await expect(selected).toHaveAttribute('aria-label', 'Photo 2')
+
+    await gallery.focus()
+    await gallery.press('ArrowRight')
+    await expect(selected).toHaveAttribute('aria-label', 'Photo 3')
+    await gallery.press('ArrowLeft')
+    await expect(selected).toHaveAttribute('aria-label', 'Photo 2')
+
+    const frame = gallery.getByRole('img').first().locator('..')
+    await frame.dispatchEvent('touchstart', { touches: [{ identifier: 1, clientX: 280 }] })
+    await frame.dispatchEvent('touchend', { changedTouches: [{ identifier: 1, clientX: 180 }] })
+    await expect(selected).toHaveAttribute('aria-label', 'Photo 3')
+  })
+
+  test('primary photographs remain contained and controls sit below the image', async ({ page }) => {
+    test.skip(skip, 'Skipping: no server available in CI')
+    test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
+    await seedViewerSession(page)
+    await page.goto('/')
+
+    const primary = page.getByRole('img').first()
+    await expect(primary).toHaveCSS('object-fit', 'contain')
+    const imageBox = await primary.boundingBox()
+    const previousBox = await page.getByRole('button', { name: 'Previous photo' }).boundingBox()
+    const nextBox = await page.getByRole('button', { name: 'Next photo' }).boundingBox()
+    expect(imageBox).not.toBeNull()
+    expect(previousBox?.y ?? 0).toBeGreaterThanOrEqual((imageBox?.y ?? 0) + (imageBox?.height ?? 0))
+    expect(nextBox?.y ?? 0).toBeGreaterThanOrEqual((imageBox?.y ?? 0) + (imageBox?.height ?? 0))
   })
 
   test('carousel does not autoplay', async ({ page }) => {

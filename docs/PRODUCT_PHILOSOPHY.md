@@ -1,6 +1,6 @@
 # Pawpaw Product Philosophy
 
-**Status:** Release 2 design-foundation proposal for product-owner approval
+**Status:** Approved Release 2 product philosophy; Batch 1 implemented and evidence-ready
 
 **Product:** Varada's private, long-lived family archive and publishing system
 
@@ -138,12 +138,18 @@ The archive can hold more than one perspective without pretending all perspectiv
 
 ## Photograph integrity
 
+A documentary photograph may be manually or AI-assistedly enhanced without ceasing to be documentary. Permitted presentation edits include exposure and white-balance correction, colour correction, contrast adjustment, denoising, sharpening, mild deblurring or resolution enhancement, straightening, deliberate cropping, and minor cleanup that does not change the factual content of the scene. These edits do not require an “AI-generated” label.
+
+A photograph ceases to qualify as unaltered documentary evidence when an edit invents, removes, composites or materially changes a person, expression, body, clothing, object, background, location, event or other factual content. Such altered imagery must not be presented as an unchanged real photograph.
+
+Sujith explicitly approved the six mildly enhanced Home photographs as final presentation assets. Pawpaw may use similarly enhanced genuine photographs in future; untouched camera originals are not required as website presentation assets. Pawpaw remains a presentation archive rather than the sole master-photo backup.
+
 - Treat each photograph as evidence and emotional centre, not raw material for a decorative crop.
 - Show the whole image by default. Crop only by deliberate editorial choice while preserving the original.
 - Never cover faces or important details with controls, illustration, gradients, or text.
 - Use captions for visible context and alt text for equivalent non-visual meaning.
 - Preserve portrait, landscape, and square images without forcing one shape.
-- Never represent AI imagery as a real family photograph.
+- Never represent invented or materially altered imagery as an unchanged real family photograph.
 
 ## No social mechanics; operational-alert distinction
 

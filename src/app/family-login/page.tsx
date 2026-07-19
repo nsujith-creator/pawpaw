@@ -2,52 +2,50 @@
 
 import { useActionState } from 'react'
 import { loginViewer } from './actions'
+import styles from './family-login.module.css'
 
 export default function FamilyLoginPage() {
   const [state, formAction, pending] = useActionState(loginViewer, { error: '' })
 
   return (
-    <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ width: '100%', maxWidth: '24rem' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.5rem', marginBottom: '0.5rem', textAlign: 'center' }}>
-          Varada&apos;s World
-        </h1>
-        <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', marginBottom: '2rem' }}>
-          Enter the family passphrase to continue.
-        </p>
-        <form action={formAction}>
-          <label htmlFor="passphrase" style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            Passphrase
-          </label>
-          <input
-            id="passphrase"
-            name="passphrase"
-            type="password"
-            required
-            autoComplete="current-password"
-            style={{
-              width: '100%', padding: '0.75rem', border: '1px solid #d1d5db',
-              borderRadius: '0.375rem', fontSize: '1rem', marginBottom: '1rem',
-            }}
-          />
-          {state.error && (
-            <p role="alert" style={{ color: '#dc2626', fontSize: '0.875rem', marginBottom: '1rem' }}>
-              {state.error}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={pending}
-            style={{
-              width: '100%', padding: '0.75rem', background: '#1a1a2e',
-              color: '#fff', borderRadius: '0.375rem', fontSize: '1rem', fontWeight: '600',
-              opacity: pending ? 0.6 : 1, cursor: pending ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {pending ? 'Checking…' : 'Enter'}
-          </button>
-        </form>
-      </div>
+    <main className={styles.page}>
+      <section className={styles.gateway} aria-labelledby="family-login-title">
+        <div className={styles.brand} aria-label="Pawpaw">
+          pawpaw <span aria-hidden="true">♥</span>
+        </div>
+
+        <div className={styles.card}>
+          <p className={styles.eyebrow}>Private family archive</p>
+          <h1 id="family-login-title" className={styles.title}>Varada&apos;s World</h1>
+          <p id="family-login-help" className={styles.intro}>
+            Enter the family passphrase to continue.
+          </p>
+
+          <form action={formAction} className={styles.form} aria-busy={pending}>
+            <label htmlFor="passphrase" className={styles.label}>Passphrase</label>
+            <input
+              id="passphrase"
+              name="passphrase"
+              type="password"
+              required
+              autoComplete="current-password"
+              aria-describedby="family-login-help"
+              aria-invalid={state.error ? true : undefined}
+              className={styles.input}
+            />
+            {state.error && (
+              <p role="alert" className={styles.error}>
+                {state.error}
+              </p>
+            )}
+            <button type="submit" disabled={pending} className={styles.submit}>
+              {pending ? 'Checking…' : 'Enter'}
+            </button>
+          </form>
+        </div>
+
+        <p className={styles.privacyNote}>Private by design. For family, with care.</p>
+      </section>
     </main>
   )
 }

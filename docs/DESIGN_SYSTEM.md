@@ -6,7 +6,7 @@
 
 **Applies to:** the private family archive, family login, Admin, and future Pawpaw interfaces only when separately authorised for implementation
 
-**Implementation state:** documentation and approved visual proof only. The production UI does not yet implement this Release 2 system.
+**Implementation state:** Batch 1 family-surface implementation and automated evidence gate are complete in the uncommitted working tree; explicit product-owner visual review remains. Batch 2 is unauthorised.
 
 This is the canonical visual system for Pawpaw. It translates [PRODUCT_PHILOSOPHY.md](PRODUCT_PHILOSOPHY.md) into approved visual rules and must be read with the repository's privacy, truth, accessibility, and release boundaries. Approval of this foundation does not authorise UI coding, new routes, new content types, production changes, or deployment.
 
@@ -72,7 +72,7 @@ Typography rules:
 - Long reading text stays between `58ch` and `72ch`, with about `66ch` as the default.
 - Body text remains left aligned; do not centre paragraphs longer than two short lines or justify text.
 - Avoid ultra-light body text, faux handwriting for body copy, decorative uppercase, and more than three active weights in one composition.
-- Font loading, self-hosting, fallback metrics, and performance are implementation proofs still required; no package or loading strategy is approved by this document.
+- The approved Batch 1 implementation loads these faces with the installed `next/font/google` integration, emits self-hosted build assets, and makes no runtime request to Google Fonts. The production build and computed browser-family checks are recorded in `docs/PROJECT_STATUS.md`.
 
 Approved evidence: [desktop](visual-proof/typography-desktop.png), [375px mobile](visual-proof/typography-mobile-375.png), and [six-photo stress test](visual-proof/typography-six-photo-stress-test.png).
 
@@ -141,7 +141,7 @@ Colour rules:
 - Butter is illustration-only. Berry and plum are reserved for depth moments.
 - Stable neutral surfaces remain behind reading text and operational controls.
 - `--color-ink-muted` is for metadata at a suitable size, not body copy; implementation must verify contrast in context.
-- Automatic photo-derived ambient colour remains required, but its exact OKLCH lightness, chroma, alpha, fallback, and transition bounds are unresolved and must not be invented.
+- Automatic photo-derived ambient colour uses the approved bounded OKLCH contract: surface lightness `0.92–0.95`, surface chroma no more than `0.06`, accent lightness `0.52–0.64`, accent chroma no more than `0.14`, surface alpha `0.16–0.24`, accent alpha `0.12–0.18`, and Home rose fallback `#FCEAED`.
 
 Approved evidence: [A4 palette PNG](visual-proof/colour-palette-a4.png), [A4 palette PDF](visual-proof/colour-palette-a4.pdf), [photo context](visual-proof/colour-photo-context.png), and [375px mobile](visual-proof/colour-mobile-375.png).
 
@@ -155,7 +155,7 @@ The three approved expressions are:
 - wonder;
 - sleepy.
 
-No other expression, costume, age, pose, family character, or production asset is approved by this milestone.
+The isolated delight, wonder, and sleepy production assets are approved. No other expression, costume, age, pose, family character, or production asset is approved by this milestone.
 
 The character grammar is:
 
@@ -212,6 +212,12 @@ These rules do not authorise new routes, content types, chapter templates, or pr
 
 Real photography is Pawpaw's documentary and emotional centre.
 
+A documentary photograph may be manually or AI-assistedly enhanced without ceasing to be documentary. Permitted presentation edits include exposure and white-balance correction, colour correction, contrast adjustment, denoising, sharpening, mild deblurring or resolution enhancement, straightening, deliberate cropping, and minor cleanup that does not change the factual content of the scene. These edits do not require an “AI-generated” label.
+
+A photograph ceases to qualify as unaltered documentary evidence when an edit invents, removes, composites or materially changes a person, expression, body, clothing, object, background, location, event or other factual content. Such altered imagery must not be presented as an unchanged real photograph.
+
+Sujith explicitly approved the six mildly enhanced Home photographs as final presentation assets. Pawpaw may use similarly enhanced genuine photographs in future; untouched camera originals are not required as website presentation assets. Pawpaw remains a presentation archive rather than the sole master-photo backup. Full-frame presentation, privacy, dignity, alt-text and no-face-obstruction rules remain unchanged.
+
 - Preserve the whole photograph by default.
 - Use `object-fit: contain` for primary family views.
 - Never make a decorative crop the only family view.
@@ -221,7 +227,7 @@ Real photography is Pawpaw's documentary and emotional centre.
 - No autoplay.
 - Preserve stable media dimensions and support mixed portrait, landscape, and square sets.
 - Decorative duplicates use empty alt text and are hidden from assistive technology.
-- Photo palettes may affect only bounded ambient layers once the unresolved OKLCH system is approved and verified.
+- Photo palettes may affect only bounded ambient layers under the approved OKLCH contract and must not control readable text or semantic states.
 
 ## 8. Admin
 
@@ -294,7 +300,7 @@ Motion may explain change, maintain spatial continuity, or add brief delight. It
 - No scroll hijacking, continuous movement, full-screen flashes, or animation that gates content.
 - Static composition must remain complete without animation.
 - `prefers-reduced-motion: reduce` removes nonessential movement and loops while preserving all meaning, controls, and hierarchy.
-- Motion duration, easing, stagger, ambient-colour transition, and character-animation values are unresolved. Do not copy the former proposal values or invent replacements.
+- Fast control feedback is `120ms`; bounded ambient transitions are `240ms` with `cubic-bezier(0.2, 0.8, 0.2, 1)`; reduced motion makes nonessential transitions immediate at `0ms`. Character animation, autoplay and continuous ambient movement are not authorised.
 
 ## 12. Accessibility
 
@@ -311,19 +317,13 @@ Target WCAG 2.2 AA throughout implementation.
 - Preserve reduced-motion support and a complete static state.
 - Privacy guards, authentication boundaries, and logout behaviour must not be weakened by visual implementation.
 
-## 13. Unresolved implementation proofs
+## 13. Batch 1 implementation proof state
 
-The visual direction is approved; the following technical details remain unresolved and require a separately authorised, bounded implementation declaration and proof:
+The visual direction, font method, ambient contract, motion contract, three character assets and Batch 1 boundary are approved. The uncommitted Batch 1 working tree now has production-build and computed-font proof, pure ambient boundary/contrast tests, active-photo and reduced-motion browser proof, keyboard/touch/focus/44px-target/320px-reflow/375px-layout/200%-zoom checks, Wonder placement proof, degraded-media prose retention, and a complete six-photo screenshot/behaviour set under `test-results/release-2-family-evidence/`.
 
-- how Fraunces, Manrope, and conditional Noto Sans Malayalam are loaded, self-hosted, subset, and matched during fallback;
-- exact OKLCH lightness, chroma, alpha, fallback, failure, and non-flashing transition bounds for automatic ambient colour;
-- exact motion durations, easings, staggers, and character-animation behaviour;
-- component-level contrast, focus, keyboard, screen-reader, 320px reflow, 375px layout, 200% zoom, and reduced-motion verification;
-- performance on ordinary Indian mobile connections and font/image loading failure;
-- production-ready character assets beyond the three approved expression foundations;
-- implementation mapping from approved concepts to existing routes and data without inventing new screens, content types, or behaviour.
+The locked production crops are all genuine landscape rectangles at 454–455 x 330 pixels. Their modest extracted resolution is a known non-blocking presentation limitation. No square or portrait fixture was manufactured because that would violate the approved exact pixel bounds; future higher-resolution or differently oriented genuine files may replace them through the ordinary Media Library without changing Home behaviour or design.
 
-Do not fill these gaps by assumption. Documentation approval does not mean the production UI already implements or has technically verified the approved design.
+Automated evidence completion is not self-approval. Sujith's explicit visual review remains required before Batch 1 receives the project's final 10/10 visual approval. Batch 2 remains unauthorised.
 
 ## 14. Explicit anti-patterns
 

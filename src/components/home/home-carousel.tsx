@@ -2,12 +2,18 @@
 
 import { useState, useCallback, useRef } from 'react'
 import type { CarouselItem } from '@/lib/content/home'
+import { createAmbientTheme } from '@/lib/media/ambient-color'
+import AmbientFrame from './ambient-frame'
 import CarouselControls from './carousel-controls'
 import styles from './home-carousel.module.css'
 
 interface Props {
   items: CarouselItem[]
   title: string
+}
+
+type MediaStyle = React.CSSProperties & {
+  '--media-aspect': string
 }
 
 export default function HomeCarousel({ items, title }: Props) {
@@ -36,43 +42,43 @@ export default function HomeCarousel({ items, title }: Props) {
   const item = items[index]
   if (!item) return null
 
+  const ambientTheme = createAmbientTheme(item.extractedPalette)
+  const mediaStyle: MediaStyle = {
+    '--media-aspect': `${item.width ?? 4} / ${item.height ?? 3}`,
+  }
+
   return (
-    <section
-      aria-label={`${title} photo gallery`}
-      onKeyDown={(e) => {
-        if (e.key === 'ArrowLeft')  prev()
-        if (e.key === 'ArrowRight') next()
-      }}
-      tabIndex={0}
-    >
-      <div
-        className={styles.frame}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
+    <AmbientFrame theme={ambientTheme}>
+      <section
+        className={styles.carousel}
+        aria-label={`${title} photo gallery`}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault()
+            prev()
+          }
+          if (event.key === 'ArrowRight') {
+            event.preventDefault()
+            next()
+          }
+        }}
+        tabIndex={0}
       >
-        {/* Blurred copy of the photo fills the letterboxed space.
-            Decorative only — hidden from assistive technology. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={`bg-${item.id}`}
-          src={item.signedUrl}
-          alt=""
-          aria-hidden="true"
-          className={styles.blurredBg}
-        />
-
-        {/* Semi-transparent gradient overlay on top of the blurred background. */}
-        <div className={styles.overlay} />
-
-        {/* The alt attribute carries the accessibility text; the visible
-            caption is rendered separately below the frame. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={item.id}
-          src={item.signedUrl}
-          alt={item.altText ?? `Photo ${index + 1} of ${items.length}`}
-          className={styles.image}
-        />
+        <div
+          className={styles.frame}
+          style={mediaStyle}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            key={item.id}
+            src={item.signedUrl}
+            alt={item.altText ?? `Photo ${index + 1} of ${items.length}`}
+            data-media-id={item.id}
+            className={styles.image}
+          />
+        </div>
 
         <CarouselControls
           total={items.length}
@@ -81,11 +87,11 @@ export default function HomeCarousel({ items, title }: Props) {
           onNext={next}
           onGoto={setIndex}
         />
-      </div>
 
-      {item.caption && (
-        <p className={styles.caption}>{item.caption}</p>
-      )}
-    </section>
+        {item.caption && (
+          <p className={styles.caption}>{item.caption}</p>
+        )}
+      </section>
+    </AmbientFrame>
   )
 }
