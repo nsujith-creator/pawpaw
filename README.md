@@ -4,7 +4,8 @@ Private family archive for Varada. Read the canonical documents before touching 
 
 - [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) — **read this first**: current build status, working-tree inventory, pending work, and manual-testing policy
 - [docs/PRODUCT_PHILOSOPHY.md](docs/PRODUCT_PHILOSOPHY.md) — Release 2 product principles and feature decision tests
-- [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — proposed implementation-ready visual system and current UI audit
+- [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — approved Release 2 visual foundation and unresolved implementation proofs
+- [docs/visual-proof/](docs/visual-proof/) — Sujith's approved 19 July 2026 typography, colour, character, Home, Her Story, and Admin proof artefacts
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md)
 - [CLAUDE_PROJECT_INSTRUCTIONS.md](CLAUDE_PROJECT_INSTRUCTIONS.md)
 - [PHASE_1_IMPLEMENTATION_DECLARATION.md](PHASE_1_IMPLEMENTATION_DECLARATION.md)
@@ -146,4 +147,4 @@ Wix is the registrar and DNS host. Vercel hosts the `pawpaw` application. Produc
 4. Set `NEXT_PUBLIC_SITE_URL` to the canonical production hostname.
 5. Verify Vercel Hobby plan limits before deploying (bandwidth, function duration, image optimization).
 
-Phase 1 is complete, merged, deployed, and production verified. Release 2 is open at the documentation-only design-foundation milestone. UI implementation remains blocked until Sujith approves `docs/PRODUCT_PHILOSOPHY.md` and `docs/DESIGN_SYSTEM.md`.
+Phase 1 is complete, merged, deployed, and production verified. Release 2 design proof is approved: canonical visual rules live in `docs/DESIGN_SYSTEM.md`, and the approved artefacts live in `docs/visual-proof/`. The current milestone is documentation reconciliation only. The next gate is a bounded UI implementation declaration and plan; implementation has not begun and is not authorised by this run.

@@ -341,7 +341,7 @@ Avoid making the entire product resemble:
 - a preschool worksheet;
 - a generic baby-shower invitation.
 
-An initial pairing such as **Bricolage Grotesque with Manrope** may be tested, but final selection must be judged against real photographs, illustrations, Malayalam and English names if needed, mobile legibility, and the desired emotional tone.
+The approved typography foundation is Fraunces 500 for display and chapter typography with Manrope for body text and interface controls. Use Noto Sans Malayalam only when Malayalam appears, and mark Malayalam content with `lang="ml"`.
 
 ### 5.7 Motion and interaction
 

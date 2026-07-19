@@ -1,6 +1,6 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 18 July 2026 (Release 2 design foundation documented; awaiting product-owner approval)
+**Status date:** 19 July 2026 (Release 2 visual foundation and proof approved; documentation reconciliation in progress)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -66,8 +66,9 @@ Every implementation prompt sent to Claude must include:
 - Shared Supabase arrangement, warnings, and limitations: **accepted as recorded in Sections 3.2 and 8**.
 - Release decision: **PR #2 was marked ready for review after every required automated verification command exited 0**.
 - Merge and deployment: **complete**. Phase 1 is merged into `main`, deployed, and production verified.
-- Release 2: **opened**. Its first milestone is the documentation-only design foundation.
-- UI implementation gate: **blocked pending Sujith's approval** of `docs/PRODUCT_PHILOSOPHY.md` and `docs/DESIGN_SYSTEM.md`.
+- Release 2: **opened**. Typography, colour, character, Home, Her Story chapter-header, and Admin dashboard visual gates are approved.
+- Current milestone: **documentation-only approved-design reconciliation**. No source code or production UI changed.
+- Next gate: **a bounded UI implementation declaration and plan**. UI implementation is not authorised by this run.
 - Manual testing for this milestone: **not required and not requested**; all 3 of 3 formal rounds remain consumed.
 
 ---
@@ -518,31 +519,40 @@ Final local verification for this correction:
 
 No dependency, migration, Supabase structure, permanent content, QtPi/Paru state, domain, secret, Release 2 feature, or unrelated UI changed.
 
-### 3.11 Release 2 design-foundation milestone (18 July 2026)
+### 3.11 Initial Release 2 design-foundation milestone (18 July 2026; superseded)
 
 Release 2 is authorized and opened with a documentation-only milestone:
 
 - `docs/PRODUCT_PHILOSOPHY.md` defines Pawpaw as Varada's private, long-lived family archive and publishing system, including privacy, truth, dignity, childhood protection, family voice, anti-social-media rules, AI truth boundaries, and feature decision tests.
-- `docs/DESIGN_SYSTEM.md` defines implementation-ready visual, typography, colour, layout, responsive, component, photography, motion, and accessibility rules. It also records a code-based audit of family login, family Home, Admin login, Dashboard, Content Library, Media Library, and Home editor.
-- `README.md` records the canonical production domain, Wix DNS arrangement, Vercel host/project, legacy fallback URL, and current Release 2 approval gate.
+- The initial `docs/DESIGN_SYSTEM.md` proposal recorded visual, typography, colour, layout, responsive, component, photography, motion, and accessibility rules plus a code-based UI audit. Its quiet/editorial translation and open approval gate were later superseded by Section 3.12.
+- `README.md` recorded the canonical production domain, Wix DNS arrangement, Vercel host/project, legacy fallback URL, and the then-current Release 2 gate.
 - No application source, CSS, component, route, dependency, migration, authentication, Supabase, DNS, Vercel configuration, QtPi, or Paru Health change occurred.
 - No manual test is required or requested. The formal manual-test count remains 3 of 3.
 
-**Approval gate:** UI implementation must not begin until Sujith reviews and approves both foundation documents. Approval authorizes design implementation planning only; stories, letters, galleries, timeline, new routes, and new features remain separate decisions.
+**Historical gate:** this proposal-review gate was superseded on 19 July 2026 by Sujith's explicit visual approvals and the bounded next gate in Section 3.12. Stories, letters, galleries, timeline, new routes, and new features remain separate decisions.
 
 Production closure: Git-integrated deployment `dpl_GKk3Ye7kra4CHXs88dMXkS6g6RF9` reached `READY`, records exact fix SHA `c5ce42e7655a54a3f9b36c5116226f356ffd64b6`, and serves the production alias. The same natural family test passed on desktop and mobile: Leave produced POST 303 followed by GET 200; one immediate Back remained on `/family-login`; no request for `/` occurred; no family wrapper, title/text/image, or Leave control was present or observed visible; and the passphrase form remained visible. Reload and direct `/` navigation remained blocked. The unchanged Admin regression also passed on desktop and mobile. Production fixtures started and ended at zero. Deployment-scoped logs recorded both viewer and Admin logout POSTs as 303 and contained no 405, 5xx, error, or fatal entry. The family production blocker is closed.
 
-### 3.12 Independent design-audit identity reconciliation (19 July 2026)
+### 3.12 Approved-design documentation reconciliation (19 July 2026)
 
-**Audit verdict:** Pawpaw is **not ready for UI implementation**. The audit confirmed an identity split: the original playful `PROJECT_BRIEF.md` is the emotional authority, while the prior quieter visual translation in subordinate Release 2 documents is rejected.
+**Approval verdict:** Sujith approved the visual direction and the supplied visual-proof pack. Pawpaw is **Direction B-led with selected Direction C energy**: a cinematic illustrated storybook of Varada's real life, built on truthful photographs, chapter structure, chronology, authorship, and family voices; animated by vivid controlled colour, humour, expressive characters, contemporary energy, and newborn baby-girlish personality. This is not a 50/50 hybrid, quiet/editorial-only, cream-and-ink-only, or generic baby-site direction.
 
-- Sujith selected **Direction B-led with selected Direction C energy**: a cinematic illustrated storybook of Varada's real life, built on truthful photographs, chapter structure, chronology, authorship, and family voices; animated by vivid controlled colour, humour, expressive characters, contemporary energy, and newborn baby-girlish personality.
-- The direction-selection blocker is resolved. This is not a 50/50 hybrid, quiet/editorial-only, cream-and-ink-only, or generic baby-site direction.
-- The current bounded task is the `docs/PRODUCT_PHILOSOPHY.md` correction. `docs/DESIGN_SYSTEM.md` remains unapproved and must not govern UI implementation yet.
-- UI implementation remains blocked. No stories, letters, gallery, moments, timeline, new route, or other feature is authorised.
-- No manual test is requested, and a fourth formal manual-test round is not authorised.
+Approved gates:
 
-**Exact next gate — typography visual test:** Fraunces + Manrope is the first candidate only, not a decided or approved pairing. Test it against one real Varada photograph with “Varada” at 72px, real English family prose, and real Malayalam text or a name where available, rendered on desktop and at 375px mobile. Sujith must approve or reject the actual visual result before any UI implementation can proceed.
+- **Typography:** Fraunces 500 for display and chapter roles; Manrope for body and interface; Noto Sans Malayalam only where Malayalam appears.
+- **Colour:** approved foundation, chapter, and semantic tokens, including corrected Gallery `#E35F45` and Moments `#359575` primaries.
+- **Character:** approved illustrated Varada foundation with delight, wonder, and sleepy expressions.
+- **Home:** approved family-facing photographic carousel concept for desktop and 375px mobile.
+- **Her Story:** approved text-led chapter-header concept for desktop and a deliberately recomposed 375px mobile layout.
+- **Admin:** approved “author's studio” dashboard concept with real counts, list-first records, semantic states, desktop sidebar, and 375px single-column mobile.
+
+The approved artefacts are present under `docs/visual-proof/` as the repository proof pack. They remain uncommitted in this working tree because this documentation-reconciliation run is explicitly prohibited from committing or pushing. `docs/DESIGN_SYSTEM.md` is the approved canonical Release 2 visual foundation and links every supplied proof file.
+
+This reconciliation changes documentation and adds approved proof artefacts only. It changes no application source, CSS, component, route, test, package, lockfile, migration, configuration, Supabase state, Vercel state, DNS, authentication, production content, QtPi Tracker, or Paru Health state. Documentation approval does not mean the production UI implements the approved system.
+
+All 3 of 3 formal manual-test rounds remain consumed. No further manual test is required or requested.
+
+**Exact next gate — bounded UI implementation declaration and plan:** define the exact existing routes, components, CSS, assets, font-loading method, unresolved ambient-colour values, unresolved motion values, accessibility proofs, and verification boundary before any UI code is written. This run does not authorise implementation.
 
 ---
 
@@ -885,7 +895,7 @@ tests/
 
 ### P1 — important
 
-- ~~Apply durable premium design system.~~ **DONE** — `docs/DESIGN_SYSTEM.md` created; premium layered carousel background implemented
+- ~~Apply Phase 1 visual conventions.~~ **DONE** — the Phase 1 layered carousel background remains implemented. The approved Release 2 visual system is now documented separately and is not yet implemented in production UI.
 - ~~Replace flat palette image backgrounds.~~ **DONE** — blurred bg + overlay + sharp contained image
 - ~~Ensure all current uncommitted work is inventoried and preserved.~~ **DONE** — see Section 5
 - `00_READ_ME_FIRST.md` was named in the checkpoint request but exists neither in the working tree nor in HEAD. No substitute content was invented; `docs/PROJECT_STATUS.md` remains the explicit canonical source.
@@ -929,7 +939,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 is now open at its documentation-only design-foundation milestone.**
+**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 is open at its documentation-only approved-design reconciliation milestone.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -937,7 +947,7 @@ Release boundary status after final checkpoint verification:
 1. ✓ Admin Dashboard complete with owner-scoped data, signed thumbnails, timestamps, usage count, search, filters, deterministic order, and error state.
 2. ✓ Content Library complete for Phase 1; title search and combined filters work, and Create New is honestly disabled until Release 2 without touching Home.
 3. ✓ Media Library complete with metadata, usage titles/counts, combined discovery filters, deterministic sorting, and reusable unattached media.
-4. ✓ Phase 1 visual conventions documented and applied; Release 2's proposed design system and current-UI audit now supersede any unsupported claim that the existing UI is already premium.
+4. ✓ Phase 1 visual conventions remain implemented; Release 2's approved visual foundation and proof pack are documented but not yet implemented in production UI.
 5. ✓ Full application verification suite green — every required command exits 0.
 6. ✓ Dashboard stat cards are navigation links; media count is scoped to the active admin.
 7. ✓ Upload/publish workflow UI clarity: message and guidance note explain attach versus publish.
@@ -948,10 +958,10 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 design foundation is documented, with UI implementation blocked pending Sujith's approval of both foundation documents.
+15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 visual direction and proof are approved, while UI implementation remains unauthorised until a bounded implementation declaration and plan is approved.
 16. ✓ Canonical production is `https://www.heyvarada.in`; Wix hosts registrar/DNS, the apex redirects to `www`, Vercel project `pawpaw` hosts the application, and `https://pawpaw-lemon.vercel.app` remains the legacy/fallback URL.
 17. ✓ No coding, UI, CSS, component, route, dependency, migration, authentication, data, DNS, hosting-configuration, or cross-application change occurred in the design-foundation milestone.
-18. ✓ No manual testing is required or requested for this documentation-only milestone. The exact next action is Sujith's review of `docs/PRODUCT_PHILOSOPHY.md` and `docs/DESIGN_SYSTEM.md`.
+18. ✓ No manual testing is required or requested for this documentation-only milestone. The exact next gate is a bounded UI implementation declaration and plan; implementation has not begun.
 
 ---
 
