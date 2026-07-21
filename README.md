@@ -3,6 +3,7 @@
 Private family archive for Varada. Read the canonical documents before touching any code.
 
 - [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) — **read this first**: current build status, working-tree inventory, pending work, and manual-testing policy
+- [docs/PENDING_REQUIREMENTS.md](docs/PENDING_REQUIREMENTS.md) — canonical living list of approved, blocked, proposed, released, and dropped follow-up requirements
 - [docs/PRODUCT_PHILOSOPHY.md](docs/PRODUCT_PHILOSOPHY.md) — Release 2 product principles and feature decision tests
 - [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — approved Release 2 visual foundation and unresolved implementation proofs
 - [docs/visual-proof/](docs/visual-proof/) — Sujith's approved 19 July 2026 typography, colour, character, Home, Her Story, and Admin proof artefacts

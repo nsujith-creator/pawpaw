@@ -16,6 +16,8 @@ function withRobots(res: NextResponse): NextResponse {
 }
 
 function isArchiveRoute(pathname: string): boolean {
+  if (pathname === '/manifest.webmanifest') return false
+
   // Everything that is not a public route, static asset, or API path.
   const publicPrefixes = [
     '/family-login',

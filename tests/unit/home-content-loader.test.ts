@@ -43,6 +43,7 @@ describe('published Home loader', () => {
     if (result.state !== 'published') return
     expect(result.content.title).toBe('Published title')
     expect(result.content.bodyBlocks).toEqual(homeRow.body_blocks)
+    expect(result.content.publishedAt).toBe(homeRow.published_at)
     expect(result.content.carousel).toHaveLength(1)
     expect(result.content.carousel[0]?.signedUrl).toContain('signed.example')
     expect(result.mediaState).toBe('complete')
@@ -92,6 +93,7 @@ describe('published Home loader', () => {
     if (result.state !== 'published') return
     expect(result.content.title).toBe('Published title')
     expect(result.content.bodyBlocks).toEqual(homeRow.body_blocks)
+    expect(result.content.publishedAt).toBe(homeRow.published_at)
     expect(result.content.carousel).toEqual([])
     expect(result.mediaState).toBe('degraded')
   })

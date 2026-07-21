@@ -7,6 +7,21 @@ import { loadEnvLocal, makeViewerCookieValue } from './viewer-session'
 
 const skip = process.env.PLAYWRIGHT_SKIP_AUTH === '1'
 const evidenceDir = join(process.cwd(), 'test-results', 'release-2-family-evidence')
+const expectedManifest = {
+  name: 'Pawpaw',
+  short_name: 'Pawpaw',
+  description: 'A private family archive.',
+  start_url: '/',
+  scope: '/',
+  display: 'standalone',
+  background_color: '#FFF8EE',
+  theme_color: '#FFF8EE',
+  icons: [
+    { src: '/icons/pawpaw-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/icons/pawpaw-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/icons/pawpaw-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ],
+}
 let cookie: string | null = null
 
 test.beforeAll(async () => {
@@ -66,8 +81,112 @@ async function expectMinimumTargets(page: Page): Promise<void> {
   }
 }
 
+function trackBrowserFailures(page: Page) {
+  const consoleErrors: string[] = []
+  const pageErrors: string[] = []
+  const failedRequests: string[] = []
+
+  page.on('console', message => {
+    if (message.type() === 'error') consoleErrors.push(message.text())
+  })
+  page.on('pageerror', error => pageErrors.push(error.message))
+  page.on('requestfailed', request => {
+    failedRequests.push(`${request.method()} ${request.url()} ${request.failure()?.errorText ?? ''}`.trim())
+  })
+
+  return () => {
+    expect(consoleErrors, 'browser console errors').toEqual([])
+    expect(pageErrors, 'uncaught page errors').toEqual([])
+    expect(failedRequests, 'failed browser requests').toEqual([])
+  }
+}
+
+async function expectPwaHeadAndAssets(page: Page): Promise<void> {
+  const manifestLink = page.locator('link[rel="manifest"]')
+  await expect(manifestLink).toHaveCount(1)
+  const manifestHref = await manifestLink.getAttribute('href')
+  expect(manifestHref).toBeTruthy()
+
+  const iconHrefs = await page.locator('link[rel~="icon"], link[rel="apple-touch-icon"]')
+    .evaluateAll(links => links.map(link => (link as HTMLLinkElement).href))
+  expect(iconHrefs.some(href => new URL(href).pathname === '/favicon.ico')).toBe(true)
+  expect(iconHrefs.some(href => new URL(href).pathname === '/icon.svg')).toBe(true)
+  expect(iconHrefs.some(href => new URL(href).pathname === '/apple-icon.png')).toBe(true)
+
+  for (const href of [manifestHref!, ...iconHrefs]) {
+    const response = await page.request.get(new URL(href, page.url()).toString())
+    expect(response.status(), href).toBe(200)
+  }
+
+  for (const path of [
+    '/icons/pawpaw-192.png',
+    '/icons/pawpaw-512.png',
+    '/icons/pawpaw-maskable-512.png',
+  ]) {
+    expect((await page.request.get(path)).status(), path).toBe(200)
+  }
+
+  const manifestResponse = await page.request.get(new URL(manifestHref!, page.url()).toString())
+  expect(await manifestResponse.json()).toEqual(expectedManifest)
+}
+
+async function expectDatelinePresentation(page: Page): Promise<void> {
+  const dateline = page.getByText('Written 19 July 2026 · V was 7 weeks and 2 days old', { exact: true })
+  await expect(dateline).toBeVisible()
+  const dateTime = await dateline.locator('time').getAttribute('datetime')
+  expect(new Date(dateTime!).toISOString()).toBe('2026-07-19T13:28:44.637Z')
+  await expect(page.locator('main time')).toHaveCount(1)
+
+  const presentation = await dateline.evaluate(element => {
+    function channels(value: string): number[] {
+      return value.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? []
+    }
+    function luminance(rgb: number[]): number {
+      const linear = rgb.map(channel => {
+        const normalized = channel / 255
+        return normalized <= 0.04045
+          ? normalized / 12.92
+          : ((normalized + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+    }
+    const style = getComputedStyle(element)
+    const foreground = luminance(channels(style.color))
+    const background = luminance(channels(getComputedStyle(document.body).backgroundColor))
+    const contrast = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+    return { fontSize: Number.parseFloat(style.fontSize), contrast }
+  })
+  expect(presentation.fontSize).toBeGreaterThanOrEqual(15)
+  expect(presentation.contrast).toBeGreaterThanOrEqual(4.5)
+}
+
+test('Unauthenticated manifest access preserves every protected route boundary', async ({ request }) => {
+  test.skip(skip, 'Skipping: no server available')
+
+  const manifestResponse = await request.get('/manifest.webmanifest', { maxRedirects: 0 })
+  expect(manifestResponse.status()).toBe(200)
+  expect(manifestResponse.headers()['location']).toBeUndefined()
+  expect(manifestResponse.headers()['content-type']).toMatch(
+    /^(?:application\/manifest\+json|application\/json)(?:;|$)/,
+  )
+  expect(await manifestResponse.json()).toEqual(expectedManifest)
+
+  for (const path of ['/', '/first-days']) {
+    const response = await request.get(path, { maxRedirects: 0 })
+    expect(response.status(), path).toBe(307)
+    expect(new URL(response.headers()['location'], 'http://pawpaw.local').pathname, path).toBe('/family-login')
+  }
+
+  for (const path of ['/admin', '/admin/home', '/admin/media']) {
+    const response = await request.get(path, { maxRedirects: 0 })
+    expect(response.status(), path).toBe(307)
+    expect(new URL(response.headers()['location'], 'http://pawpaw.local').pathname, path).toBe('/admin/login')
+  }
+})
+
 test('Family login visual foundation at 1440px and 375px', async ({ page }) => {
   test.skip(skip, 'Skipping: no server available')
+  const expectNoBrowserFailures = trackBrowserFailures(page)
   const thirdPartyFontRequests: string[] = []
   page.on('request', request => {
     if (/fonts\.(?:googleapis|gstatic)\.com/.test(request.url())) {
@@ -77,6 +196,7 @@ test('Family login visual foundation at 1440px and 375px', async ({ page }) => {
 
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/family-login')
+  await expectPwaHeadAndAssets(page)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText("Varada's World")
   await expect(page.getByLabel('Passphrase')).toBeVisible()
 
@@ -113,17 +233,21 @@ test('Family login visual foundation at 1440px and 375px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 })
   await expectNoHorizontalOverflow(page)
   await expect(page.getByRole('button', { name: 'Enter' })).toBeVisible()
+  expectNoBrowserFailures()
 })
 
 test('Authenticated Home visual foundation, reflow, focus, and privacy', async ({ page }) => {
   test.skip(skip, 'Skipping: no server available')
   test.skip(!cookie, 'Skipping: no viewer cookie could be derived')
+  const expectNoBrowserFailures = trackBrowserFailures(page)
   await seedViewerSession(page)
 
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/')
+  await expectPwaHeadAndAssets(page)
   await expect(page.locator('[data-private-surface="family"]')).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+  await expectDatelinePresentation(page)
   await expect(page.getByRole('tab')).toHaveCount(6)
   await expect(page.getByRole('img').first()).toHaveCSS('object-fit', 'contain')
   await expect(page.locator('header').getByRole('button', { name: 'Leave' })).toBeVisible()
@@ -149,6 +273,7 @@ test('Authenticated Home visual foundation, reflow, focus, and privacy', async (
 
   await page.setViewportSize({ width: 375, height: 812 })
   await expectNoHorizontalOverflow(page)
+  await expectDatelinePresentation(page)
   await expectMinimumTargets(page)
   const tabRows = await page.getByRole('tab').evaluateAll(tabs => (
     tabs.map(tab => Math.round(tab.getBoundingClientRect().top))
@@ -172,15 +297,19 @@ test('Authenticated Home visual foundation, reflow, focus, and privacy', async (
 
   await page.setViewportSize({ width: 320, height: 800 })
   await expectNoHorizontalOverflow(page)
+  await expectDatelinePresentation(page)
 
   await page.setViewportSize({ width: 640, height: 900 })
   await page.evaluate(() => { document.body.style.zoom = '2' })
+  await expectNoHorizontalOverflow(page)
+  await expectDatelinePresentation(page)
   for (const buttonName of ['Previous photo', 'Next photo', 'Leave']) {
     const box = await page.getByRole('button', { name: buttonName }).boundingBox()
     expect(box).not.toBeNull()
     expect(box!.x).toBeGreaterThanOrEqual(0)
     expect(box!.x + box!.width).toBeLessThanOrEqual(640)
   }
+  expectNoBrowserFailures()
 })
 
 test('Home evidence includes all six approved exact-crop photographs', async ({ page }) => {

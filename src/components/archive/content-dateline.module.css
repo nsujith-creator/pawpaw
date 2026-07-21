@@ -1,0 +1,15 @@
+.dateline {
+  margin: -0.75rem 0 1.25rem;
+  color: var(--color-ink-secondary);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.separator {
+  display: inline-block;
+  margin: 0 0.45em;
+  color: var(--color-home-primary);
+}

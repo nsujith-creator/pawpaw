@@ -19,6 +19,7 @@ const uploadForm  = read('app/admin/media/upload-form.tsx')
 const viewerPage  = read('app/(archive)/page.tsx')
 const archiveLayout = read('app/(archive)/layout.tsx')
 const familyHeader = read('components/archive/family-header.tsx')
+const contentDateline = read('components/archive/content-dateline.tsx')
 const leaveBtn    = read('components/home/leave-button.tsx')
 const attachments = read('app/admin/media/attachment-list.tsx')
 const adminPage   = read('app/admin/home/page.tsx')
@@ -340,6 +341,15 @@ describe('bounded carousel ambient surface', () => {
 })
 
 describe('Release 2 bounded Home treatment', () => {
+  it('renders one semantic Home dateline from publishedAt without rewriting database prose', () => {
+    expect(viewerPage).toContain('date={content.publishedAt}')
+    expect(viewerPage).toContain('context="V was 7 weeks and 2 days old"')
+    expect(contentDateline.match(/<time\b/g)).toHaveLength(1)
+    expect(contentDateline).toContain('dateTime={date}')
+    expect(viewerPage).not.toContain('7 weeks and 2 days to the day today.')
+    expect(viewerPage).not.toMatch(/\.replace\(/)
+  })
+
   it('uses only the approved Wonder character as a decorative Home asset', () => {
     expect(viewerPage).toContain('/illustrations/varada/varada-wonder.png')
     expect(viewerPage).not.toContain('varada-delight.png')

@@ -1,8 +1,10 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 19 July 2026 (Release 2 Batch 1 fully approved at 10/10 and authorised for production release)
+**Status date:** 21 July 2026 (Pawpaw 2.0.1 bounded implementation authorised)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
+**Current released commit:** `4804febc43f3821a3462dc77c4b07e623eed81b6`
+**Current production deployment:** `dpl_8rhCdAVcckbpmgafULJJdpdujLij`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
 **Main merge commit:** `93e464f30bdb95975bbac5d9e387a931c509c0ff` — normal GitHub merge of PR #2
 **Purpose of this file:** Single self-contained source of truth for current work, completed work, pending tasks, active risks, verification status, and manual-testing policy.
@@ -67,8 +69,9 @@ Every implementation prompt sent to Claude must include:
 - Release decision: **PR #2 was marked ready for review after every required automated verification command exited 0**.
 - Merge and deployment: **complete**. Phase 1 is merged into `main`, deployed, and production verified.
 - Release 2: **opened**. Typography, colour, character, Home, Her Story chapter-header, and Admin dashboard visual gates are approved.
-- Current milestone: **Release 2 Batch 1 final approval complete**. Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, responsive layouts, accessibility, reduced-motion/degraded-media states, family navigation, and Leave placement/behaviour are explicitly approved and locked at 10/10.
-- Next gate: execute the authorised Batch 1 commit, push, exact-commit Vercel production deployment, and read-only production smoke test. Batch 2 remains unauthorised.
+- Closed released milestone: **Release 2 Batch 1 is locked and live** at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through production deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, responsive layouts, accessibility, reduced-motion/degraded-media states, family navigation, and Leave placement/behaviour remain explicitly approved and locked at 10/10.
+- Current milestone: **Pawpaw 2.0.1 bounded implementation is authorised** for PR-001, PR-002, the code-only portion of PR-005, PR-006, and canonical status documentation. These requirements remain pending until production verification.
+- Next gate: complete the bounded Pawpaw 2.0.1 implementation and automated/icon evidence review without commit, push, deployment, or production data mutation. Batch 2/Admin remains unauthorised.
 - Manual testing for this milestone: **not required and not requested**; all 3 of 3 formal rounds remain consumed.
 
 ---
@@ -673,6 +676,14 @@ Sujith authorised the complete approved Batch 1 set for one exact-scope commit, 
 
 Canonical production is `https://www.heyvarada.in`; the fallback remains `https://pawpaw-lemon.vercel.app`. The final release commit SHA and successful production date are recorded in the release report after those facts exist, avoiding an inaccurate circular SHA or an unnecessary second documentation-only commit. Batch 2 and Admin redesign remain unauthorised.
 
+### 3.18 Release 2 Batch 1 closure and Pawpaw 2.0.1 authorisation (21 July 2026)
+
+Release 2 Batch 1 is closed, locked, and live. The released source baseline is commit `4804febc43f3821a3462dc77c4b07e623eed81b6`; the corresponding production deployment is `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. The approved Family Login, Home, First Days, all 15 photographs, family copy, captions, alt text, character placement, responsive compositions, accessibility behaviour, reduced-motion/degraded-media states, family navigation, Leave behaviour, authentication, and privacy boundaries remain locked.
+
+Sujith authorised a bounded Pawpaw 2.0.1 implementation covering only PR-001 favicon/browser identity, PR-002 manifest/icon foundation, the code preparation portion of PR-005, PR-006 reusable optional dateline treatment, and canonical pending/status documentation. `docs/PENDING_REQUIREMENTS.md` is the living requirements register. PR-001, PR-002, PR-005, and PR-006 remain pending until implementation review, production deployment, and smoke verification are complete. This authorisation adds no dependency, service, migration, authentication/security change, service worker, private caching, Admin work, or production data mutation.
+
+Batch 2/Admin remains separately unauthorised. No fourth formal manual-test round is requested; automated verification and icon screenshot review do not change the 3-of-3 formal-round count.
+
 ---
 
 ## 4. Completed major milestone — Phase 1 private Home flow
@@ -1058,7 +1069,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 Batch 1 Family Login, Home and First Days are explicitly approved at 10/10 and locked; every Batch 1 visual gate is closed and the production release is authorised. Batch 2 is unauthorised.**
+**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 Batch 1 Family Login, Home and First Days are explicitly approved at 10/10, locked, and live at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Pawpaw 2.0.1 is the current bounded implementation; Batch 2/Admin is unauthorised.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -1077,10 +1088,10 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 Batch 1 received Sujith's explicit final 10/10 approval and is authorised for exact-scope commit, push and production release. Batch 2 remains unauthorised.
+15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 Batch 1 is closed, locked, and live at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Pawpaw 2.0.1 is the current authorised bounded implementation. Batch 2/Admin remains unauthorised.
 16. ✓ Canonical production is `https://www.heyvarada.in`; Wix hosts registrar/DNS, the apex redirects to `www`, Vercel project `pawpaw` hosts the application, and `https://pawpaw-lemon.vercel.app` remains the legacy/fallback URL.
 17. ✓ No coding, UI, CSS, component, route, dependency, migration, authentication, data, DNS, hosting-configuration, or cross-application change occurred in the design-foundation milestone.
-18. ✓ No fourth manual-testing round is required or requested. The exact next gate is the authorised Batch 1 production release; Batch 2 requires separate authorization.
+18. ✓ No fourth manual-testing round is required or requested. The exact next gate is bounded Pawpaw 2.0.1 implementation review and icon screenshot review; Batch 2/Admin requires separate authorization.
 
 ---
 

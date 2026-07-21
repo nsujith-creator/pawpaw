@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { getPublishedHomeContent } from '@/lib/content/home'
+import ContentDateline from '@/components/archive/content-dateline'
 import HomeCarousel from '@/components/home/home-carousel'
 import styles from './home.module.css'
 
@@ -52,6 +53,10 @@ export default async function HomePage() {
         <section className={styles.prose}>
           <p className={styles.chapterLabel}>Home</p>
           <h1 className={styles.title}>{content.title}</h1>
+          <ContentDateline
+            date={content.publishedAt}
+            context="V was 7 weeks and 2 days old"
+          />
           <div className={styles.bodyCopy}>
             {content.bodyBlocks.map((block, i) => {
               if (block.type === 'heading') {
