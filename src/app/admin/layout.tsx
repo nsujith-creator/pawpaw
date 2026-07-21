@@ -3,18 +3,20 @@
 
 import AdminNav from '@/components/admin/admin-nav'
 import PrivateHistoryGuard from '@/components/auth/private-history-guard'
+import styles from './admin.module.css'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: '100dvh', background: '#f9fafb' }}>
+    <div className={styles.adminRoot}>
       <PrivateHistoryGuard />
-      <header style={{ borderBottom: '1px solid #e5e7eb', background: '#fff', padding: '0.75rem 1.25rem' }}>
-        <span style={{ fontFamily: 'Georgia, serif', fontWeight: 600 }}>Varada — Admin</span>
+      <header className={styles.brandHeader}>
+        <span className={styles.brand}>pawpaw</span>
+        <span className={styles.brandContext}>author&apos;s studio</span>
       </header>
-      <AdminNav />
-      <main style={{ padding: '1.5rem 1.25rem', maxWidth: '64rem', margin: '0 auto' }}>
-        {children}
-      </main>
+      <div className={styles.studioLayout}>
+        <AdminNav />
+        <main className={styles.main}>{children}</main>
+      </div>
     </div>
   )
 }

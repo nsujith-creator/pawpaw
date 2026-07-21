@@ -7,6 +7,7 @@ import HomeEditor from './home-editor'
 import UploadForm from '../media/upload-form'
 import AttachmentList, { type AttachmentItem } from '../media/attachment-list'
 import { loadCanonicalAdminHome } from '@/lib/content/manage-home'
+import styles from '../admin.module.css'
 
 interface AttachmentRow {
   sort_order:   number
@@ -51,9 +52,10 @@ export default async function AdminHomePage() {
 
   if (homeResult.state === 'error') {
     return (
-      <div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', marginBottom: '1rem' }}>Home</h1>
-        <p role="alert" style={{ color: '#b91c1c' }}>
+      <div className={styles.pageNarrow}>
+        <p className={styles.eyebrow}>Home page editor</p>
+        <h1 className={styles.pageTitle}>Home</h1>
+        <p role="alert" className={styles.errorNotice}>
           Home could not be loaded. Nothing has been changed; please try again later.
         </p>
       </div>
@@ -86,33 +88,40 @@ export default async function AdminHomePage() {
   )
 
   return (
-    <div>
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Home</h1>
-      <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '1.5rem' }}>
+    <div className={styles.pageNarrow}>
+      <header className={styles.pageHeader}>
+        <div>
+          <p className={styles.eyebrow}>Home page editor</p>
+          <h1 className={styles.pageTitle}>Home</h1>
+          <p className={styles.lede}>
         Changes appear on the family page after it is refreshed — an already-open
         page will not update by itself.
-      </p>
-      <HomeEditor existing={item ?? null} />
+          </p>
+        </div>
+      </header>
+      <section className={styles.editorSection} aria-label="Home words and publication">
+        <HomeEditor existing={item ?? null} />
+      </section>
 
-      <hr style={{ margin: '2rem 0', borderColor: '#e5e7eb' }} />
-      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', marginBottom: '0.375rem' }}>
-        Attached photos
-      </h2>
-      <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '1rem' }}>
+      <hr className={styles.sectionDivider} />
+      <h2 className={styles.sectionTitle}>Attached photos</h2>
+      <p className={styles.lede}>
         Uploading or attaching a photo saves it in Admin immediately.
         The family sees photos only after the Home page is published — use the Publish button above.
       </p>
       {item?.id ? (
         <AttachmentList contentId={item.id} items={attachments} />
       ) : (
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+        <p className={styles.emptyState}>
           Save Home content first — photos attach to the saved content.
         </p>
       )}
 
-      <hr style={{ margin: '2rem 0', borderColor: '#e5e7eb' }} />
-      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', marginBottom: '1rem' }}>Upload a photo</h2>
-      <UploadForm contentItemId={item?.id ?? null} />
+      <hr className={styles.sectionDivider} />
+      <section className={styles.editorSection} aria-labelledby="upload-photo-title">
+        <h2 id="upload-photo-title" className={styles.sectionTitle}>Upload a photo</h2>
+        <UploadForm contentItemId={item?.id ?? null} />
+      </section>
     </div>
   )
 }

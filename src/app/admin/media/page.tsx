@@ -10,6 +10,7 @@ import {
   type MediaViewItem,
 } from '@/lib/admin/library-view'
 import MediaLibraryClient, { type MediaLibraryItem } from './media-library-client'
+import styles from '../admin.module.css'
 
 interface UsageRow {
   content_id: string
@@ -28,11 +29,6 @@ function formatSize(bytes: number | null): string {
     : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
-const filterControl: React.CSSProperties = {
-  padding: '0.4375rem 0.625rem', border: '1px solid #d1d5db', borderRadius: '0.375rem',
-  fontSize: '0.8125rem', background: '#fff', color: '#1a1a2e',
-}
-
 export default async function MediaLibraryPage({
   searchParams,
 }: {
@@ -48,7 +44,6 @@ export default async function MediaLibraryPage({
 
   const filters = parseMediaFilters(await searchParams)
   const db = createAdminClient()
-
   const { data: rows, error: queryError } = await db
     .from('media_assets')
     .select(`
@@ -65,23 +60,17 @@ export default async function MediaLibraryPage({
   if (queryError) {
     console.error('MediaLibraryPage query failed:', queryError)
     return (
-      <div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.375rem', color: '#1a1a2e' }}>
-          Media library
-        </h1>
-        <p role="alert" style={{ fontSize: '0.875rem', color: '#dc2626', marginTop: '1rem' }}>
-          The media list could not be loaded right now. Refresh the page to try again.
-        </p>
+      <div className={styles.page}>
+        <p className={styles.eyebrow}>Photograph desk</p>
+        <h1 className={styles.pageTitle}>Media library</h1>
+        <p role="alert" className={styles.errorNotice}>The media list could not be loaded right now. Refresh the page to try again.</p>
       </div>
     )
   }
 
   const baseItems: ServerMediaItem[] = (rows ?? []).map(row => {
     const usage = ((row.content_media ?? []) as unknown as UsageRow[])
-    const usageTitles = usage
-      .map(item => item.content_items?.title?.trim() || '(untitled content)')
-      .sort((a, b) => a.localeCompare(b))
-
+    const usageTitles = usage.map(item => item.content_items?.title?.trim() || '(untitled content)').sort((a, b) => a.localeCompare(b))
     return {
       mediaId: row.id,
       altText: row.alt_text ?? '',
@@ -104,7 +93,6 @@ export default async function MediaLibraryPage({
     } catch (error) {
       console.error('MediaLibraryPage thumbnail signing failed:', error)
     }
-
     return {
       mediaId: item.mediaId,
       signedUrl,
@@ -119,71 +107,50 @@ export default async function MediaLibraryPage({
     }
   }))
 
-  const hasFilters = Boolean(
-    filters.query || filters.type !== 'all' || filters.attachment !== 'all' || filters.sort !== 'newest',
-  )
+  const hasFilters = Boolean(filters.query || filters.type !== 'all' || filters.attachment !== 'all' || filters.sort !== 'newest')
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.375rem', color: '#1a1a2e', margin: 0 }}>
-          Media library
-        </h1>
-        <span style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
-          {items.length} of {baseItems.length} file{baseItems.length !== 1 ? 's' : ''}
-        </span>
-      </div>
+    <div className={styles.page}>
+      <header className={styles.splitHeader}>
+        <div>
+          <p className={styles.eyebrow}>Photograph desk</p>
+          <h1 className={styles.pageTitle}>Media library</h1>
+          <p className={styles.lede}>Review the private photographs already saved in Pawpaw and where each one is used.</p>
+        </div>
+        <span className={styles.countNote}>{items.length} of {baseItems.length} file{baseItems.length !== 1 ? 's' : ''}</span>
+      </header>
 
-      <form method="GET" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <input
-          name="q"
-          type="search"
-          defaultValue={filters.query}
-          placeholder="Search photos or usage"
-          aria-label="Search media"
-          style={{ ...filterControl, minWidth: '14rem', flex: '1 1 14rem' }}
-        />
-        <select name="type" defaultValue={filters.type} aria-label="Filter by image type" style={filterControl}>
+      <form method="GET" className={styles.filterBar}>
+        <input name="q" type="search" defaultValue={filters.query} placeholder="Search photos or usage" aria-label="Search media" className={styles.field} />
+        <select name="type" defaultValue={filters.type} aria-label="Filter by image type" className={styles.select}>
           <option value="all">All image types</option>
           <option value="jpeg">JPEG</option>
           <option value="png">PNG</option>
           <option value="webp">WebP</option>
         </select>
-        <select name="attachment" defaultValue={filters.attachment} aria-label="Filter by attachment status" style={filterControl}>
+        <select name="attachment" defaultValue={filters.attachment} aria-label="Filter by attachment status" className={styles.select}>
           <option value="all">Attached and unattached</option>
           <option value="attached">Attached</option>
           <option value="unattached">Unattached</option>
         </select>
-        <select name="sort" defaultValue={filters.sort} aria-label="Sort media" style={filterControl}>
+        <select name="sort" defaultValue={filters.sort} aria-label="Sort media" className={styles.select}>
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
         </select>
-        <button type="submit" style={{ ...filterControl, background: '#1a1a2e', color: '#fff', border: 'none' }}>
-          Apply
-        </button>
-        <a href="/admin/media" style={{ ...filterControl, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-          Clear
-        </a>
+        <button type="submit" className={styles.action}>Apply</button>
+        <a href="/admin/media" className={styles.secondaryAction}>Clear</a>
       </form>
 
       {baseItems.length === 0 ? (
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-          No photos uploaded yet. Upload photos from the{' '}
-          <a href="/admin/home" style={{ textDecoration: 'underline', color: '#1a1a2e' }}>Home page</a>.
-        </p>
+        <p className={styles.emptyState}>No photos uploaded yet. Upload photos from the <a href="/admin/home" className={styles.inlineLink}>Home page</a>.</p>
       ) : items.length === 0 ? (
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-          No media matches these filters.{' '}
-          <a href="/admin/media" style={{ textDecoration: 'underline', color: '#1a1a2e' }}>Clear filters</a>.
-        </p>
+        <p className={styles.emptyState}>No media matches these filters. <a href="/admin/media" className={styles.inlineLink}>Clear filters</a>.</p>
       ) : (
         <MediaLibraryClient items={items} />
       )}
 
       {hasFilters && items.length > 0 && (
-        <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#6b7280' }}>
-          Search covers alt text, caption, safe filename, and attached content titles.
-        </p>
+        <p className={styles.countNote}>Search covers alt text, caption, safe filename, and attached content titles.</p>
       )}
     </div>
   )

@@ -12,6 +12,7 @@ import {
   type AttachmentCandidate,
   type ContentViewItem,
 } from '@/lib/admin/library-view'
+import styles from './admin.module.css'
 
 interface DashboardAttachmentRow {
   sort_order: number
@@ -28,18 +29,6 @@ interface DashboardItem extends ContentViewItem {
 }
 
 const CONTENT_TYPES = ['home', 'story', 'gallery', 'letter', 'moment'] as const
-
-const statusBadge = (status: string): React.CSSProperties => ({
-  display: 'inline-block', fontSize: '0.6875rem', fontWeight: 600,
-  padding: '0.125rem 0.5rem', borderRadius: '9999px',
-  background: status === 'published' ? '#dcfce7' : '#f3f4f6',
-  color: status === 'published' ? '#166534' : '#4b5563',
-})
-
-const filterControl: React.CSSProperties = {
-  padding: '0.4375rem 0.625rem', border: '1px solid #d1d5db', borderRadius: '0.375rem',
-  fontSize: '0.8125rem', background: '#fff', color: '#1a1a2e',
-}
 
 export default async function AdminDashboard({
   searchParams,
@@ -79,11 +68,10 @@ export default async function AdminDashboard({
   if (contentResult.error || mediaResult.error) {
     console.error('AdminDashboard query failed:', contentResult.error ?? mediaResult.error)
     return (
-      <div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.375rem', color: '#1a1a2e' }}>
-          Dashboard
-        </h1>
-        <p role="alert" style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#dc2626' }}>
+      <div className={styles.page}>
+        <p className={styles.eyebrow}>Author&apos;s studio</p>
+        <h1 className={styles.pageTitle}>Dashboard</h1>
+        <p role="alert" className={styles.errorNotice}>
           Dashboard data could not be loaded right now. Refresh the page to try again.
         </p>
       </div>
@@ -126,141 +114,124 @@ export default async function AdminDashboard({
 
   const draftCount = allItems.filter(item => item.status === 'draft').length
   const publishedCount = allItems.filter(item => item.status === 'published').length
+  const missingAltMediaIds = new Set<string>()
+  for (const row of contentResult.data ?? []) {
+    const attachments = ((row.content_media ?? []) as unknown as DashboardAttachmentRow[])
+    for (const attachment of attachments) {
+      const media = attachment.media_assets
+      if (media && !media.alt_text?.trim()) missingAltMediaIds.add(media.id)
+    }
+  }
+  const missingAltCount = missingAltMediaIds.size
   const hasFilters = Boolean(filters.query || filters.status !== 'all' || filters.type !== 'all')
 
-  const statCard: React.CSSProperties = {
-    display: 'block', background: '#fff', border: '1px solid #e5e7eb',
-    borderRadius: '0.5rem', padding: '1rem 1.25rem', minWidth: '8rem',
-    textDecoration: 'none',
-  }
-  const quickLink: React.CSSProperties = {
-    display: 'block', background: '#fff', border: '1px solid #e5e7eb',
-    borderRadius: '0.5rem', padding: '1rem 1.25rem', fontWeight: 500,
-    textDecoration: 'none', color: '#1a1a2e',
-  }
-
   return (
-    <div>
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.375rem', marginBottom: '1.5rem', color: '#1a1a2e' }}>
-        Dashboard
-      </h1>
-
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-        <a href="/admin/content?status=draft" style={statCard}>
-          <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>Drafts</p>
-          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>{draftCount}</p>
-        </a>
-        <a href="/admin/content?status=published" style={statCard}>
-          <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>Published</p>
-          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>{publishedCount}</p>
-        </a>
-        <a href="/admin/media" style={statCard}>
-          <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>Media files</p>
-          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>{mediaResult.count ?? 0}</p>
-        </a>
-      </div>
-
-      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', marginBottom: '0.75rem', color: '#1a1a2e' }}>
-        Quick access
-      </h2>
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-        <a href="/admin/home" style={quickLink}>Home page &rarr;</a>
-        <a href="/admin/content" style={quickLink}>Content library &rarr;</a>
-        <a href="/admin/media" style={quickLink}>Media library &rarr;</a>
-      </div>
-
-      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', marginBottom: '0.75rem', color: '#1a1a2e' }}>
-        Recently updated
-      </h2>
-
-      <form method="GET" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <input
-          name="q"
-          type="search"
-          defaultValue={filters.query}
-          placeholder="Search by title"
-          aria-label="Search content by title"
-          style={{ ...filterControl, minWidth: '13rem', flex: '1 1 13rem' }}
-        />
-        <select name="status" defaultValue={filters.status} aria-label="Filter by status" style={filterControl}>
-          <option value="all">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-        </select>
-        <select name="type" defaultValue={filters.type} aria-label="Filter by content type" style={filterControl}>
-          <option value="all">All types</option>
-          {CONTENT_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
-        </select>
-        <button type="submit" style={{ ...filterControl, background: '#1a1a2e', color: '#fff', border: 'none' }}>
-          Apply
-        </button>
-        <a href="/admin" style={{ ...filterControl, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-          Clear
-        </a>
-      </form>
-
-      {allItems.length === 0 ? (
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Nothing saved yet.</p>
-      ) : recentItems.length === 0 ? (
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-          No content matches these filters. <a href="/admin" style={{ textDecoration: 'underline' }}>Clear filters</a>.
-        </p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {recentItems.map(item => {
-            const published = publishedTimestamp(item)
-            return (
-              <article
-                key={item.id}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1rem',
-                  background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', flexWrap: 'wrap',
-                }}
-              >
-                {item.signedThumbnail ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.signedThumbnail}
-                    alt={item.firstMedia?.altText ?? `First attached photo for ${item.title ?? 'this content'}`}
-                    width={64}
-                    height={64}
-                    style={{ width: '4rem', height: '4rem', objectFit: 'cover', borderRadius: '0.375rem', flexShrink: 0 }}
-                  />
-                ) : (
-                  <div aria-hidden="true" style={{ width: '4rem', height: '4rem', borderRadius: '0.375rem', background: '#f3f4f6', flexShrink: 0 }} />
-                )}
-
-                <div style={{ flex: 1, minWidth: '11rem' }}>
-                  <p style={{ fontSize: '0.875rem', color: '#1a1a2e', fontWeight: 600 }}>
-                    {item.title ?? '(untitled)'}
-                  </p>
-                  <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                    Updated {formatAdminDateTime(item.updatedAt)}
-                  </p>
-                  {published && <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{published}</p>}
-                </div>
-
-                <span style={{ fontSize: '0.6875rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {item.type}
-                </span>
-                <span style={statusBadge(item.status)}>{item.status}</span>
-                <span style={{ fontSize: '0.75rem', color: '#6b7280', whiteSpace: 'nowrap' }}>
-                  {item.attachedMediaCount} photo{item.attachedMediaCount === 1 ? '' : 's'}
-                </span>
-                {item.type === 'home' && (
-                  <a href="/admin/home" style={{ fontSize: '0.75rem', color: '#6b7280', textDecoration: 'underline' }}>Edit</a>
-                )}
-              </article>
-            )
-          })}
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <div>
+          <p className={styles.eyebrow}>Author&apos;s studio</p>
+          <h1 className={styles.pageTitle}>Dashboard</h1>
+          <p className={styles.lede}>The book is safe. Here is what is ready, what is live, and what needs attention.</p>
         </div>
-      )}
+      </header>
 
-      {hasFilters && recentItems.length > 0 && (
-        <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#6b7280' }}>
-          Showing {recentItems.length} matching item{recentItems.length === 1 ? '' : 's'}.
-        </p>
-      )}
+      <div className={styles.statsStrip} aria-label="Current studio counts">
+        <a href="/admin/content?status=draft" className={styles.statLink}>
+          <span className={styles.statNumber}>{draftCount}</span>
+          <span className={styles.statLabel}>Drafts</span>
+        </a>
+        <a href="/admin/content?status=published" className={styles.statLink}>
+          <span className={styles.statNumber}>{publishedCount}</span>
+          <span className={styles.statLabel}>Published</span>
+        </a>
+        <a href="/admin/media" className={styles.statLink}>
+          <span className={styles.statNumber}>{mediaResult.count ?? 0}</span>
+          <span className={styles.statLabel}>Media files</span>
+        </a>
+      </div>
+
+      <div className={styles.dashboardGrid}>
+        <section className={styles.panel} aria-labelledby="continue-editing-title">
+          <h2 id="continue-editing-title" className={styles.sectionTitle}>Continue editing</h2>
+          <div className={styles.quickLinks}>
+            <a href="/admin/home" className={styles.quickLink}>Home page</a>
+            <a href="/admin/content" className={styles.quickLink}>Content library</a>
+            <a href="/admin/media" className={styles.quickLink}>Media library</a>
+          </div>
+        </section>
+
+        <section className={styles.panel} aria-labelledby="needs-attention-title">
+          <h2 id="needs-attention-title" className={styles.sectionTitle}>Needs attention</h2>
+          {missingAltCount > 0 || draftCount > 0 ? (
+            <ul className={styles.attentionList}>
+              {missingAltCount > 0 && (
+                <li className={styles.attentionItem}>{missingAltCount} attached photo{missingAltCount === 1 ? '' : 's'} missing alt text</li>
+              )}
+              {draftCount > 0 && (
+                <li className={styles.attentionItem}>{draftCount} unpublished draft{draftCount === 1 ? '' : 's'}</li>
+              )}
+            </ul>
+          ) : (
+            <p className={styles.emptyState}>Nothing needs attention.</p>
+          )}
+        </section>
+      </div>
+
+      <section aria-labelledby="recently-updated-title">
+        <div className={styles.sectionHeader}>
+          <h2 id="recently-updated-title" className={styles.sectionTitle}>Recently updated</h2>
+        </div>
+
+        <form method="GET" className={`${styles.filterBar} ${styles.filterBarCompact}`}>
+          <input name="q" type="search" defaultValue={filters.query} placeholder="Search by title" aria-label="Search content by title" className={styles.field} />
+          <select name="status" defaultValue={filters.status} aria-label="Filter by status" className={styles.select}>
+            <option value="all">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+          <select name="type" defaultValue={filters.type} aria-label="Filter by content type" className={styles.select}>
+            <option value="all">All types</option>
+            {CONTENT_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+          </select>
+          <button type="submit" className={styles.action}>Apply</button>
+          <a href="/admin" className={styles.secondaryAction}>Clear</a>
+        </form>
+
+        {allItems.length === 0 ? (
+          <p className={styles.emptyState}>Nothing saved yet.</p>
+        ) : recentItems.length === 0 ? (
+          <p className={styles.emptyState}>No content matches these filters. <a href="/admin" className={styles.inlineLink}>Clear filters</a>.</p>
+        ) : (
+          <div className={styles.list}>
+            {recentItems.map(item => {
+              const published = publishedTimestamp(item)
+              return (
+                <article key={item.id} className={styles.recordRow}>
+                  {item.signedThumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.signedThumbnail} alt={item.firstMedia?.altText ?? `First attached photo for ${item.title ?? 'this content'}`} width={64} height={64} className={styles.recordThumb} />
+                  ) : (
+                    <div aria-hidden="true" className={`${styles.recordPlaceholder} ${styles.recordThumb}`} />
+                  )}
+                  <div className={styles.recordContent}>
+                    <p className={styles.recordTitle}>{item.title ?? '(untitled)'}</p>
+                    <p className={styles.recordMeta}>Updated {formatAdminDateTime(item.updatedAt)}</p>
+                    {published && <p className={styles.recordMeta}>{published}</p>}
+                  </div>
+                  <span className={styles.recordType}>{item.type}</span>
+                  <span className={`${styles.badge} ${item.status === 'published' ? styles.badgePublished : styles.badgeDraft}`}>{item.status}</span>
+                  <span className={styles.recordMeta}>{item.attachedMediaCount} photo{item.attachedMediaCount === 1 ? '' : 's'}</span>
+                  {item.type === 'home' && <a href="/admin/home" className={styles.inlineLink}>Edit</a>}
+                </article>
+              )
+            })}
+          </div>
+        )}
+
+        {hasFilters && recentItems.length > 0 && (
+          <p className={styles.countNote}>Showing {recentItems.length} matching item{recentItems.length === 1 ? '' : 's'}.</p>
+        )}
+      </section>
     </div>
   )
 }

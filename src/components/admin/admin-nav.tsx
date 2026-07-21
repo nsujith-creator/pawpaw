@@ -17,22 +17,27 @@ export default function AdminNav() {
 
   return (
     <nav className={styles.nav} aria-label="Admin navigation">
-      {links.map(({ href, label, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href)
-        return (
-          <a
-            key={href}
-            href={href}
-            className={active ? `${styles.link} ${styles.active}` : styles.link}
-            aria-current={active ? 'page' : undefined}
-          >
-            {label}
-          </a>
-        )
-      })}
+      <p className={styles.navLabel}>Studio</p>
+      <div className={styles.destinationList}>
+        {links.map(({ href, label, exact }) => {
+          const active = exact ? pathname === href : pathname.startsWith(href)
+          return (
+            <a
+              key={href}
+              href={href}
+              className={active ? `${styles.link} ${styles.active}` : styles.link}
+              aria-current={active ? 'page' : undefined}
+            >
+              <span>{label}</span>
+              {active && <span className={styles.currentCue}>Current</span>}
+            </a>
+          )
+        })}
+      </div>
       <form action="/logout/admin" method="post" className={styles.signOutForm}>
         <button type="submit" className={styles.signOut}>Sign out</button>
       </form>
+      <p className={styles.privacyNote}>Private by design</p>
     </nav>
   )
 }

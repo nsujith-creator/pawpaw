@@ -23,12 +23,10 @@ const contentDateline = read('components/archive/content-dateline.tsx')
 const leaveBtn    = read('components/home/leave-button.tsx')
 const attachments = read('app/admin/media/attachment-list.tsx')
 const adminPage   = read('app/admin/home/page.tsx')
+const adminCss    = read('app/admin/admin.module.css')
 const carousel    = read('components/home/home-carousel.tsx')
 const carouselCss = read('components/home/home-carousel.module.css')
 const ambient     = read('components/home/ambient-frame.tsx')
-
-const ERROR_COLOR   = '#dc2626'
-const SUCCESS_COLOR = '#16a34a'
 
 describe('Release 2 visual foundation', () => {
   it('loads the three approved font families through the installed Next font support', () => {
@@ -83,20 +81,23 @@ describe('editor and upload message states', () => {
     expect(editor).toMatch(/setSuccess\(/)
   })
 
-  it('editor renders errors as role=alert in the error colour', () => {
+  it('editor renders errors as role=alert with the semantic error class', () => {
     const alertBlock = editor.slice(editor.indexOf('role="alert"'))
     expect(editor).toContain('role="alert"')
-    expect(alertBlock.slice(0, 200)).toContain(ERROR_COLOR)
+    expect(alertBlock.slice(0, 200)).toContain('styles.errorNotice')
   })
 
-  it('editor renders successes as role=status in the success colour', () => {
-    const statusBlock = editor.slice(editor.indexOf('role="status"'))
+  it('editor renders successes as role=status with the semantic success class', () => {
+    const statusBlock = editor.slice(editor.lastIndexOf('role="status"'))
     expect(editor).toContain('role="status"')
-    expect(statusBlock.slice(0, 200)).toContain(SUCCESS_COLOR)
+    expect(statusBlock.slice(0, 200)).toContain('styles.successNotice')
   })
 
-  it('error and success colours are distinct', () => {
-    expect(ERROR_COLOR).not.toBe(SUCCESS_COLOR)
+  it('semantic error and success notices use distinct approved tokens', () => {
+    expect(adminCss).toContain('var(--color-error-soft)')
+    expect(adminCss).toContain('var(--color-success-soft)')
+    expect(adminCss).toContain('var(--color-error-on-soft)')
+    expect(adminCss).toContain('var(--color-success-on-soft)')
   })
 
   it('editor clears stale messages when a submission starts', () => {
@@ -118,8 +119,8 @@ describe('editor and upload message states', () => {
   it('upload form renders errors as role=alert and successes as role=status', () => {
     expect(uploadForm).toContain('role="alert"')
     expect(uploadForm).toContain('role="status"')
-    expect(uploadForm).toContain(ERROR_COLOR)
-    expect(uploadForm).toContain(SUCCESS_COLOR)
+    expect(uploadForm).toContain('styles.errorNotice')
+    expect(uploadForm).toContain('styles.successNotice')
   })
 
   it('upload form pre-validates the file with the shared application limit', () => {
@@ -237,8 +238,8 @@ describe('attached-photo management', () => {
     expect(attachments).toMatch(/finally\s*{\s*setBusy\(false\)/)
     expect(attachments).toContain('role="alert"')
     expect(attachments).toContain('role="status"')
-    expect(attachments).toContain(ERROR_COLOR)
-    expect(attachments).toContain(SUCCESS_COLOR)
+    expect(attachments).toContain('styles.errorNotice')
+    expect(attachments).toContain('styles.successNotice')
   })
 })
 

@@ -1,8 +1,10 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 21 July 2026 (Pawpaw 2.0.1 released and production verified)
+**Status date:** 22 July 2026 (PR-004A final Dashboard truthfulness correction verified locally; unreleased)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
+**Current committed HEAD and `origin/main` baseline:** `0a183101f436f1a9a9773770ad92cd2e48b84a0c`
+**Current milestone:** Release 2 Batch 2 / PR-004A Author's Studio visual/mobile foundation — implementation and evidence complete locally, release not authorised
 **Pawpaw 2.0.1 implementation commit:** `97b5b13956bbb76ba7622c60d8119c9049f7f1e2`
 **Pawpaw 2.0.1 implementation deployment:** `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -71,7 +73,7 @@ Every implementation prompt sent to Claude must include:
 - Release 2: **opened**. Typography, colour, character, Home, Her Story chapter-header, and Admin dashboard visual gates are approved.
 - Closed released milestone: **Release 2 Batch 1 is locked and live** at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through production deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, responsive layouts, accessibility, reduced-motion/degraded-media states, family navigation, and Leave placement/behaviour remain explicitly approved and locked at 10/10.
 - Closed released milestone: **Pawpaw 2.0.1 is live and production verified** at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`. PR-001, PR-002, PR-005, and PR-006 are Released.
-- Next gate: no further Pawpaw work is authorised. Batch 2/Admin and the character-system requirements remain pending and require separate explicit authorisation.
+- Next gate: explicit PR-004A release decision. PR-004B and the character-system requirements remain pending and separately unauthorised.
 - Manual testing for this milestone: **not required and not requested**; all 3 of 3 formal rounds remain consumed.
 
 ---
@@ -694,6 +696,28 @@ Production smoke verified the exact manifest and six icon assets as public 200 r
 
 No dependency, migration, schema, policy, Storage, Admin, character, service-worker, domain, environment, DNS, hosting-configuration, or cross-application change was made.
 
+### 3.20 Release 2 Batch 2 / PR-004A Author's Studio implementation (21 July 2026)
+
+Sujith explicitly authorised PR-004A against clean branch `main` at exact committed HEAD and `origin/main` `0a183101f436f1a9a9773770ad92cd2e48b84a0c`. The tracked tree was clean and the only pre-existing untracked path was `?? .claude/`; that path was not inspected, opened, modified, staged, deleted, or renamed.
+
+**Implemented locally:** the existing Admin login, shell/navigation, Dashboard, Content Library, Media Library, Home editor, upload form, and attachment controls now use the approved neutral blue-grey, mobile-first author's-studio presentation. The result is list-first, uses Fraunces and Manrope through the already released shared foundation, exposes explicit draft/published/warning/information/success/error/destructive states, retains every destination and Sign out on desktop/mobile, and adds no character, fake analytics, unsupported control, route, query, filter, mutation, preview, chapter editor, or photograph-replacement behaviour.
+
+**Final review correction (22 July 2026):** Dashboard attention now deduplicates missing-alt attachments by the already-returned `media_assets.id`, reports `attached photo(s) missing alt text`, reports factual `unpublished draft(s)` without a readiness inference, hides zero-value attention rows, and renders `Nothing needs attention.` only when both counts are zero. The existing Dashboard query/select, owner filter, ordering, Supabase calls, server actions, authentication, and media workflow are unchanged. The reversible Admin fixture associates one missing-alt asset with both fixture content records and proves the Dashboard reports one unique attached photo, not two.
+
+**Working-tree inventory:**
+
+- Created: `src/app/admin/admin.module.css`; `tests/e2e/release-2-admin-visual.spec.ts`.
+- Admin source modified: `src/app/admin/layout.tsx`; `src/app/admin/login/page.tsx`; `src/app/admin/page.tsx`; `src/app/admin/content/page.tsx`; `src/app/admin/media/page.tsx`; `src/app/admin/media/media-library-client.tsx`; `src/app/admin/home/page.tsx`; `src/app/admin/home/home-editor.tsx`; `src/app/admin/media/upload-form.tsx`; `src/app/admin/media/attachment-list.tsx`; `src/components/admin/admin-nav.tsx`; `src/components/admin/admin-nav.module.css`.
+- Tests modified: `tests/unit/admin-dashboard.test.ts`; `tests/unit/ui-acceptance.test.ts`.
+- Canonical documentation modified: `RELEASE_2_UI_IMPLEMENTATION_DECLARATION.md`; `docs/PROJECT_STATUS.md`; `docs/PENDING_REQUIREMENTS.md`.
+- Ignored evidence only: `test-results/release-2-admin-evidence/`; screenshots are review evidence, not committed baselines or visual approval.
+
+**Evidence currently generated:** all required base captures for `/admin/login`, `/admin`, `/admin/content`, `/admin/media`, and `/admin/home` at 1440px and 375px, plus filtered-empty, long-text, error, success, destructive-confirmation, advanced-editor, upload-error, reduced-motion, and effective-200%-zoom states. Every route passed 320px document-overflow checks; 375px interactive targets passed the 44 x 44 minimum; focus, active navigation's non-colour cue, reduced-motion zero duration, safe visible filenames, signed-URL non-disclosure, logout and immediate-Back closure, and reversible fixture cleanup were exercised. The dedicated Admin Playwright suite passed 4 of 4 with pre/post fixture residue zero for users, content, media, associations, Storage objects, and throttle rows.
+
+**Verification complete:** `git diff --check`, type-check, full lint, default Vitest, production build, live integration, and the full Playwright matrix all pass. Default Vitest: 282 passed with 42 intentional live-credential skips. Production build: 16 application routes generated successfully. Live integration: 43 of 43 passed with fixture residue zero before and after. Full Playwright: 47 passed with 17 intentional project/credential skips, fixture residue zero before and after, and Pawpaw server-process residue zero. The five focused unit files passed 133 of 133, and the dedicated Admin evidence suite passed 4 of 4 with pre/post fixture residue zero. No fourth formal manual test is requested; formal rounds remain 3 of 3 used.
+
+**Blockers and review boundary:** no implementation blocker is known. PR-004A is not released, deployed, committed, pushed, or recorded as visually approved. PR-004 remains open. PR-004B still contains generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, and installed-PWA operation dependent on PR-003. The next gate is an explicit PR-004A release decision.
+
 ---
 
 ## 4. Completed major milestone — Phase 1 private Home flow
@@ -1079,7 +1103,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 Batch 1 Family Login, Home and First Days remain explicitly approved at 10/10 and locked. Pawpaw 2.0.1 is released and production verified at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`; Batch 2/Admin is unauthorised.**
+**`phase-1-implementation` remains preserved. Phase 1, Release 2 Batch 1, and Pawpaw 2.0.1 remain production deployed and verified. PR-004A Author's Studio foundation is implemented and fully verified in the uncommitted local tree but is not released, deployed, or visually approved; PR-004B remains unauthorised.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -1098,10 +1122,10 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 and Release 2 Batch 1 remain closed, locked, and live. Pawpaw 2.0.1 is released and production verified at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`. Batch 2/Admin remains unauthorised.
+15. ✓ **Release decision:** Phase 1, Release 2 Batch 1, and Pawpaw 2.0.1 remain closed, locked, and live. PR-004A is locally implemented and evidence-ready only; no commit, push, release, deployment, or visual approval occurred. PR-004B remains unauthorised.
 16. ✓ Canonical production is `https://www.heyvarada.in`; Wix hosts registrar/DNS, the apex redirects to `www`, Vercel project `pawpaw` hosts the application, and `https://pawpaw-lemon.vercel.app` remains the legacy/fallback URL.
 17. ✓ No coding, UI, CSS, component, route, dependency, migration, authentication, data, DNS, hosting-configuration, or cross-application change occurred in the design-foundation milestone.
-18. ✓ No fourth manual-testing round occurred. No further Pawpaw work is authorised; Batch 2/Admin and character-system work require separate explicit authorization.
+18. ✓ No fourth manual-testing round occurred. The next gate is an explicit PR-004A release decision; PR-004B and character-system work require separate explicit authorization.
 
 ---
 

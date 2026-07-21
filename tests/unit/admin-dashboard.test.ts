@@ -9,6 +9,7 @@ const adminDashboard = read('app/admin/page.tsx')
 const adminLayout    = read('app/admin/layout.tsx')
 const adminNav       = read('components/admin/admin-nav.tsx')
 const adminNavCss    = read('components/admin/admin-nav.module.css')
+const adminCss       = read('app/admin/admin.module.css')
 
 describe('admin dashboard', () => {
   it('redirects to login when not authenticated', () => {
@@ -82,6 +83,16 @@ describe('admin dashboard', () => {
   it('fetches content items and media count in parallel', () => {
     expect(adminDashboard).toContain('Promise.all')
   })
+
+  it('deduplicates missing-alt media and renders only factual attention states', () => {
+    expect(adminDashboard).toContain('const missingAltMediaIds = new Set<string>()')
+    expect(adminDashboard).toContain('missingAltMediaIds.add(media.id)')
+    expect(adminDashboard).toContain('const missingAltCount = missingAltMediaIds.size')
+    expect(adminDashboard).toContain('attached photo')
+    expect(adminDashboard).toContain('unpublished draft')
+    expect(adminDashboard).toContain('Nothing needs attention.')
+    expect(adminDashboard).not.toContain('ready to review')
+  })
 })
 
 describe('admin navigation', () => {
@@ -125,19 +136,28 @@ describe('admin navigation', () => {
     expect(header).not.toContain('/logout/admin')
   })
 
-  it('uses a sticky nav bar with a z-index', () => {
+  it('uses a sticky desktop studio sidebar', () => {
     expect(adminNavCss).toContain('position: sticky')
     expect(adminNavCss).toContain('top: 0')
-    expect(adminNavCss).toContain('z-index')
+    expect(adminNavCss).toContain('border-right')
+    expect(adminLayout).toContain('styles.studioLayout')
   })
 
-  it('horizontally scrolls without showing a scrollbar on overflow', () => {
-    expect(adminNavCss).toContain('overflow-x: auto')
-    expect(adminNavCss).toContain('scrollbar-width: none')
+  it('recomposes navigation without horizontal scrolling on mobile', () => {
+    expect(adminNavCss).toContain('@media (max-width: 52rem)')
+    expect(adminNavCss).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))')
+    expect(adminNavCss).not.toContain('overflow-x: auto')
   })
 
-  it('respects prefers-reduced-motion by disabling link transitions', () => {
+  it('uses a non-colour active cue and 44px minimum targets', () => {
+    expect(adminNav).toContain('Current')
+    expect(adminNavCss).toContain('box-shadow: inset 0.25rem 0')
+    expect(adminNavCss).toContain('min-height: 3rem')
+    expect(adminCss).toContain('min-height: 2.75rem')
+  })
+
+  it('respects prefers-reduced-motion by zeroing navigation transitions', () => {
     expect(adminNavCss).toContain('prefers-reduced-motion')
-    expect(adminNavCss).toContain('transition: none')
+    expect(adminNavCss).toContain('transition-duration: 0ms')
   })
 })

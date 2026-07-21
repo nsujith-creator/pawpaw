@@ -2,11 +2,11 @@
 
 ## 1. Status and approval boundary
 
-**Declaration status:** Batch 1 and its separately approved bounded continuation are implemented in the uncommitted working tree. Sujith has explicitly approved and locked Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, desktop/mobile/zoom layouts, reduced-motion and degraded-media states, family navigation, and Leave placement/behaviour at 10/10. Every Batch 1 visual gate is closed and Sujith authorised the Batch 1 commit, push, and production release on 19 July 2026. Batch 2 and Admin redesign remain unauthorised.
+**Declaration status:** Batch 1 is released and locked. On 21 July 2026 Sujith separately authorised PR-004A, the bounded Batch 2 author's-studio visual/mobile foundation for the existing Admin surfaces. The final Dashboard truthfulness correction is implemented and verified in the current uncommitted working tree. PR-004A remains unreleased, undeployed, and not recorded as visually approved; it does not complete PR-004 or authorise PR-004B.
 
-This document began as the smallest evidence-based path for applying the approved Release 2 visual system to existing Pawpaw routes only. Sujith subsequently approved the declaration, exact two-batch boundary, font mechanics, ambient and motion contracts, three isolated production character assets, and Batch 1 execution. The current uncommitted tree contains that bounded Batch 1 implementation; Batch 2 is still outside authorization.
+This document began as the smallest evidence-based path for applying the approved Release 2 visual system to existing Pawpaw routes only. Sujith subsequently approved the declaration, exact two-batch boundary, font mechanics, ambient and motion contracts, three isolated production character assets, Batch 1 execution, and then PR-004A against the verified shared foundation. The current uncommitted tree contains only the authorised PR-004A Admin presentation/test/documentation set.
 
-Sujith's approval of the proof pack remains the visual-direction authority. The font mechanics, numeric ambient-colour contract, motion contract, delight/wonder/sleepy assets and Batch 1 are explicitly approved; no approval extends to Batch 2.
+Sujith's approval of the proof pack remains the visual-direction authority. PR-004A may implement the approved author's-studio direction without adding a character, changing Admin behaviour, or beginning the still-pending PR-004B capability work.
 
 ## 2. Current verified baseline
 
@@ -53,7 +53,7 @@ No implementation claim is valid from compilation or a screenshot alone. Each la
 | Responsive layouts are recomposed | Approved 375px boards; 320px overflow checks; 375px screenshots; 200% zoom checks; target-size checks |
 | Security/privacy remain intact | Existing unit, integration, and E2E security suites; response-header checks; logout/history checks; no raw private-path or secret output |
 
-**Result:** the proof method remains valid. Family Login, Home, and First Days passed their final evidence review at 10/10 and are locked. This approval includes all 15 photographs, exact prose/captions/alt text, responsive layouts at 1440px/375px/320px, 200% zoom, reduced-motion and degraded-media states, family navigation, and Leave placement/behaviour. Every Batch 1 visual gate is closed; Batch 2 remains unauthorised.
+**Result:** the proof method remains valid. Family Login, Home, and First Days remain locked at 10/10. PR-004A implementation is authorised, but its generated Admin screenshots are evidence for the next review gate and are not themselves visual approval or release approval.
 
 ## 5. Exact implementation scope
 
@@ -296,15 +296,15 @@ The former `600ms` ambient transition and `200ms` untokenized dot transition are
 
 **Sequence:**
 
-1. Start only after Batch 1's shared visual foundation is verified, or after Sujith explicitly authorizes Batch 2 against an independently verified shared foundation.
-2. Approve the font-loading/motion contracts and Batch 2 itself.
-3. Add the route-scoped Admin module and shell/sidebar/mobile structure.
-4. Restyle login, dashboard, Content, Media, and Home editor in that order, running relevant tests after each surface.
-5. Update only the two declared unit source-contract files where extracted styles invalidate obsolete assertions.
-6. Generate the full Admin screenshot/state matrix and run interaction/accessibility checks.
-7. Run the full Batch 2 verification boundary in Section 22 and stop for evidence review.
+1. Start only after Batch 1's shared visual foundation is verified, or after Sujith explicitly authorizes Batch 2 against an independently verified shared foundation. **Done for PR-004A on 21 July 2026.**
+2. Approve the font-loading/motion contracts and Batch 2 itself. **Done for the bounded PR-004A slice.**
+3. Add the route-scoped Admin module and shell/sidebar/mobile structure. **Done.**
+4. Restyle login, dashboard, Content, Media, and Home editor in that order, running relevant tests after each surface. **Done without changing the preserved functional paths.**
+5. Update only the two declared unit source-contract files where extracted styles invalidate obsolete assertions. **Done.**
+6. Generate the full Admin screenshot/state matrix and run interaction/accessibility checks. **Done under ignored `test-results/release-2-admin-evidence/`.**
+7. Run the full Batch 2 verification boundary in Section 22 and stop for evidence review. **Done; all commands pass, and the next gate is review rather than release.**
 
-**Readiness:** **NOT READY**. Batch 2 remains unauthorised. Batch 1's completed shared foundation and evidence do not authorize Admin implementation; a separate explicit Batch 2 instruction is required after Batch 1 review.
+**Readiness:** **PR-004A IMPLEMENTED AND EVIDENCE-READY, UNRELEASED**. Sujith authorised this bounded implementation on 21 July 2026. The route-scoped CSS, existing Admin surface recomposition, two declared unit-contract updates, reversible Admin E2E suite, and ignored screenshot matrix are present. PR-004B, commit, push, deployment, production mutation, and visual approval remain outside this authorisation.
 
 ## 18. Accessibility acceptance criteria
 
@@ -435,7 +435,8 @@ Neither batch includes commit, push, merge, Vercel deployment, DNS change, schem
 10. **Final 10/10 approved and locked:** Family Login, authenticated Home, all six Home photographs, Home prose/captions, First Days, all nine chronological First Days photographs, captions/alt text, desktop/mobile/200% zoom layouts, reduced motion, degraded media, family navigation, and Leave placement/behaviour.
 11. **All Batch 1 visual gates closed:** the final Story orchid, decorative Sleepy header, tighter desktop rhythm, readable captions, accessibility evidence, and exact mobile chronology are approved.
 12. **Release authorised:** Sujith authorised one Batch 1 commit, push to `origin/main`, exact-commit deployment through the existing linked Vercel project, and read-only production smoke testing on 19 July 2026. Canonical production is `https://www.heyvarada.in`; fallback is `https://pawpaw-lemon.vercel.app`.
-13. **Unauthorised:** Batch 2 and any further family chapter or Admin redesign.
+13. **Authorised on 21 July 2026:** PR-004A, the existing-surface Admin author's-studio visual/mobile foundation only. It is implemented and evidence-ready in the uncommitted working tree, without release or deployment authority.
+14. **Unauthorised:** PR-004B generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, installed-PWA operation dependent on PR-003, and any further family chapter or Admin capability expansion.
 
 ### Bounded continuation implementation record
 
