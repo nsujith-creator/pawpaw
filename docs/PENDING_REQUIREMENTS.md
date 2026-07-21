@@ -11,13 +11,13 @@
 - `Released`: live in production and verified.
 - `Dropped`: explicitly rejected, with reason recorded.
 
-_Last updated: 20 July 2026 — video requirement added_
+_Last updated: 21 July 2026 — Pawpaw 2.0.1 released_
 
 ---
 
 ## PR-001 — Favicon and browser identity
 
-**Status:** Approved — Pending
+**Status:** Released
 **Suggested release:** Pawpaw 2.0.1 micro-release
 
 Add:
@@ -41,7 +41,7 @@ Preferred visual direction:
 
 ## PR-002 — PWA icon family and web-app manifest
 
-**Status:** Approved — Pending
+**Status:** Released
 **Suggested release:** Pawpaw 2.0.1 foundation
 
 Add:
@@ -126,7 +126,7 @@ Required capabilities:
 
 ## PR-005 — Home “About Varada” dateline and copy correction
 
-**Status:** Approved — Pending
+**Status:** Released
 **Current implementation note:** The paragraph is database-backed in `content_items.body_blocks`; it is not hardcoded.
 
 Problem:
@@ -147,7 +147,7 @@ Approved direction:
 
 ## PR-006 — Visible timestamps/datelines for time-sensitive family writing
 
-**Status:** Approved — Pending
+**Status:** Released
 
 Provide an optional, human-readable date treatment for:
 - Home introductions;
@@ -388,7 +388,7 @@ Include a visible usage limit and warning so a mistake cannot create uncontrolle
 ## Change log
 
 ### 21 July 2026
-Pawpaw 2.0.1 implementation was authorised. PR-001, PR-002, PR-005, and PR-006 remain pending until production verification.
+Pawpaw 2.0.1 implementation was authorised and released. PR-001, PR-002, PR-005, and PR-006 passed automated verification, exact-commit production deployment, the one-row preconditioned Home-copy correction, and production smoke verification. No fourth formal manual-test round occurred.
 
 ### 20 July 2026
 Initial living list created from all missing features discussed after Release 2 Batch 1 went live:

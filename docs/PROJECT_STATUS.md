@@ -1,10 +1,10 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 21 July 2026 (Pawpaw 2.0.1 bounded implementation authorised)
+**Status date:** 21 July 2026 (Pawpaw 2.0.1 released and production verified)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
-**Current released commit:** `4804febc43f3821a3462dc77c4b07e623eed81b6`
-**Current production deployment:** `dpl_8rhCdAVcckbpmgafULJJdpdujLij`
+**Pawpaw 2.0.1 implementation commit:** `97b5b13956bbb76ba7622c60d8119c9049f7f1e2`
+**Pawpaw 2.0.1 implementation deployment:** `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
 **Main merge commit:** `93e464f30bdb95975bbac5d9e387a931c509c0ff` — normal GitHub merge of PR #2
 **Purpose of this file:** Single self-contained source of truth for current work, completed work, pending tasks, active risks, verification status, and manual-testing policy.
@@ -70,8 +70,8 @@ Every implementation prompt sent to Claude must include:
 - Merge and deployment: **complete**. Phase 1 is merged into `main`, deployed, and production verified.
 - Release 2: **opened**. Typography, colour, character, Home, Her Story chapter-header, and Admin dashboard visual gates are approved.
 - Closed released milestone: **Release 2 Batch 1 is locked and live** at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through production deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, responsive layouts, accessibility, reduced-motion/degraded-media states, family navigation, and Leave placement/behaviour remain explicitly approved and locked at 10/10.
-- Current milestone: **Pawpaw 2.0.1 bounded implementation is authorised** for PR-001, PR-002, the code-only portion of PR-005, PR-006, and canonical status documentation. These requirements remain pending until production verification.
-- Next gate: complete the bounded Pawpaw 2.0.1 implementation and automated/icon evidence review without commit, push, deployment, or production data mutation. Batch 2/Admin remains unauthorised.
+- Closed released milestone: **Pawpaw 2.0.1 is live and production verified** at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`. PR-001, PR-002, PR-005, and PR-006 are Released.
+- Next gate: no further Pawpaw work is authorised. Batch 2/Admin and the character-system requirements remain pending and require separate explicit authorisation.
 - Manual testing for this milestone: **not required and not requested**; all 3 of 3 formal rounds remain consumed.
 
 ---
@@ -684,6 +684,16 @@ Sujith authorised a bounded Pawpaw 2.0.1 implementation covering only PR-001 fav
 
 Batch 2/Admin remains separately unauthorised. No fourth formal manual-test round is requested; automated verification and icon screenshot review do not change the 3-of-3 formal-round count.
 
+### 3.19 Pawpaw 2.0.1 production release (21 July 2026)
+
+Sujith approved the Pawpaw 2.0.1 implementation and icon proof. Implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` was pushed normally to `main`; Vercel Git deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu` reached READY for that exact SHA with no dirty-worktree marker. The canonical production domain remains `https://www.heyvarada.in`.
+
+The exact preconditioned Home-copy transaction affected one published Home row in Supabase project `voorknvdvfweahsnjvne`. It removed only `7 weeks and 2 days to the day today.`, preserved title `Varada`, status `published`, and `published_at` `2026-07-19 13:28:44.637+00`, and left one valid structured paragraph matching the approved replacement exactly.
+
+Production smoke verified the exact manifest and six icon assets as public 200 responses without Family Login redirects; archive and Admin redirects remained closed; protected Home and First Days responses retained no-store and robots protections; Home rendered `Written 19 July 2026 · V was 7 weeks and 2 days old`, the corrected exact prose, and all six photographs; First Days retained all nine photographs; Leave and browser-Back protections remained intact; and no manifest/icon failure, 5xx, console/page error, ChunkLoadError, service worker, private caching, fixture residue, or Vercel runtime error was found. PR-001, PR-002, PR-005, and PR-006 are Released. No fourth formal manual-test round occurred.
+
+No dependency, migration, schema, policy, Storage, Admin, character, service-worker, domain, environment, DNS, hosting-configuration, or cross-application change was made.
+
 ---
 
 ## 4. Completed major milestone — Phase 1 private Home flow
@@ -1069,7 +1079,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 Batch 1 Family Login, Home and First Days are explicitly approved at 10/10, locked, and live at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Pawpaw 2.0.1 is the current bounded implementation; Batch 2/Admin is unauthorised.**
+**`phase-1-implementation` remains preserved. Phase 1 is production deployed and verified. Release 2 Batch 1 Family Login, Home and First Days remain explicitly approved at 10/10 and locked. Pawpaw 2.0.1 is released and production verified at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`; Batch 2/Admin is unauthorised.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -1088,10 +1098,10 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1 is merged into `main`; both Admin and natural family logout history are production verified. Release 2 Batch 1 is closed, locked, and live at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Pawpaw 2.0.1 is the current authorised bounded implementation. Batch 2/Admin remains unauthorised.
+15. ✓ **Release decision:** Phase 1 and Release 2 Batch 1 remain closed, locked, and live. Pawpaw 2.0.1 is released and production verified at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`. Batch 2/Admin remains unauthorised.
 16. ✓ Canonical production is `https://www.heyvarada.in`; Wix hosts registrar/DNS, the apex redirects to `www`, Vercel project `pawpaw` hosts the application, and `https://pawpaw-lemon.vercel.app` remains the legacy/fallback URL.
 17. ✓ No coding, UI, CSS, component, route, dependency, migration, authentication, data, DNS, hosting-configuration, or cross-application change occurred in the design-foundation milestone.
-18. ✓ No fourth manual-testing round is required or requested. The exact next gate is bounded Pawpaw 2.0.1 implementation review and icon screenshot review; Batch 2/Admin requires separate authorization.
+18. ✓ No fourth manual-testing round occurred. No further Pawpaw work is authorised; Batch 2/Admin and character-system work require separate explicit authorization.
 
 ---
 
