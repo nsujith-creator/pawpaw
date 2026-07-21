@@ -2,9 +2,9 @@
 
 ## 1. Status and approval boundary
 
-**Declaration status:** Batch 1 is released and locked. On 21 July 2026 Sujith separately authorised PR-004A, the bounded Batch 2 author's-studio visual/mobile foundation for the existing Admin surfaces. The final Dashboard truthfulness correction is implemented and verified in the current uncommitted working tree. PR-004A remains unreleased, undeployed, and not recorded as visually approved; it does not complete PR-004 or authorise PR-004B.
+**Declaration status:** Batch 1 is released and locked. PR-004A, the bounded Batch 2 author's-studio visual/mobile foundation for the existing Admin surfaces, is implemented, automatically verified, reviewed, and released to production. The final Dashboard truthfulness correction is included in implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525`, deployed READY as `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ`, and verified through read-only production smoke. PR-004A does not complete PR-004 or authorise PR-004B.
 
-This document began as the smallest evidence-based path for applying the approved Release 2 visual system to existing Pawpaw routes only. Sujith subsequently approved the declaration, exact two-batch boundary, font mechanics, ambient and motion contracts, three isolated production character assets, Batch 1 execution, and then PR-004A against the verified shared foundation. The current uncommitted tree contains only the authorised PR-004A Admin presentation/test/documentation set.
+This document began as the smallest evidence-based path for applying the approved Release 2 visual system to existing Pawpaw routes only. Sujith subsequently approved the declaration, exact two-batch boundary, font mechanics, ambient and motion contracts, three isolated production character assets, Batch 1 execution, and then PR-004A against the verified shared foundation. PR-004A's released boundary contains only the authorised Admin presentation, tests, and release documentation; PR-004B remains outside it.
 
 Sujith's approval of the proof pack remains the visual-direction authority. PR-004A may implement the approved author's-studio direction without adding a character, changing Admin behaviour, or beginning the still-pending PR-004B capability work.
 
@@ -53,7 +53,7 @@ No implementation claim is valid from compilation or a screenshot alone. Each la
 | Responsive layouts are recomposed | Approved 375px boards; 320px overflow checks; 375px screenshots; 200% zoom checks; target-size checks |
 | Security/privacy remain intact | Existing unit, integration, and E2E security suites; response-header checks; logout/history checks; no raw private-path or secret output |
 
-**Result:** the proof method remains valid. Family Login, Home, and First Days remain locked at 10/10. PR-004A implementation is authorised, but its generated Admin screenshots are evidence for the next review gate and are not themselves visual approval or release approval.
+**Result:** the proof method remains valid. Family Login, Home, and First Days remain locked at 10/10. PR-004A's automated and screenshot evidence was technically and visually reviewed, the bounded release was approved, and production smoke passed. Screenshot review did not create a fourth formal manual-test round; the formal count remains 3 of 3.
 
 ## 5. Exact implementation scope
 
@@ -302,9 +302,9 @@ The former `600ms` ambient transition and `200ms` untokenized dot transition are
 4. Restyle login, dashboard, Content, Media, and Home editor in that order, running relevant tests after each surface. **Done without changing the preserved functional paths.**
 5. Update only the two declared unit source-contract files where extracted styles invalidate obsolete assertions. **Done.**
 6. Generate the full Admin screenshot/state matrix and run interaction/accessibility checks. **Done under ignored `test-results/release-2-admin-evidence/`.**
-7. Run the full Batch 2 verification boundary in Section 22 and stop for evidence review. **Done; all commands pass, and the next gate is review rather than release.**
+7. Run the full Batch 2 verification boundary in Section 22 and stop for evidence review. **Done; all commands passed, the review correction was accepted, and the bounded release was separately authorised and completed.**
 
-**Readiness:** **PR-004A IMPLEMENTED AND EVIDENCE-READY, UNRELEASED**. Sujith authorised this bounded implementation on 21 July 2026. The route-scoped CSS, existing Admin surface recomposition, two declared unit-contract updates, reversible Admin E2E suite, and ignored screenshot matrix are present. PR-004B, commit, push, deployment, production mutation, and visual approval remain outside this authorisation.
+**Readiness:** **PR-004A RELEASED**. The route-scoped CSS, existing Admin surface recomposition, two declared unit-contract updates, reversible Admin E2E suite, ignored screenshot matrix, final Dashboard truthfulness correction, exact-SHA production deployment, and read-only production smoke are complete. PR-004B capability work remains explicitly outside this released boundary.
 
 ## 18. Accessibility acceptance criteria
 
@@ -419,7 +419,7 @@ After every build, restore `next-env.d.ts` if Next.js regenerates it and verify 
 
 ## 23. Deployment boundary
 
-Neither batch includes commit, push, merge, Vercel deployment, DNS change, schema/policy/authentication change, cross-application operation, or production deployment verification. Later explicit instructions authorised the completed bounded content operations: the earlier Home repair, six full-size Home uploads and replacement associations, one existing-model First Days story, and nine First Days uploads/associations. Any checkpoint, Batch 2 work, or deployment still needs a separate instruction with fresh pre-flight and exact authorization.
+The original batch declarations did not themselves authorise commit, push, merge, Vercel deployment, DNS change, schema/policy/authentication change, cross-application operation, or production deployment verification. Later explicit instructions separately authorised the completed bounded content operations and releases, including PR-004A implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525` and production deployment `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ`. No DNS, environment, Vercel configuration, schema, policy, authentication, Storage, production-content, or cross-application change was authorised or made for PR-004A.
 
 ## 24. Current approval and evidence state
 
@@ -435,8 +435,8 @@ Neither batch includes commit, push, merge, Vercel deployment, DNS change, schem
 10. **Final 10/10 approved and locked:** Family Login, authenticated Home, all six Home photographs, Home prose/captions, First Days, all nine chronological First Days photographs, captions/alt text, desktop/mobile/200% zoom layouts, reduced motion, degraded media, family navigation, and Leave placement/behaviour.
 11. **All Batch 1 visual gates closed:** the final Story orchid, decorative Sleepy header, tighter desktop rhythm, readable captions, accessibility evidence, and exact mobile chronology are approved.
 12. **Release authorised:** Sujith authorised one Batch 1 commit, push to `origin/main`, exact-commit deployment through the existing linked Vercel project, and read-only production smoke testing on 19 July 2026. Canonical production is `https://www.heyvarada.in`; fallback is `https://pawpaw-lemon.vercel.app`.
-13. **Authorised on 21 July 2026:** PR-004A, the existing-surface Admin author's-studio visual/mobile foundation only. It is implemented and evidence-ready in the uncommitted working tree, without release or deployment authority.
-14. **Unauthorised:** PR-004B generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, installed-PWA operation dependent on PR-003, and any further family chapter or Admin capability expansion.
+13. **Released on 22 July 2026:** PR-004A, the existing-surface Admin author's-studio visual/mobile foundation only. Implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525` reached READY in production deployment `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ`; exact-SHA attribution, browser smoke, runtime health, security boundaries, responsive composition, Dashboard truthfulness, signed media, Home's six photographs, and logout/history protection passed without production data mutation.
+14. **Approved — Pending and outside PR-004A:** PR-004B generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, installed-PWA operation dependent on PR-003, and any further family chapter or Admin capability expansion.
 
 ### Bounded continuation implementation record
 

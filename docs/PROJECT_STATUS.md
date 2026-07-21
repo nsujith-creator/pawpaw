@@ -1,10 +1,11 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
-**Status date:** 22 July 2026 (PR-004A final Dashboard truthfulness correction verified locally; unreleased)
+**Status date:** 22 July 2026 (PR-004A Author's Studio foundation released and production verified)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
-**Current committed HEAD and `origin/main` baseline:** `0a183101f436f1a9a9773770ad92cd2e48b84a0c`
-**Current milestone:** Release 2 Batch 2 / PR-004A Author's Studio visual/mobile foundation — implementation and evidence complete locally, release not authorised
+**PR-004A implementation commit:** `cb5faa79600df8d787aa6c40bf2b935ded111525`
+**Current milestone:** Release 2 Batch 2 / PR-004A Author's Studio visual/mobile foundation — Released
+**PR-004A implementation deployment:** `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ` — READY
 **Pawpaw 2.0.1 implementation commit:** `97b5b13956bbb76ba7622c60d8119c9049f7f1e2`
 **Pawpaw 2.0.1 implementation deployment:** `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`
 **PR:** `#2 — Implement Phase 1 private Home flow` (merged and closed)
@@ -73,7 +74,8 @@ Every implementation prompt sent to Claude must include:
 - Release 2: **opened**. Typography, colour, character, Home, Her Story chapter-header, and Admin dashboard visual gates are approved.
 - Closed released milestone: **Release 2 Batch 1 is locked and live** at commit `4804febc43f3821a3462dc77c4b07e623eed81b6` through production deployment `dpl_8rhCdAVcckbpmgafULJJdpdujLij`. Family Login, authenticated Home, First Days, all 15 photographs, prose, captions, alt text, responsive layouts, accessibility, reduced-motion/degraded-media states, family navigation, and Leave placement/behaviour remain explicitly approved and locked at 10/10.
 - Closed released milestone: **Pawpaw 2.0.1 is live and production verified** at implementation commit `97b5b13956bbb76ba7622c60d8119c9049f7f1e2` through deployment `dpl_56j4KreFpaQMnsAZhTZDwxP8eAQu`. PR-001, PR-002, PR-005, and PR-006 are Released.
-- Next gate: explicit PR-004A release decision. PR-004B and the character-system requirements remain pending and separately unauthorised.
+- Closed released milestone: **PR-004A Author's Studio foundation is live and production verified** at implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525` through production deployment `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ`.
+- Next Admin capability gate: PR-004B remains Approved — Pending. PR-004 remains overall incomplete.
 - Manual testing for this milestone: **not required and not requested**; all 3 of 3 formal rounds remain consumed.
 
 ---
@@ -716,7 +718,11 @@ Sujith explicitly authorised PR-004A against clean branch `main` at exact commit
 
 **Verification complete:** `git diff --check`, type-check, full lint, default Vitest, production build, live integration, and the full Playwright matrix all pass. Default Vitest: 282 passed with 42 intentional live-credential skips. Production build: 16 application routes generated successfully. Live integration: 43 of 43 passed with fixture residue zero before and after. Full Playwright: 47 passed with 17 intentional project/credential skips, fixture residue zero before and after, and Pawpaw server-process residue zero. The five focused unit files passed 133 of 133, and the dedicated Admin evidence suite passed 4 of 4 with pre/post fixture residue zero. No fourth formal manual test is requested; formal rounds remain 3 of 3 used.
 
-**Blockers and review boundary:** no implementation blocker is known. PR-004A is not released, deployed, committed, pushed, or recorded as visually approved. PR-004 remains open. PR-004B still contains generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, and installed-PWA operation dependent on PR-003. The next gate is an explicit PR-004A release decision.
+**Production release closure (22 July 2026):** implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525` was pushed normally to `main`. Git-integrated Vercel production deployment `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ` reached READY, records that exact SHA, has no dirty-worktree marker or build error, and retains canonical production `https://www.heyvarada.in`.
+
+Read-only production smoke passed all public Admin redirects, the Author's Studio login, manifest/icons, protected Home and First Days, no-store/robots protections, Leave/Back protection, and authenticated Dashboard, Content Library, Media Library, and Home editor at desktop, effective 375px, and effective 320px. Live reconciliation proved 0 drafts, 2 published items, 27 media files, 15 unique attached media records with no missing alt text, hidden zero-count rows, and the truthful `Nothing needs attention.` state. Content search/filters and disabled Create New were present; all 27 Media thumbnails and all six Home photographs loaded through signed image sources without exposing signed links, raw Storage paths, credentials, tokens, or UUIDs in visible UI. Focus, non-colour active cues, controls, overflow, Sign out, immediate Back, direct-route closure, console/page/request/5xx/ChunkLoadError, and Vercel runtime gates passed. No production content or media was saved, published, unpublished, reordered, detached, uploaded, edited, or deleted.
+
+PR-004A is Released; PR-004 remains overall incomplete. PR-004B remains Approved — Pending and contains generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, and installed-PWA operation dependent on PR-003. The technical/visual screenshot review was evidence review, not a fourth formal manual-test round; formal rounds remain 3 of 3. No migration, dependency, authentication, schema, policy, Storage, family-page, character, PWA/service-worker, video, DNS, domain, environment, Vercel-configuration, or cross-application change occurred.
 
 ---
 
@@ -1103,7 +1109,7 @@ tests/
 **PHASE 1 ACCEPTANCE COMPLETE — the family logout history correction is deployed and production verified; no Pawpaw release blocker remains.**
 **PR #2 was merged into `main` through normal GitHub merge commit `93e464f30bdb95975bbac5d9e387a931c509c0ff`.**
 **The final independent merge review approved the merged head; post-merge type-check, lint, default tests, and production build passed on `main`.**
-**`phase-1-implementation` remains preserved. Phase 1, Release 2 Batch 1, and Pawpaw 2.0.1 remain production deployed and verified. PR-004A Author's Studio foundation is implemented and fully verified in the uncommitted local tree but is not released, deployed, or visually approved; PR-004B remains unauthorised.**
+**`phase-1-implementation` remains preserved. Phase 1, Release 2 Batch 1, Pawpaw 2.0.1, and PR-004A Author's Studio foundation are production deployed and verified. PR-004 remains overall incomplete; PR-004B remains Approved — Pending.**
 **Manual Test Round 2 failed and remains consumed; its findings were fixed and verified. Manual Test Round 3 completed with all checks passed.** Formal rounds used are **3 of 3**. There are no failed, unclear, or untested Round 3 items. No further manual testing is authorized unless Sujith explicitly requests it later.
 
 Release boundary status after final checkpoint verification:
@@ -1122,10 +1128,10 @@ Release boundary status after final checkpoint verification:
 12. ✓ `paru-health-assets` policies are bucket-scoped and grant no access to Pawpaw's `media` bucket or paths.
 13. ✓ `next-env.d.ts` was restored after build and has no diff; no secret file is tracked.
 14. ✓ Manual Test Round 3 completed with every check passed; formal rounds used are 3/3 and Phase 1 manual acceptance is complete.
-15. ✓ **Release decision:** Phase 1, Release 2 Batch 1, and Pawpaw 2.0.1 remain closed, locked, and live. PR-004A is locally implemented and evidence-ready only; no commit, push, release, deployment, or visual approval occurred. PR-004B remains unauthorised.
+15. ✓ **Release decision:** Phase 1, Release 2 Batch 1, Pawpaw 2.0.1, and PR-004A remain closed and live. PR-004A implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525` is READY and production verified through deployment `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ`. PR-004B remains Approved — Pending.
 16. ✓ Canonical production is `https://www.heyvarada.in`; Wix hosts registrar/DNS, the apex redirects to `www`, Vercel project `pawpaw` hosts the application, and `https://pawpaw-lemon.vercel.app` remains the legacy/fallback URL.
-17. ✓ No coding, UI, CSS, component, route, dependency, migration, authentication, data, DNS, hosting-configuration, or cross-application change occurred in the design-foundation milestone.
-18. ✓ No fourth manual-testing round occurred. The next gate is an explicit PR-004A release decision; PR-004B and character-system work require separate explicit authorization.
+17. ✓ PR-004A changed only its approved existing-surface Admin presentation, tests, and three release documents; no migration, dependency, authentication, schema, policy, Storage, family-page, character, PWA/service-worker, video, DNS, domain, environment, hosting-configuration, production-data, or cross-application change occurred.
+18. ✓ No fourth formal manual-testing round occurred. Screenshot review was technical/visual evidence review; formal rounds remain 3 of 3. The next Admin capability gate is PR-004B.
 
 ---
 

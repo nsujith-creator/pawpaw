@@ -99,8 +99,8 @@ Admin save, publish, and upload actions must require a live network connection a
 
 ## PR-004 — Mobile-first Admin panel
 
-**Status:** Partially implemented — PR-004 remains unreleased
-**Current authorised slice:** PR-004A Author's Studio foundation, authorised and implemented in the uncommitted working tree; final Dashboard truthfulness correction verified on 22 July 2026, release not authorised
+**Status:** Partially released — PR-004 remains overall incomplete
+**Released slice:** PR-004A Author's Studio foundation, released and production verified on 22 July 2026
 
 Admin must allow Sujith to manage Pawpaw from mobile without code or deployment work.
 
@@ -124,13 +124,13 @@ Required capabilities:
 
 ### PR-004A — Author's Studio foundation
 
-**Status:** Authorised — Implemented and verified, unreleased
+**Status:** Released
 
 The existing Admin login, shell/navigation, Dashboard, Content Library, Media Library, and Home editor now use the approved neutral blue-grey, mobile-first author's-studio presentation. Existing queries, filters, actions, upload validation, private signed-media delivery, owner scope, publication flow, authentication, and security behaviour remain the contract. This slice adds no new content-management capability and does not complete PR-004.
 
 ### PR-004B — Remaining Admin capability work
 
-**Status:** Approved — Pending, separately unauthorised for implementation
+**Status:** Approved — Pending
 
 Still required:
 - generic chapter creation and management;
@@ -405,7 +405,9 @@ Include a visible usage limit and warning so a mistake cannot create uncontrolle
 ## Change log
 
 ### 22 July 2026
-PR-004A's final review correction now counts unique attached media assets missing alt text, labels drafts factually as unpublished, and renders `Nothing needs attention.` only when both attention counts are zero. The existing Dashboard query, ownership boundary, actions, authentication, and media workflows remain unchanged. Targeted and full verification pass with reversible fixture residue zero; PR-004A remains unreleased and is not recorded as visually approved.
+PR-004A's final review correction counts unique attached media assets missing alt text, labels drafts factually as unpublished, and renders `Nothing needs attention.` only when both attention counts are zero. The existing Dashboard query, ownership boundary, actions, authentication, and media workflows remain unchanged. Targeted and full verification passed with reversible fixture residue zero.
+
+PR-004A was released through implementation commit `cb5faa79600df8d787aa6c40bf2b935ded111525` and exact-SHA production deployment `dpl_AdUC9GWRLJfdVSeBq7uv6GEXKDrQ`, which reached READY at `https://www.heyvarada.in`. Read-only production smoke passed the public/Admin boundaries, authenticated desktop/mobile Admin routes, live Dashboard reconciliation, signed-media delivery, six-photo Home editor, responsive/focus/accessibility checks, Sign out/Back protection, and browser/runtime error gates without production data mutation. Screenshot review was technical/visual evidence review, not a fourth formal manual-test round; formal rounds remain 3 of 3. PR-004 remains overall incomplete, and PR-004B remains Approved — Pending with generic chapter creation/management, chapter title/copy editing, preview before publishing, explicit photograph replacement, and installed-PWA operation dependent on PR-003. PR-003 and PR-007 through PR-011 are unchanged.
 
 ### 21 July 2026
 Pawpaw 2.0.1 implementation was authorised and released. PR-001, PR-002, PR-005, and PR-006 passed automated verification, exact-commit production deployment, the one-row preconditioned Home-copy correction, and production smoke verification. No fourth formal manual-test round occurred.
