@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-integrated-release-verification",
+  "task_name": "PR-004B integrated local release verification",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T18:16:48+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "Verify the completed PR-004B work as one dependable local Pawpaw system using only local Supabase and synthetic non-private fixtures.",
+  "user_journeys": [
+    "An active admin saves a chapter draft, publishes it, edits the later draft, republishes it, and unpublishes it.",
+    "A family viewer sees only the active immutable published revision through the Chapters index and detail routes.",
+    "A family viewer logs out and immediate browser Back does not reveal private content on desktop Chromium or mobile Chrome.",
+    "Either active admin can manage shared records, including replacing a draft photograph without changing its position or cover meaning.",
+    "Letter remains unavailable for publication."
+  ],
+  "non_negotiable_quality": [
+    "All database work uses the local Supabase stack; remote Supabase is forbidden.",
+    "Automated verification uses generated synthetic fixtures and no private family data.",
+    "Draft changes and photograph replacements remain invisible to viewers until explicit republish.",
+    "Immutable published revisions and revision-media snapshots cannot be modified.",
+    "Viewer and active-admin authorization fail closed, and logout history protection works in both required browser projects.",
+    "All generated fixture residue returns to zero after verification.",
+    "No product source, migration, dependency, or infrastructure file may change in this task."
+  ],
+  "realistic_harms_prevented": [
+    "A private draft or replacement photograph must not leak to family viewers.",
+    "Logout followed by browser Back must not reveal cached private family content.",
+    "One trusted active admin must not be blocked from safely continuing another active admin's work.",
+    "Verification must not leave synthetic users, content, media, associations, objects, or throttle records behind.",
+    "A local verification result must not be misrepresented as production proof."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "A clean local migration reset succeeds and every pgTAP database test passes.",
+      "proof_type": "database",
+      "proof_command": "supabase db reset; supabase test db"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "Viewer, active-admin, inactive-admin, non-admin, and anonymous authorization boundaries are enforced, while both active admins can manage the same draft, revision history, media, publication, and unpublication records.",
+      "proof_type": "database",
+      "proof_command": "supabase test db; npm.cmd run test:integration:live"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Draft save, first publish, later draft edit, republish, and unpublish preserve immutable revision history, and viewer reads resolve only the active published revision.",
+      "proof_type": "integration",
+      "proof_command": "supabase test db; npm.cmd run test:integration:live -- tests/integration/content-management.test.ts"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "The private Chapters index and published detail work for an authorized viewer, and logout followed by immediate Back exposes no private content in desktop Chromium or mobile Chrome.",
+      "proof_type": "browser",
+      "proof_command": "playwright test tests/e2e/chapters-privacy.spec.ts --project=chromium --project=mobile-chrome"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "Draft photograph replacement preserves position, presentation fields, and draft cover meaning while the published photograph remains unchanged until explicit republish.",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-06",
+      "criterion": "Letter remains unavailable for creation publication, and database publication rejects Letter content.",
+      "proof_type": "integration",
+      "proof_command": "supabase test db; npm.cmd test"
+    },
+    {
+      "id": "AC-07",
+      "criterion": "Synthetic fixture residue is zero after live integration and browser verification.",
+      "proof_type": "integration",
+      "proof_command": "npm.cmd run test:integration:live; playwright fixture cleanup"
+    },
+    {
+      "id": "AC-08",
+      "criterion": "The production dependency audit reports zero known vulnerabilities, and type-check, lint, full tests, production build, and git diff whitespace validation all pass.",
+      "proof_type": "build",
+      "proof_command": "npm.cmd audit --omit=dev; npm.cmd run type-check; npm.cmd run lint; npm.cmd test; npm.cmd run build; git diff --check"
+    },
+    {
+      "id": "AC-09",
+      "criterion": "The result JSON validates against this contract, the final scope gate passes, and both project and global decision ledgers are closed with the exact outcome.",
+      "proof_type": "inspection",
+      "proof_command": "scope gate check and close"
+    }
+  ],
+  "non_goals": [
+    "Fix any product defect found during verification.",
+    "Modify product source, database migrations, dependency manifests or lockfiles, generated product declarations, authentication, or infrastructure.",
+    "Use private family data or access any remote Supabase project.",
+    "Commit, push, deploy, or begin production verification.",
+    "Add dependencies, services, broad test frameworks, or unrelated cleanup."
+  ],
+  "simplest_acceptable_approach": "Capture the current preserved dirty worktree with the installed scope gate, reset and test only the local Supabase stack, run the existing PR-004B database, live integration, and browser paths with synthetic fixtures, add or adjust only the smallest directly required test or Playwright configuration when an acceptance claim otherwise lacks executable proof, run the full project quality matrix, prove zero residue, then validate the result and close both ledgers.",
+  "allowed_paths": [
+    ".build-governance/**",
+    "tests/unit/**",
+    "tests/integration/**",
+    "tests/e2e/**",
+    "tests/support/**",
+    "playwright*.config.ts"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 5,
+    "max_new_files": 3,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "installed task-contract.schema.json validation",
+    "scope gate init",
+    "supabase db reset",
+    "supabase test db",
+    "npm.cmd run test:integration:live",
+    "focused PR-004B Chromium browser verification",
+    "Chapters privacy and logout-Back verification in desktop Chromium and mobile Chrome",
+    "fixture residue zero reconciliation",
+    "npm.cmd audit --omit=dev",
+    "npm.cmd run type-check",
+    "npm.cmd run lint",
+    "npm.cmd test",
+    "npm.cmd run build",
+    "git diff --check",
+    "final scope gate with result JSON",
+    "project and global ledger closure"
+  ],
+  "prompt_word_limit": 650
+}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { attachMediaToHome, updateMediaDetails, deleteMediaForever } from './actions'
+import { attachMediaToContent, updateMediaDetails, deleteMediaForever } from './actions'
 import { formatAdminDateTime } from '@/lib/admin/library-view'
 import styles from '../admin.module.css'
 
@@ -18,10 +18,18 @@ export interface MediaLibraryItem {
   attachmentCount: number
   usageTitles: string[]
 }
+export interface MediaTarget {
+  id: string
+  label: string
+  type: string
+}
 
-interface Props { items: MediaLibraryItem[] }
+interface Props {
+  items: MediaLibraryItem[]
+  targets: MediaTarget[]
+}
 
-export default function MediaLibraryClient({ items }: Props) {
+export default function MediaLibraryClient({ items, targets }: Props) {
   const router = useRouter()
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -29,8 +37,9 @@ export default function MediaLibraryClient({ items }: Props) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [altDrafts, setAltDrafts] = useState<Record<string, string>>({})
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({})
+  const [targetDrafts, setTargetDrafts] = useState<Record<string, string>>({})
 
-  async function run(op: () => Promise<{ ok?: boolean; error?: string }>, msg: string) {
+  async function run(op: () => Promise<{ ok?: boolean; error?: string }>, message: string) {
     setError('')
     setSuccess('')
     setBusy(true)
@@ -40,7 +49,7 @@ export default function MediaLibraryClient({ items }: Props) {
         setError(result.error)
       } else {
         router.refresh()
-        setSuccess(msg)
+        setSuccess(message)
       }
     } catch {
       setError('Something went wrong. Please try again.')
@@ -51,23 +60,30 @@ export default function MediaLibraryClient({ items }: Props) {
   }
 
   function saveDetails(item: MediaLibraryItem) {
-    const fd = new FormData()
-    fd.set('media_id', item.mediaId)
-    fd.set('alt_text', altDrafts[item.mediaId] ?? item.altText)
-    fd.set('caption', captionDrafts[item.mediaId] ?? item.caption ?? '')
-    void run(() => updateMediaDetails(fd), 'Details updated.')
+    const data = new FormData()
+    data.set('media_id', item.mediaId)
+    data.set('alt_text', altDrafts[item.mediaId] ?? item.altText)
+    data.set('caption', captionDrafts[item.mediaId] ?? item.caption ?? '')
+    void run(() => updateMediaDetails(data), 'Photograph details updated.')
   }
 
   function attach(mediaId: string) {
-    const fd = new FormData()
-    fd.set('media_id', mediaId)
-    void run(() => attachMediaToHome(fd), 'Photo attached to Home page. Open Home page to reorder or remove it.')
+    const contentId = targetDrafts[mediaId] ?? targets[0]?.id ?? ''
+    if (!contentId) {
+      setError('Save an eligible content item before attaching this photograph.')
+      return
+    }
+    const data = new FormData()
+    data.set('media_id', mediaId)
+    data.set('content_id', contentId)
+    const target = targets.find(item => item.id === contentId)
+    void run(() => attachMediaToContent(data), `Photograph attached to ${target?.label ?? 'the selected content'}.`)
   }
 
   function deleteForever(mediaId: string) {
-    const fd = new FormData()
-    fd.set('media_id', mediaId)
-    void run(() => deleteMediaForever(fd), 'Photo permanently deleted.')
+    const data = new FormData()
+    data.set('media_id', mediaId)
+    void run(() => deleteMediaForever(data), 'Photograph permanently deleted.')
   }
 
   const attached = items.filter(item => item.attachmentCount > 0)
@@ -93,23 +109,42 @@ export default function MediaLibraryClient({ items }: Props) {
         <p className={styles.usageText}>{item.usageTitles.length > 0 ? `Used on: ${item.usageTitles.join(', ')}` : 'Usage: not attached to any content'}</p>
 
         <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Alt text for screen readers</label>
-          <input value={altDrafts[item.mediaId] ?? item.altText} onChange={event => setAltDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} aria-label="Alt text for this photo" />
+          <label htmlFor={`library-alt-${item.mediaId}`} className={styles.fieldLabel}>Alt text for screen readers</label>
+          <input id={`library-alt-${item.mediaId}`} value={altDrafts[item.mediaId] ?? item.altText} onChange={event => setAltDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
         </div>
 
         <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Caption (optional)</label>
+          <label htmlFor={`library-caption-${item.mediaId}`} className={styles.fieldLabel}>Caption (optional)</label>
           <div className={styles.fieldActionRow}>
-            <input value={captionDrafts[item.mediaId] ?? item.caption ?? ''} onChange={event => setCaptionDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} aria-label="Caption for this photo" />
+            <input id={`library-caption-${item.mediaId}`} value={captionDrafts[item.mediaId] ?? item.caption ?? ''} onChange={event => setCaptionDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
             <button type="button" disabled={busy} onClick={() => saveDetails(item)} className={styles.secondaryAction}>Save details</button>
           </div>
         </div>
 
+        <div className={styles.mediaTargetControl}>
+          <label htmlFor={`target-${item.mediaId}`} className={styles.fieldLabel}>Attach to content</label>
+          <div className={styles.fieldActionRow}>
+            <select
+              id={`target-${item.mediaId}`}
+              className={styles.select}
+              value={targetDrafts[item.mediaId] ?? targets[0]?.id ?? ''}
+              onChange={event => setTargetDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))}
+              disabled={busy || targets.length === 0}
+            >
+              {targets.length === 0 ? (
+                <option value="">No eligible content</option>
+              ) : targets.map(target => (
+                <option key={target.id} value={target.id}>{target.label} · {target.type}</option>
+              ))}
+            </select>
+            <button type="button" disabled={busy || targets.length === 0} onClick={() => attach(item.mediaId)} className={styles.secondaryAction}>Attach photograph</button>
+          </div>
+        </div>
+
         <div className={styles.actions}>
-          <button type="button" disabled={busy} onClick={() => attach(item.mediaId)} className={styles.secondaryAction}>Attach to Home</button>
           {confirmDeleteId === item.mediaId ? (
             <div className={styles.confirmation} role="group" aria-label="Permanent delete confirmation">
-              <span className={styles.confirmationText}>Delete this photo forever? This cannot be undone.</span>
+              <span className={styles.confirmationText}>Delete this photograph forever from every use? This cannot be undone.</span>
               <div className={styles.confirmationActions}>
                 <button type="button" disabled={busy} onClick={() => deleteForever(item.mediaId)} className={styles.dangerAction}>Yes, delete forever</button>
                 <button type="button" disabled={busy} onClick={() => setConfirmDeleteId(null)} className={styles.secondaryAction}>Cancel</button>
@@ -139,7 +174,7 @@ export default function MediaLibraryClient({ items }: Props) {
           <div className={styles.sectionHeader}>
             <h2 id="unattached-media-title" className={styles.sectionTitle}>Unattached ({unattached.length})</h2>
           </div>
-          <p className={styles.informationNotice}>These photos are saved in your library but not shown on any page. Use “Attach to Home” to add one to the Home page.</p>
+          <p className={styles.informationNotice}>These photographs are saved in the private library but not shown on any page. Choose an owned Home or chapter target to attach one.</p>
           <div className={styles.mediaList}>{unattached.map(renderItem)}</div>
         </section>
       )}

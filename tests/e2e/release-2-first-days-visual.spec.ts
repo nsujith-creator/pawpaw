@@ -192,7 +192,7 @@ test('First Days reflows at 375px and 320px and remains usable at 200 percent zo
   expect(mobileCharacter!.width).toBeLessThanOrEqual(135)
   expect(overlaps(mobileCharacter!, mobileTitle!)).toBe(false)
   expect(overlaps(mobileCharacter!, mobileFirstFigure!)).toBe(false)
-  for (const item of ['Home', 'First Days', 'Leave']) {
+  for (const item of ['Home', 'First Days', 'Chapters', 'Leave']) {
     const control = item === 'Leave' ? page.getByRole('button', { name: item }) : page.getByRole('link', { name: item, exact: true })
     const box = await control.boundingBox()
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
@@ -214,7 +214,7 @@ test('First Days reflows at 375px and 320px and remains usable at 200 percent zo
   expect(zoomFirstFigure).not.toBeNull()
   expect(overlaps(zoomCharacter!, zoomTitle!)).toBe(false)
   expect(overlaps(zoomCharacter!, zoomFirstFigure!)).toBe(false)
-  for (const item of ['Home', 'First Days', 'Leave']) {
+  for (const item of ['Home', 'First Days', 'Chapters', 'Leave']) {
     const control = item === 'Leave' ? page.getByRole('button', { name: item }) : page.getByRole('link', { name: item, exact: true })
     const box = await control.boundingBox()
     expect(box).not.toBeNull()

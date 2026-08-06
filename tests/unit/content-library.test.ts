@@ -34,15 +34,10 @@ describe('content library page', () => {
     expect(contentLibrary).toContain('href="/admin/content"')
   })
 
-  it('uses a disabled Release 2 Create New decision that cannot touch Home', () => {
-    expect(contentLibrary).toContain('Create New — Release 2')
-    expect(contentLibrary).toContain('disabled')
-    expect(contentLibrary).toContain('never opens')
-    const createBlock = contentLibrary.slice(
-      contentLibrary.indexOf('Create New — Release 2') - 300,
-      contentLibrary.indexOf('Create New — Release 2') + 300,
-    )
-    expect(createBlock).not.toContain('/admin/home')
+  it('offers the authorised shared chapter creator without changing the Home route', () => {
+    expect(contentLibrary).toContain('Create chapter')
+    expect(contentLibrary).toContain('href="/admin/content/new"')
+    expect(contentLibrary).toContain('Home remains a protected singleton')
   })
 
   it('keeps query errors distinct from a genuine empty library', () => {
@@ -56,14 +51,13 @@ describe('content library page', () => {
     expect(contentLibrary).toContain("item.type === 'home'")
   })
 
-  it('does not link to a fake non-home editor URL', () => {
-    // Non-home editors are not built yet — no URL like /admin/content/[id].
-    expect(contentLibrary).not.toMatch(/\/admin\/content\/\[/)
-    expect(contentLibrary).not.toMatch(/\/admin\/content\/editor/)
+  it('links every non-Home item to the shared ID-based editor', () => {
+    expect(contentLibrary).toContain('href={`/admin/content/${item.id}`}')
+    expect(contentLibrary).not.toContain('/admin/content/editor')
   })
 
-  it('shows a release 2 note for non-home content types', () => {
-    expect(contentLibrary).toMatch(/Release 2/i)
+  it('states the exact four non-Home types handled by the shared editor', () => {
+    expect(contentLibrary).toContain('Story, Gallery, Letter, and Moment')
   })
 
   it('does not have a redundant Home editor link in the page header', () => {

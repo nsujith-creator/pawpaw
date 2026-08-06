@@ -9,7 +9,7 @@ import {
   safeStorageBasename,
   type MediaViewItem,
 } from '@/lib/admin/library-view'
-import MediaLibraryClient, { type MediaLibraryItem } from './media-library-client'
+import MediaLibraryClient, { type MediaLibraryItem, type MediaTarget } from './media-library-client'
 import styles from '../admin.module.css'
 
 interface UsageRow {
@@ -35,9 +35,8 @@ export default async function MediaLibraryPage({
   searchParams: Promise<{ q?: string; type?: string; attachment?: string; sort?: string }>
 }) {
   const supabase = await createClient()
-  let admin: { id: string; email: string }
   try {
-    admin = await requireActiveAdmin(supabase)
+    await requireActiveAdmin(supabase)
   } catch {
     redirect('/admin/login')
   }
@@ -53,7 +52,6 @@ export default async function MediaLibraryPage({
         content_items (title)
       )
     `)
-    .eq('created_by', admin.id)
     .order('created_at', { ascending: false })
     .order('id', { ascending: true })
 
@@ -108,6 +106,17 @@ export default async function MediaLibraryPage({
   }))
 
   const hasFilters = Boolean(filters.query || filters.type !== 'all' || filters.attachment !== 'all' || filters.sort !== 'newest')
+  const { data: targetRows, error: targetError } = await db
+    .from('content_items')
+    .select('id, type, title, slug')
+    .order('type', { ascending: true })
+    .order('title', { ascending: true })
+    .order('id', { ascending: true })
+  const targets: MediaTarget[] = targetError ? [] : (targetRows ?? []).map(row => ({
+    id: row.id,
+    label: row.type === 'home' && row.slug === 'home' ? 'Home' : row.title,
+    type: row.type,
+  }))
 
   return (
     <div className={styles.page}>
@@ -146,7 +155,7 @@ export default async function MediaLibraryPage({
       ) : items.length === 0 ? (
         <p className={styles.emptyState}>No media matches these filters. <a href="/admin/media" className={styles.inlineLink}>Clear filters</a>.</p>
       ) : (
-        <MediaLibraryClient items={items} />
+        <MediaLibraryClient items={items} targets={targets} />
       )}
 
       {hasFilters && items.length > 0 && (

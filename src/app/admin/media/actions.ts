@@ -10,25 +10,57 @@ import { validateUploadFile } from '@/lib/media/validate-upload'
 import { buildUploadPath } from '@/lib/media/upload-path'
 import { finalizeUploadCore } from '@/lib/media/finalize-upload'
 import { sweepOrphans } from '@/lib/media/orphan-sweep'
+import { isValidId } from '@/lib/content/manage-content'
 import {
   attachMediaCore,
   updateMediaDetailsCore,
   reorderAttachmentCore,
-  detachMediaCore,
+  detachMediaSafelyCore,
   deleteMediaCore,
+  replaceAttachmentCore,
+  setCoverMediaCore,
 } from '@/lib/media/manage-media'
 
 async function requireAdminWithOrigin() {
-  const headersList = await headers()
-  checkOrigin(headersList)
+  checkOrigin(await headers())
   const supabase = await createClient()
   return requireActiveAdmin(supabase)
 }
 
-function revalidateHome() {
-  revalidatePath('/')
-  revalidatePath('/admin/home')
+async function revalidateTarget(contentId: string) {
+  const db = createAdminClient()
+  const { data } = await db
+    .from('content_items')
+    .select('id, type, slug')
+    .eq('id', contentId)
+    .maybeSingle()
+  revalidatePath('/admin')
+  revalidatePath('/admin/content')
   revalidatePath('/admin/media')
+  if (!data) return
+  if (data.type === 'home') {
+    revalidatePath('/')
+    revalidatePath('/admin/home')
+    return
+  }
+  revalidatePath(`/admin/content/${data.id}`)
+  revalidatePath(`/admin/content/${data.id}/preview`)
+  revalidatePath('/chapters')
+  if (data.slug === 'first-days') revalidatePath('/first-days')
+  else revalidatePath(`/chapters/${data.slug}`)
+}
+
+async function revalidateMediaUsages(mediaId: string) {
+  const db = createAdminClient()
+  const { data } = await db
+    .from('content_media')
+    .select('content_id')
+    .eq('media_id', mediaId)
+  if (!data || data.length === 0) {
+    revalidatePath('/admin/media')
+    return
+  }
+  await Promise.all(data.map(row => revalidateTarget(row.content_id)))
 }
 
 export async function authorizeUpload(formData: FormData) {
@@ -53,79 +85,173 @@ export async function authorizeUpload(formData: FormData) {
 
 export async function finalizeUpload(formData: FormData) {
   const admin = await requireAdminWithOrigin()
+  const contentId = (formData.get('content_id') as string | null) || null
+  if (contentId && !isValidId(contentId)) return { error: 'That chapter could not be found.' }
   const result = await finalizeUploadCore(createAdminClient(), admin.id, {
     path: (formData.get('path') as string | null) ?? '',
     altText: (formData.get('alt_text') as string | null)?.trim() ?? '',
     caption: (formData.get('caption') as string | null) ?? null,
-    contentId: (formData.get('content_id') as string | null) || null,
+    contentId,
   })
-  if ('ok' in result) revalidateHome()
+  if ('ok' in result) {
+    if (contentId) await revalidateTarget(contentId)
+    else revalidatePath('/admin/media')
+  }
   return result
+}
+
+export async function finalizeReplacementUpload(formData: FormData) {
+  const admin = await requireAdminWithOrigin()
+  const contentId = (formData.get('content_id') as string | null) ?? ''
+  const oldMediaId = (formData.get('old_media_id') as string | null) ?? ''
+  if (!isValidId(contentId) || !isValidId(oldMediaId)) {
+    return { error: 'The replacement target could not be found.' }
+  }
+  const db = createAdminClient()
+  const finalized = await finalizeUploadCore(db, admin.id, {
+    path: (formData.get('path') as string | null) ?? '',
+    altText: (formData.get('alt_text') as string | null)?.trim() ?? '',
+    caption: (formData.get('caption') as string | null) ?? null,
+    contentId: null,
+  })
+  if ('error' in finalized) return finalized
+
+  const replaced = await replaceAttachmentCore(db, admin.id, contentId, oldMediaId, finalized.mediaId)
+  if ('error' in replaced) {
+    return {
+      error: `${replaced.error} The new file remains safely available in Media Library.`,
+      mediaId: finalized.mediaId,
+    }
+  }
+  await revalidateTarget(contentId)
+  return {
+    ok: true as const,
+    mediaId: finalized.mediaId,
+    message: 'Photograph replaced. The previous file remains in Media Library.',
+  }
 }
 
 export async function updateMediaDetails(formData: FormData) {
   const admin = await requireAdminWithOrigin()
+  const mediaId = (formData.get('media_id') as string | null) ?? ''
+  if (!isValidId(mediaId)) return { error: 'That photo could not be found.' }
   const result = await updateMediaDetailsCore(
     createAdminClient(),
     admin.id,
-    (formData.get('media_id') as string | null) ?? '',
+    mediaId,
     (formData.get('alt_text') as string | null) ?? '',
     (formData.get('caption') as string | null) ?? null,
   )
-  if ('ok' in result) revalidateHome()
+  if ('ok' in result) await revalidateMediaUsages(mediaId)
   return result
 }
 
-export async function reorderHomeMedia(formData: FormData) {
+export async function reorderContentMedia(formData: FormData) {
   const admin = await requireAdminWithOrigin()
   const contentId = (formData.get('content_id') as string | null) ?? ''
   const mediaId = (formData.get('media_id') as string | null) ?? ''
-  if (!contentId || !mediaId) return { error: 'That photo could not be found.' }
+  if (!isValidId(contentId) || !isValidId(mediaId)) return { error: 'That photo could not be found.' }
   const result = await reorderAttachmentCore(
     createAdminClient(), admin.id, contentId, mediaId,
     formData.get('direction') === 'earlier' ? 'earlier' : 'later',
   )
-  if ('ok' in result) revalidateHome()
+  if ('ok' in result) await revalidateTarget(contentId)
   return result
 }
 
-export async function detachHomeMedia(formData: FormData) {
+export async function detachContentMedia(formData: FormData) {
   const admin = await requireAdminWithOrigin()
   const contentId = (formData.get('content_id') as string | null) ?? ''
   const mediaId = (formData.get('media_id') as string | null) ?? ''
-  if (!contentId || !mediaId) return { error: 'That photo could not be found.' }
-  const result = await detachMediaCore(createAdminClient(), admin.id, contentId, mediaId)
-  if ('ok' in result) revalidateHome()
+  if (!isValidId(contentId) || !isValidId(mediaId)) return { error: 'That photo could not be found.' }
+  const result = await detachMediaSafelyCore(createAdminClient(), admin.id, contentId, mediaId)
+  if ('ok' in result) await revalidateTarget(contentId)
+  return result
+}
+
+export async function setContentCover(formData: FormData) {
+  const admin = await requireAdminWithOrigin()
+  const contentId = (formData.get('content_id') as string | null) ?? ''
+  const mediaId = (formData.get('media_id') as string | null) ?? ''
+  if (!isValidId(contentId) || !isValidId(mediaId)) return { error: 'That photo could not be found.' }
+  const result = await setCoverMediaCore(createAdminClient(), admin.id, contentId, mediaId)
+  if ('ok' in result) await revalidateTarget(contentId)
+  return result
+}
+
+export async function replaceContentMedia(formData: FormData) {
+  const admin = await requireAdminWithOrigin()
+  const contentId = (formData.get('content_id') as string | null) ?? ''
+  const oldMediaId = (formData.get('old_media_id') as string | null) ?? ''
+  const newMediaId = (formData.get('new_media_id') as string | null) ?? ''
+  if (![contentId, oldMediaId, newMediaId].every(isValidId)) {
+    return { error: 'The replacement photographs could not be found.' }
+  }
+  const result = await replaceAttachmentCore(
+    createAdminClient(), admin.id, contentId, oldMediaId, newMediaId,
+  )
+  if ('ok' in result) {
+    await revalidateTarget(contentId)
+    return {
+      ok: true as const,
+      message: 'Photograph replaced. The previous file remains in Media Library.',
+    }
+  }
   return result
 }
 
 export async function deleteMediaForever(formData: FormData) {
   const admin = await requireAdminWithOrigin()
   const mediaId = (formData.get('media_id') as string | null) ?? ''
-  const result = await deleteMediaCore(createAdminClient(), admin.id, mediaId)
-  if ('ok' in result) revalidateHome()
+  if (!isValidId(mediaId)) return { error: 'That photo could not be found.' }
+  const db = createAdminClient()
+  const { data: usages } = await db.from('content_media').select('content_id').eq('media_id', mediaId)
+  const result = await deleteMediaCore(db, admin.id, mediaId)
+  if ('ok' in result) {
+    await Promise.all((usages ?? []).map(row => revalidateTarget(row.content_id)))
+    revalidatePath('/admin/media')
+  }
   return result
+}
+
+export async function attachMediaToContent(formData: FormData) {
+  const admin = await requireAdminWithOrigin()
+  const mediaId = (formData.get('media_id') as string | null) ?? ''
+  const contentId = (formData.get('content_id') as string | null) ?? ''
+  if (!isValidId(mediaId) || !isValidId(contentId)) return { error: 'Photo or target chapter not specified.' }
+
+  const db = createAdminClient()
+  const result = await attachMediaCore(db, admin.id, contentId, mediaId)
+  if ('error' in result) return result
+  await revalidateTarget(contentId)
+  return { ok: true as const }
+}
+
+// Backward-compatible wrappers keep the released Home editor imports stable.
+export async function reorderHomeMedia(formData: FormData) {
+  return reorderContentMedia(formData)
+}
+
+export async function detachHomeMedia(formData: FormData) {
+  return detachContentMedia(formData)
 }
 
 export async function attachMediaToHome(formData: FormData) {
   const admin = await requireAdminWithOrigin()
   const mediaId = (formData.get('media_id') as string | null) ?? ''
-  if (!mediaId) return { error: 'Photo not specified.' }
-
+  if (!isValidId(mediaId)) return { error: 'Photo not specified.' }
   const db = createAdminClient()
   const { data: homes, error } = await db
     .from('content_items')
     .select('id')
     .eq('type', 'home')
     .eq('slug', 'home')
-    .eq('created_by', admin.id)
     .limit(2)
   if (error || homes === null || homes.length !== 1) {
-    return { error: 'No Home page owned by you is available for this photo.' }
+    return { error: 'The shared Home page is not available for this photo.' }
   }
-
   const result = await attachMediaCore(db, admin.id, homes[0].id, mediaId)
   if ('error' in result) return result
-  revalidateHome()
+  await revalidateTarget(homes[0].id)
   return { ok: true as const }
 }

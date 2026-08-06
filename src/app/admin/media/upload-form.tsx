@@ -9,7 +9,13 @@ import styles from '../admin.module.css'
 
 // Direct-to-Storage upload: image bytes go from the browser straight to the
 // private bucket with a short-lived token. The 8 MB limit is rechecked by the server.
-export default function UploadForm({ contentItemId }: { contentItemId: string | null }) {
+export default function UploadForm({
+  contentItemId,
+  targetLabel = 'Home',
+}: {
+  contentItemId: string | null
+  targetLabel?: string
+}) {
   const router = useRouter()
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -69,7 +75,7 @@ export default function UploadForm({ contentItemId }: { contentItemId: string | 
       }
 
       router.refresh()
-      setSuccess('Photo saved and attached to Home. To make it visible to the family, publish the Home page.')
+      setSuccess(`Photo saved and attached to ${targetLabel}. It becomes visible to family only while that content is published.`)
       form.reset()
     } catch {
       setError('Upload failed before it completed. Check your connection and try again.')
@@ -95,7 +101,7 @@ export default function UploadForm({ contentItemId }: { contentItemId: string | 
         <input id="caption" name="caption" type="text" placeholder="A line the family will see under the photo" className={styles.field} />
       </div>
       <button type="submit" disabled={busy} className={styles.action}>{busy ? (step || 'Uploading…') : 'Upload photo'}</button>
-      {!contentItemId && <p className={styles.informationNotice}>Save Home content first, then upload to attach the photo automatically.</p>}
+      {!contentItemId && <p className={styles.informationNotice}>Save the content first, then upload to attach the photo automatically.</p>}
       {error && <p role="alert" className={styles.errorNotice}>{error}</p>}
       {success && <p role="status" className={styles.successNotice}>{success}</p>}
     </form>

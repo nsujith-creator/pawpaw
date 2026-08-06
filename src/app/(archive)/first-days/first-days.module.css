@@ -78,6 +78,66 @@
   gap: clamp(2.75rem, 6.5vw, 6rem);
 }
 
+.readingSurface {
+  width: min(100% - 1rem, 48rem);
+  margin: -1rem auto clamp(3rem, 7vw, 6rem);
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+.summary {
+  color: var(--color-ink-secondary);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.copy {
+  color: var(--color-ink);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.copy > * + * {
+  margin-top: 1.25rem;
+}
+
+.summary + .copy {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.copy h2,
+.copy h3 {
+  margin-top: 2rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.copy h2 { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+.copy h3 { font-size: clamp(1.4rem, 4vw, 2rem); }
+.copy > p { white-space: pre-wrap; }
+
+.copy blockquote {
+  padding: 1rem 1.25rem;
+  border-left: 0.25rem solid var(--chapter-accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--chapter-soft);
+  color: var(--chapter-on-soft);
+}
+
+.copy cite {
+  margin-top: 0.65rem;
+  display: block;
+  font-size: 0.875rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .figure {
   width: min(100%, 42rem);
   margin: 0;

@@ -1,8 +1,10 @@
-const HISTORY_GUARD = `(() => {
+export const HISTORY_GUARD = `(() => {
   const hiddenAttribute = 'data-pawpaw-private-hidden';
   const isProtectedPath = () => {
-    const path = window.location.pathname;
-    return path === '/' || (path.startsWith('/admin') && path !== '/admin/login');
+    let path = window.location.pathname;
+    try { path = decodeURIComponent(path); } catch {}
+    const family = path === '/' || path === '/first-days' || path === '/chapters' || path.startsWith('/chapters/');
+    return family || (path.startsWith('/admin') && path !== '/admin/login');
   };
   const hide = () => document.documentElement.setAttribute(hiddenAttribute, '');
   const reveal = () => document.documentElement.removeAttribute(hiddenAttribute);

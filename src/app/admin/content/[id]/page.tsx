@@ -1,0 +1,75 @@
+import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { requireActiveAdmin } from '@/lib/auth/admin'
+import { generateSignedUrl } from '@/lib/media/private-url'
+import { getAdminChapter } from '@/lib/content/chapters'
+import ChapterEditor from '../chapter-editor'
+import type { ReplacementCandidate } from '../../media/attachment-list'
+import styles from '../../admin.module.css'
+
+export default async function EditChapterPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const supabase = await createClient()
+  try {
+    await requireActiveAdmin(supabase)
+  } catch {
+    redirect('/admin/login')
+  }
+  const { id } = await params
+  const result = await getAdminChapter(id)
+  if (result.state === 'empty') notFound()
+  if (result.state === 'error') {
+    return (
+      <div className={styles.pageNarrow}>
+        <h1 className={styles.pageTitle}>Chapter editor</h1>
+        <p role="alert" className={styles.errorNotice}>This chapter could not be loaded safely. Nothing has been changed.</p>
+      </div>
+    )
+  }
+
+  const db = createAdminClient()
+  const { data: mediaRows, error: mediaError } = await db
+    .from('media_assets')
+    .select('id, storage_path, alt_text, caption')
+    .eq('processing_status', 'ready')
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true })
+  const replacementCandidates: ReplacementCandidate[] = mediaError ? [] : await Promise.all((mediaRows ?? []).map(async row => {
+    let signedUrl: string | null = null
+    try {
+      signedUrl = await generateSignedUrl(row.storage_path)
+    } catch {
+      // The candidate remains listed without a thumbnail.
+    }
+    return {
+      mediaId: row.id,
+      signedUrl,
+      altText: row.alt_text?.trim() || 'Family photograph',
+      caption: row.caption,
+    }
+  }))
+
+  return (
+    <div className={styles.pageNarrow}>
+      <header className={styles.pageHeader}>
+        <div>
+          <p className={styles.eyebrow}>{result.content.type} editor</p>
+          <h1 className={styles.pageTitle}>Edit chapter</h1>
+          <p className={styles.lede}>Words, publication, and photographs are saved through the private Author&apos;s Studio.</p>
+        </div>
+        <Link href="/admin/content" className={styles.secondaryAction}>Back to content</Link>
+      </header>
+      {result.mediaState === 'degraded' && (
+        <p role="alert" className={styles.warningNotice}>Some private photo previews are unavailable. The saved copy and photo records remain intact.</p>
+      )}
+      <section className={styles.editorSection}>
+        <ChapterEditor existing={result.content} replacementCandidates={replacementCandidates} />
+      </section>
+    </div>
+  )
+}

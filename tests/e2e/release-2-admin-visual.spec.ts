@@ -17,6 +17,7 @@ const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR
 
 let db: SupabaseClient | null = null
 let adminId: string | null = null
+let draftContentId = ''
 
 test.describe.configure({ mode: 'serial', timeout: 120_000 })
 
@@ -55,6 +56,7 @@ test.beforeAll(async ({}, testInfo) => {
     },
   ]).select('id')
   if (content.error || !content.data) throw content.error ?? new Error('Admin visual content fixtures were not created')
+  draftContentId = content.data[0].id
 
   const paths = [fixtureObjectName('admin-visual-attached', 'png'), fixtureObjectName('admin-visual-unattached', 'png')]
     .map(name => `${adminId}/${name}`)
@@ -264,7 +266,7 @@ test('Content, media, editor, upload, semantic states, and destructive confirmat
   await signIn(page)
 
   await gotoAdmin(page, '/admin/content')
-  await expect(page.getByRole('button', { name: 'Create New — Release 2' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: 'Create chapter' })).toHaveAttribute('href', '/admin/content/new')
   await page.getByLabel('Search content by title').fill('no-result-studio-filter')
   await page.getByRole('button', { name: 'Apply' }).click()
   await expect(page.getByText('No content matches these filters.')).toBeVisible()
@@ -284,9 +286,13 @@ test('Content, media, editor, upload, semantic states, and destructive confirmat
   await expect(page.getByRole('status')).toContainText('Details updated.')
   await capture(page, 'admin-media-success.png')
 
-  await page.getByRole('button', { name: 'Attach to Home' }).last().click()
-  await expect(page.getByRole('alert')).toBeVisible()
-  await capture(page, 'admin-media-error.png')
+  const unattachedCard = page.getByRole('article').filter({
+    has: page.locator('input[value="A tiny test-only square used for reversible Admin evidence."]'),
+  })
+  await unattachedCard.getByLabel('Attach to content').selectOption(draftContentId)
+  await unattachedCard.getByRole('button', { name: 'Attach photograph' }).click()
+  await expect(page.getByRole('status')).toContainText(`Photograph attached to ${longTitle}.`)
+  await capture(page, 'admin-media-target-attachment.png')
 
   await gotoAdmin(page, '/admin/home')
   await expect(page.getByRole('button', { name: 'Save draft' })).toBeVisible()

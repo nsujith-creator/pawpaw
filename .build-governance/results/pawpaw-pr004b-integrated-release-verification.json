@@ -1,0 +1,150 @@
+{
+  "task_id": "pawpaw-pr004b-integrated-release-verification",
+  "result": "failed",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "The clean local reset applied all ten migrations through 20260806110000_pr004b_atomic_photo_replacement.sql, and both pgTAP files passed all 92 database tests."
+    },
+    {
+      "id": "AC-02",
+      "status": "fail",
+      "evidence": "pgTAP proves the intended database rules for viewer, active-admin, inactive-admin, non-admin, anonymous, and two-admin shared management, but the integrated service-role API path fails with PostgreSQL 42501 permission denied for schema private. Local email login is also disabled by the existing Supabase configuration, so authenticated browser/RLS login proof cannot complete."
+    },
+    {
+      "id": "AC-03",
+      "status": "fail",
+      "evidence": "The PostgreSQL implementation passed its direct pgTAP lifecycle checks, but the real service-role call to public.publish_content_revision failed with 42501 permission denied for schema private. Therefore draft save through first publish, later edit, republish, unpublish, and viewer selection did not pass as one integrated application path."
+    },
+    {
+      "id": "AC-04",
+      "status": "fail",
+      "evidence": "Authorized Chapters index headers and logout-immediate-Back protection passed on desktop Chromium and mobile Chrome, and unauthenticated/forged-cookie checks passed on desktop. Published-detail proof was skipped because no legitimate active revision can be created through the blocked service-role publication path after the clean reset."
+    },
+    {
+      "id": "AC-05",
+      "status": "pass",
+      "evidence": "The 37 photograph-replacement pgTAP assertions passed, including exact sort order, caption and placement preservation, draft cover transfer semantics, both active admins, unchanged published cover and revision-media snapshots, and no leak before republish."
+    },
+    {
+      "id": "AC-06",
+      "status": "pass",
+      "evidence": "pgTAP passed the PR004B_LETTER_PUBLICATION_FORBIDDEN database check, and the full unit suite passed the creation-choice and disabled-publication UI assertions."
+    },
+    {
+      "id": "AC-07",
+      "status": "pass",
+      "evidence": "The guarded local integration cleanup reported users=0, content=0, media=0, associations=0, objects=0, throttle=0 after the failed full run and again before and after the final focused residue check."
+    },
+    {
+      "id": "AC-08",
+      "status": "pass",
+      "evidence": "The production dependency audit reported 0 vulnerabilities; type-check and lint passed; the standard full suite passed 350 tests with 47 expected non-live skips; the unchanged production build passed on retry after one Windows native worker exit; and git diff --check passed."
+    },
+    {
+      "id": "AC-09",
+      "status": "pass",
+      "evidence": "The installed scope gate validated the contract, captured the baseline, and reported only the new local-only Vitest configuration in the task delta. This result is recorded as failed and is used to close both decision ledgers without release action."
+    }
+  ],
+  "tests": [
+    {
+      "command": "installed scope gate init",
+      "exit_code": 0,
+      "summary": "Contract validated; baseline captured at c41fec2dd455960a06e02c24f24d23ffef313779 with 77 pre-existing dirty paths and zero staged paths."
+    },
+    {
+      "command": "supabase db reset",
+      "exit_code": 0,
+      "summary": "Reset only the local database and applied all ten repository migrations plus the synthetic seed file."
+    },
+    {
+      "command": "supabase test db",
+      "exit_code": 0,
+      "summary": "2 pgTAP files passed; 92 database tests passed."
+    },
+    {
+      "command": "npx.cmd vitest run --config tests/integration/vitest.local.config.ts",
+      "exit_code": 1,
+      "summary": "Guarded local-only full integration run: 20 passed, 14 failed, 14 skipped. Critical PR-004B failures were 42501 permission denied for schema private on publication and media attachment. Cleanup completed with all six fixture residue counts at zero."
+    },
+    {
+      "command": "npx.cmd playwright test tests/e2e/chapters-privacy.spec.ts --project=chromium --project=mobile-chrome",
+      "exit_code": 1,
+      "summary": "The combined development-server run hit Windows native memory exits; its global cleanup still reported all fixture residue counts at zero."
+    },
+    {
+      "command": "npx.cmd playwright test --config playwright.stage1.config.ts --project=chromium",
+      "exit_code": 1,
+      "summary": "Production-server desktop run passed four privacy checks, skipped the unavailable published-detail check, and hit ERR_INSUFFICIENT_RESOURCES only on the reload after the logout-Back assertions."
+    },
+    {
+      "command": "npx.cmd playwright test --config playwright.stage1.config.ts --project=chromium --grep logout-Back-index",
+      "exit_code": 0,
+      "summary": "Focused desktop Chromium logout then immediate Back check passed 1/1."
+    },
+    {
+      "command": "npx.cmd playwright test --config playwright.stage1.config.ts --project=mobile-chrome --grep logout-Back-index",
+      "exit_code": 0,
+      "summary": "Focused mobile Chrome logout then immediate Back check passed 1/1 with a reduced Node heap reservation after two native allocation failures."
+    },
+    {
+      "command": "npx.cmd vitest run --config tests/integration/vitest.local.config.ts tests/integration/throttle-live.test.ts",
+      "exit_code": 0,
+      "summary": "Final guarded local-only residue proof passed 1/1 and reported zero users, content, media, associations, Storage objects, and throttle rows both before and after."
+    },
+    {
+      "command": "npm.cmd audit --omit=dev",
+      "exit_code": 0,
+      "summary": "Production dependency audit reported 0 vulnerabilities."
+    },
+    {
+      "command": "npm.cmd run type-check",
+      "exit_code": 0,
+      "summary": "TypeScript completed with no errors."
+    },
+    {
+      "command": "npm.cmd run lint",
+      "exit_code": 0,
+      "summary": "ESLint completed with no errors."
+    },
+    {
+      "command": "npm.cmd test",
+      "exit_code": 0,
+      "summary": "29 files passed and 6 live-mode files skipped; 350 tests passed and 47 skipped."
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=2048 npm.cmd run build",
+      "exit_code": 1,
+      "summary": "First unchanged production-build attempt compiled and type-checked, then a Windows Next.js worker exited with native code 3221226505 during static generation."
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=2048 npm.cmd run build (retry)",
+      "exit_code": 0,
+      "summary": "Second unchanged attempt compiled, type-checked, generated all 17 static pages, and completed production optimization."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors were reported; only pre-existing line-ending warnings were emitted."
+    },
+    {
+      "command": "scope gate check before result",
+      "exit_code": 0,
+      "summary": "After exact restoration of the Next-dev-generated AGENTS.md block, the only task delta was tests/integration/vitest.local.config.ts and every forbidden capability remained unchanged."
+    }
+  ],
+  "deviations": [
+    "The existing .env.local points at a remote project, so every live command explicitly injected local CLI values; tests/integration/vitest.local.config.ts rejects any host other than localhost or 127.0.0.1. No remote Supabase request was made.",
+    "The standard live Vitest configuration and several historical integration tests assume a provisioned non-local environment. The clean local seed contains no canonical Home or First Days rows, and local email login is disabled; those assumptions produced additional non-PR-004B failures after reset.",
+    "The first combined browser runs hit Windows native allocation failures. The required logout-Back checks were rerun one project at a time and passed; published-detail proof remained blocked by the product publication defect, not by the resource retry.",
+    "Next dev appended an agent-rules block to AGENTS.md. Only that generated task side effect was removed, and the file's exact pre-task SHA-256 was restored before scope closure."
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Stop after failed-result ledger closure. A separate owner-approved product-fix contract is required to grant the service-role wrappers a safe executable path into the private schema and to reconcile clean-reset local fixtures/auth before PR-004B release verification may be rerun. Do not commit, push, deploy, access remote Supabase, or begin production verification."
+}

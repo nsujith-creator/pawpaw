@@ -27,6 +27,11 @@ const adminCss    = read('app/admin/admin.module.css')
 const carousel    = read('components/home/home-carousel.tsx')
 const carouselCss = read('components/home/home-carousel.module.css')
 const ambient     = read('components/home/ambient-frame.tsx')
+const chaptersIndex = read('app/(archive)/chapters/page.tsx')
+const firstDaysPage = read('app/(archive)/first-days/page.tsx')
+const chapterPreview = read('app/admin/content/[id]/preview/page.tsx')
+const chapterRenderer = read('components/content/chapter-renderer.tsx')
+const chapterEditor = read('app/admin/content/chapter-editor.tsx')
 
 describe('Release 2 visual foundation', () => {
   it('loads the three approved font families through the installed Next font support', () => {
@@ -210,7 +215,9 @@ describe('attached-photo management', () => {
     expect(attachments).toContain('Save details')
     expect(attachments).toContain('Move earlier')
     expect(attachments).toContain('Move later')
-    expect(attachments).toContain('Move to Media Library')
+    expect(attachments).toContain('>Detach<')
+    expect(attachments).toContain('Replace photograph')
+    expect(attachments).toContain('Set as cover')
     expect(attachments).toContain('Delete permanently')
   })
 
@@ -226,12 +233,12 @@ describe('attached-photo management', () => {
   })
 
   it('clearly distinguishes detach (keeps the file) from permanent delete', () => {
-    expect(attachments).toContain('the file is not deleted')
+    expect(attachments).toContain('The file remains in Media Library')
     expect(attachments).toContain('This cannot be undone')
   })
 
-  it('success messages tell the owner the family page changed and needs a refresh', () => {
-    expect(attachments).toContain('Refresh the family page to see the change.')
+  it('successful attachment changes refresh the server-rendered editor immediately', () => {
+    expect(attachments).toContain('router.refresh()')
   })
 
   it('busy state resets in finally and messages use distinct alert/status roles', () => {
@@ -269,7 +276,7 @@ describe('alt text vs caption in the upload form', () => {
 
   it('refreshes and clears the form only after successful finalization', () => {
     const refreshPos = uploadForm.indexOf('router.refresh()')
-    const successPos = uploadForm.indexOf("setSuccess('Photo saved")
+    const successPos = uploadForm.indexOf('setSuccess(`Photo saved')
     const resetPos   = uploadForm.indexOf('form.reset()')
     expect(refreshPos).toBeGreaterThan(-1)
     expect(successPos).toBeGreaterThan(refreshPos)
@@ -388,11 +395,44 @@ describe('viewer logout control', () => {
     expect(leaveBtn).toContain('method="post"')
   })
 
-  it('renders Home, First Days, and Leave in the shared archive header', () => {
+  it('renders Home, First Days, Chapters, and Leave in the shared archive header', () => {
     expect(archiveLayout).toContain('<FamilyHeader />')
     expect(familyHeader).toContain("{ href: '/', label: 'Home' }")
     expect(familyHeader).toContain("{ href: '/first-days', label: 'First Days' }")
+    expect(familyHeader).toContain("{ href: '/chapters', label: 'Chapters' }")
     expect(familyHeader).toContain('<LeaveButton />')
     expect(familyHeader).toContain("aria-current={current ? 'page' : undefined}")
+  })
+})
+
+describe('PR-004B family and preview truthfulness', () => {
+  it('keeps Letter out of creation choices and gates its publish control', () => {
+    expect(chapterEditor).toContain('CREATABLE_CONTENT_TYPES.map')
+    expect(chapterEditor).toContain('canPublishContentType(existing.type)')
+    expect(chapterEditor).toContain('{canPublish && (')
+    expect(chapterEditor).toContain('Letter publication remains disabled')
+  })
+
+  it('keeps a truthful Chapters empty state in the real index branch', () => {
+    expect(chaptersIndex).toContain('result.items.length === 0')
+    expect(chaptersIndex).toContain('No chapters are published yet.')
+  })
+
+  it('renders optional First Days copy only inside its approved reading surface', () => {
+    expect(firstDaysPage).toContain('styles.readingSurface')
+    expect(firstDaysPage).toContain('result.content.summary')
+    expect(firstDaysPage).toContain('result.content.bodyBlocks.map')
+  })
+
+  it('keeps private preview dynamic, no-store, noindex, and on the shared renderer', () => {
+    expect(chapterPreview).toContain("export const dynamic = 'force-dynamic'")
+    expect(chapterPreview).toContain('noStore()')
+    expect(chapterPreview).toContain('robots: { index: false, follow: false }')
+    expect(chapterPreview).toContain('Private preview — not visible to family')
+    expect(chapterPreview).toContain('<ChapterRenderer')
+  })
+
+  it('does not emit raw media identifiers from the generic family renderer', () => {
+    expect(chapterRenderer).not.toContain('data-media-id')
   })
 })

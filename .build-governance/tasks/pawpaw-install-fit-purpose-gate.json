@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-install-fit-purpose-gate",
+  "task_name": "Install Pawpaw fit-for-purpose governance gate",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T13:36:00+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "Pawpaw tasks are governed by a balanced contract that blocks both unnecessary complexity and incomplete shortcuts.",
+  "user_journeys": [
+    "Sujith approves a bounded task and Codex checks it before and after implementation."
+  ],
+  "non_negotiable_quality": [
+    "Existing product code remains untouched during gate installation.",
+    "The contradictory universal 10/10 rule is removed without weakening Pawpaw privacy, data safety, accessibility, or approved design quality."
+  ],
+  "realistic_harms_prevented": [
+    "Future agents cannot silently broaden scope or skip approved acceptance criteria."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "The contradictory universal 10/10 section is replaced by the fit-for-purpose Pawpaw gate.",
+      "proof_type": "inspection",
+      "proof_command": "Select-String AGENTS.md 'Pawpaw fit-for-purpose quality gate'"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "The Stage 3 contract exists and parses as JSON without modifying product code.",
+      "proof_type": "inspection",
+      "proof_command": "Get-Content .build-governance/tasks/pawpaw-pr004b-stage3-photo-replacement.json | ConvertFrom-Json"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "No product, migration, dependency, test, Git, Supabase, or production state changes occur.",
+      "proof_type": "inspection",
+      "proof_command": "git status --short"
+    }
+  ],
+  "non_goals": [
+    "Implement Stage 3.",
+    "Modify product code, migrations, dependencies, tests, Git history, Supabase, or production.",
+    "Create a new framework or service."
+  ],
+  "simplest_acceptable_approach": "Replace one conflicting AGENTS.md section and add one approved machine-readable Stage 3 contract under the repository governance directory.",
+  "allowed_paths": [
+    "AGENTS.md",
+    ".build-governance/tasks/pawpaw-install-fit-purpose-gate.json",
+    ".build-governance/tasks/pawpaw-pr004b-stage3-photo-replacement.json"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 3,
+    "max_new_files": 2,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "JSON parse",
+    "AGENTS section inspection",
+    "git diff --check",
+    "git status --short"
+  ],
+  "prompt_word_limit": 300
+}

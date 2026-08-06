@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-next-16-3-security-remediation",
+  "task_name": "Pawpaw Next.js 16.3 security remediation",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T17:19:43+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "Pawpaw uses the approved exact Next.js and Sharp security-remediation versions while its existing family and admin journeys continue to pass the full project checks.",
+  "user_journeys": [
+    "Sujith can continue using the existing Pawpaw family and admin journeys after the dependency-only security remediation."
+  ],
+  "non_negotiable_quality": [
+    "Next.js is pinned exactly to 16.3.0 and Sharp is pinned exactly to 0.35.3 in both npm manifests.",
+    "No product source or configuration file changes during this task.",
+    "The existing type-check, lint, full test suite, and production build remain successful.",
+    "No commit, push, deployment, remote Supabase operation, or release verification occurs."
+  ],
+  "realistic_harms_prevented": [
+    "Known dependency vulnerabilities are not left in the production dependency tree.",
+    "The remediation does not silently alter Pawpaw behavior or overwrite the preserved PR-004B worktree.",
+    "Governance evidence records the exact verification outcome without claiming a release."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "The exact approved install command succeeds and npm resolves Next.js 16.3.0 and Sharp 0.35.3 with a valid PostCSS dependency tree.",
+      "proof_type": "inspection",
+      "proof_command": "npm install --save-exact next@16.3.0 sharp@0.35.3; npm.cmd ls next sharp postcss"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "The production dependency audit reports no known vulnerabilities after remediation.",
+      "proof_type": "inspection",
+      "proof_command": "npm.cmd audit --omit=dev"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Type-check, lint, full tests, and the production build all pass without any source or configuration repair.",
+      "proof_type": "build",
+      "proof_command": "npm.cmd run type-check; npm.cmd run lint; npm.cmd test; npm.cmd run build"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Only package.json, package-lock.json, and approved governance records change from the captured task baseline, with no whitespace errors.",
+      "proof_type": "inspection",
+      "proof_command": "git diff --check; & \"$env:USERPROFILE\\.build-governance\\Invoke-ScopeGate.ps1\" check --repo . --contract .build-governance\\tasks\\pawpaw-next-16-3-security-remediation.json"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The task result JSON validates against the contract and records costs, deviations, exact checks, and the stop-before-release boundary.",
+      "proof_type": "inspection",
+      "proof_command": "& \"$env:USERPROFILE\\.build-governance\\Invoke-ScopeGate.ps1\" check --repo . --contract .build-governance\\tasks\\pawpaw-next-16-3-security-remediation.json --result .build-governance\\results\\pawpaw-next-16-3-security-remediation.json"
+    }
+  ],
+  "non_goals": [
+    "Modify application source, tests, configuration, migrations, authentication, infrastructure, or services.",
+    "Add any product capability beyond the approved dependency security remediation.",
+    "Commit, push, deploy, use remote Supabase, or begin release verification."
+  ],
+  "simplest_acceptable_approach": "Capture the existing dirty worktree, run the one approved exact npm install command, verify the dependency tree and complete project matrix without repairs, then write the result and close the project and global ledgers.",
+  "allowed_paths": [
+    "package.json",
+    "package-lock.json",
+    ".build-governance/**"
+  ],
+  "capabilities": {
+    "dependencies": true,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 3,
+    "max_new_files": 3,
+    "max_migrations": 0,
+    "max_new_dependencies": 2,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "npm install --save-exact next@16.3.0 sharp@0.35.3",
+    "npm.cmd ls next sharp postcss",
+    "npm.cmd audit --omit=dev",
+    "npm.cmd run type-check",
+    "npm.cmd run lint",
+    "npm.cmd test",
+    "npm.cmd run build",
+    "git diff --check",
+    "final scope gate",
+    "result JSON validation",
+    "project and global ledger closure"
+  ],
+  "prompt_word_limit": 300
+}

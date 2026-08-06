@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { deleteMediaCore, planReorder } from '@/lib/media/manage-media'
+import {
+  deleteMediaCore,
+  planReorder,
+  replaceAttachmentCore,
+} from '@/lib/media/manage-media'
 
 const items = [
   { mediaId: 'a', sortOrder: 0 },
@@ -93,5 +97,48 @@ describe('transactional media deletion', () => {
     await expect(deleteMediaCore(db, 'admin-id', 'media-id')).resolves.toEqual({
       error: 'The database record was deleted, but the private file cleanup failed. It will be retried.',
     })
+  })
+})
+
+describe('atomic photograph replacement', () => {
+  function dbWith(rpcResult: unknown) {
+    const rpc = vi.fn().mockResolvedValue(rpcResult)
+    const from = vi.fn()
+    const storageFrom = vi.fn()
+    const db = { rpc, from, storage: { from: storageFrom } } as unknown as SupabaseClient
+    return { db, rpc, from, storageFrom }
+  }
+
+  it('calls exactly one atomic RPC and performs no direct table or Storage writes', async () => {
+    const fixture = dbWith({ data: { sort_order: 3, cover_transferred: true }, error: null })
+    await expect(replaceAttachmentCore(fixture.db, 'admin', 'content', 'old', 'new'))
+      .resolves.toEqual({ ok: true })
+    expect(fixture.rpc).toHaveBeenCalledOnce()
+    expect(fixture.rpc).toHaveBeenCalledWith('replace_draft_content_media', {
+      p_admin_id: 'admin',
+      p_content_id: 'content',
+      p_old_media_id: 'old',
+      p_new_media_id: 'new',
+    })
+    expect(fixture.from).not.toHaveBeenCalled()
+    expect(fixture.storageFrom).not.toHaveBeenCalled()
+  })
+
+  it('reports an RPC failure truthfully without attempting compensation writes', async () => {
+    const fixture = dbWith({ data: null, error: { message: 'stale target' } })
+    await expect(replaceAttachmentCore(fixture.db, 'admin', 'content', 'old', 'new'))
+      .resolves.toEqual({
+        error: 'The replacement could not be completed. The original photograph remains unchanged.',
+      })
+    expect(fixture.rpc).toHaveBeenCalledOnce()
+    expect(fixture.from).not.toHaveBeenCalled()
+    expect(fixture.storageFrom).not.toHaveBeenCalled()
+  })
+
+  it('rejects the same photograph before any database call', async () => {
+    const fixture = dbWith({ data: null, error: null })
+    await expect(replaceAttachmentCore(fixture.db, 'admin', 'content', 'same', 'same'))
+      .resolves.toEqual({ error: 'Choose a different photograph.' })
+    expect(fixture.rpc).not.toHaveBeenCalled()
   })
 })

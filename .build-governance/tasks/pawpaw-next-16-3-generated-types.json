@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-next-16-3-generated-types",
+  "task_name": "Retain Next.js 16.3 generated types",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T17:59:00+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "Pawpaw retains the exact Next.js 16.3 generated type declarations so future type-checks and production builds use the framework's current generated contract.",
+  "user_journeys": [
+    "Sujith can continue the existing Pawpaw family and admin journeys with the framework-generated Next.js 16.3 type declarations retained."
+  ],
+  "non_negotiable_quality": [
+    "next-env.d.ts is generated only by npx next typegen and is not edited manually.",
+    "No package file, application source, configuration, migration, or test changes during this task.",
+    "The existing dependency tree, production audit, type-check, and production build remain successful.",
+    "No commit, push, deployment, remote Supabase access, or release verification occurs."
+  ],
+  "realistic_harms_prevented": [
+    "Generated framework declarations are not approximated or manually altered.",
+    "The narrow generated-types task does not overwrite the preserved PR-004B worktree or broaden into product changes.",
+    "Governance evidence distinguishes generated-type acceptance from release verification."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "The exact npx next typegen command succeeds and its exact generated next-env.d.ts output is retained without manual editing.",
+      "proof_type": "inspection",
+      "proof_command": "npx next typegen"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "The installed Next.js, Sharp, and PostCSS dependency tree is valid and the production dependency audit reports no known vulnerabilities.",
+      "proof_type": "inspection",
+      "proof_command": "npm ls next sharp postcss; npm audit --omit=dev"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Type-check and the production build pass with the retained generated declaration and without any additional product-file change.",
+      "proof_type": "build",
+      "proof_command": "npm.cmd run type-check; npm.cmd run build"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Only next-env.d.ts and approved governance records change from the captured task baseline, with no whitespace errors.",
+      "proof_type": "inspection",
+      "proof_command": "git diff --check; & \"$env:USERPROFILE\\.build-governance\\Invoke-ScopeGate.ps1\" check --repo . --contract .build-governance\\tasks\\pawpaw-next-16-3-generated-types.json"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The task result JSON validates against the contract and records exact checks, costs, deviations, and the stop-after-closure boundary.",
+      "proof_type": "inspection",
+      "proof_command": "& \"$env:USERPROFILE\\.build-governance\\Invoke-ScopeGate.ps1\" check --repo . --contract .build-governance\\tasks\\pawpaw-next-16-3-generated-types.json --result .build-governance\\results\\pawpaw-next-16-3-generated-types.json"
+    }
+  ],
+  "non_goals": [
+    "Modify package files, application source, configuration, migrations, or tests.",
+    "Manually edit or normalize the generated next-env.d.ts output.",
+    "Rerun the full test suite unless type-check or build exposes a defect.",
+    "Commit, push, deploy, access remote Supabase, or begin release verification."
+  ],
+  "simplest_acceptable_approach": "Capture the existing dirty worktree, run the one approved Next.js type-generation command, retain its exact output, verify the installed dependency tree and required project gates, then write the result and close both ledgers.",
+  "allowed_paths": [
+    "next-env.d.ts",
+    ".build-governance/**"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 2,
+    "max_new_files": 3,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "npx next typegen",
+    "npm ls next sharp postcss",
+    "npm audit --omit=dev",
+    "npm.cmd run type-check",
+    "npm.cmd run build",
+    "git diff --check",
+    "final scope gate",
+    "result JSON validation",
+    "project and global ledger closure"
+  ],
+  "prompt_word_limit": 300
+}

@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireActiveAdmin } from '@/lib/auth/admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
 import {
   filterAndSortContent,
+  derivePublicationState,
   formatAdminDateTime,
   parseContentFilters,
   publishedTimestamp,
@@ -36,9 +38,8 @@ export default async function AdminDashboard({
   searchParams: Promise<{ q?: string; status?: string; type?: string }>
 }) {
   const supabase = await createClient()
-  let admin: { id: string; email: string }
   try {
-    admin = await requireActiveAdmin(supabase)
+    await requireActiveAdmin(supabase)
   } catch {
     redirect('/admin/login')
   }
@@ -50,19 +51,17 @@ export default async function AdminDashboard({
     db
       .from('content_items')
       .select(`
-        id, type, title, status, updated_at, published_at,
+        id, type, title, status, updated_at, published_at, active_published_revision_id,
         content_media (
           sort_order,
           media_assets (id, storage_path, alt_text)
         )
       `)
-      .eq('created_by', admin.id)
       .order('updated_at', { ascending: false })
       .order('id', { ascending: true }),
     db
       .from('media_assets')
-      .select('id', { count: 'exact', head: true })
-      .eq('created_by', admin.id),
+      .select('id', { count: 'exact', head: true }),
   ])
 
   if (contentResult.error || mediaResult.error) {
@@ -76,6 +75,17 @@ export default async function AdminDashboard({
         </p>
       </div>
     )
+  }
+
+  const revisionIds = (contentResult.data ?? []).map(row => row.active_published_revision_id).filter((id): id is string => Boolean(id))
+  const revisionDates = new Map<string, string>()
+  if (revisionIds.length > 0) {
+    const revisions = await db.from('content_revisions').select('id, created_at').in('id', revisionIds)
+    if (revisions.error) {
+      console.error('AdminDashboard revision query failed:', revisions.error)
+      return <div className={styles.page}><p role="alert" className={styles.errorNotice}>Publication state could not be loaded safely.</p></div>
+    }
+    for (const revision of revisions.data ?? []) revisionDates.set(revision.id, revision.created_at)
   }
 
   const allItems: DashboardItem[] = (contentResult.data ?? []).map(row => {
@@ -93,9 +103,11 @@ export default async function AdminDashboard({
       id: row.id,
       title: row.title,
       type: row.type,
-      status: row.status,
+      status: row.type === 'home'
+        ? row.status === 'published' ? 'published' : 'unpublished'
+        : derivePublicationState(row.active_published_revision_id, row.updated_at, row.active_published_revision_id ? revisionDates.get(row.active_published_revision_id) ?? null : null),
       updatedAt: row.updated_at,
-      publishedAt: row.published_at,
+      publishedAt: row.type === 'home' ? row.published_at : row.active_published_revision_id ? revisionDates.get(row.active_published_revision_id) ?? null : null,
       attachedMediaCount: summary.count,
       firstMedia: summary.first,
     }
@@ -112,8 +124,8 @@ export default async function AdminDashboard({
     }
   }))
 
-  const draftCount = allItems.filter(item => item.status === 'draft').length
-  const publishedCount = allItems.filter(item => item.status === 'published').length
+  const draftCount = allItems.filter(item => item.status === 'unpublished' || item.status === 'published-draft').length
+  const publishedCount = allItems.filter(item => item.status === 'published' || item.status === 'published-draft').length
   const missingAltMediaIds = new Set<string>()
   for (const row of contentResult.data ?? []) {
     const attachments = ((row.content_media ?? []) as unknown as DashboardAttachmentRow[])
@@ -136,14 +148,14 @@ export default async function AdminDashboard({
       </header>
 
       <div className={styles.statsStrip} aria-label="Current studio counts">
-        <a href="/admin/content?status=draft" className={styles.statLink}>
+        <Link href="/admin/content?status=unpublished" className={styles.statLink}>
           <span className={styles.statNumber}>{draftCount}</span>
           <span className={styles.statLabel}>Drafts</span>
-        </a>
-        <a href="/admin/content?status=published" className={styles.statLink}>
+        </Link>
+        <Link href="/admin/content?status=published" className={styles.statLink}>
           <span className={styles.statNumber}>{publishedCount}</span>
           <span className={styles.statLabel}>Published</span>
-        </a>
+        </Link>
         <a href="/admin/media" className={styles.statLink}>
           <span className={styles.statNumber}>{mediaResult.count ?? 0}</span>
           <span className={styles.statLabel}>Media files</span>
@@ -155,7 +167,7 @@ export default async function AdminDashboard({
           <h2 id="continue-editing-title" className={styles.sectionTitle}>Continue editing</h2>
           <div className={styles.quickLinks}>
             <a href="/admin/home" className={styles.quickLink}>Home page</a>
-            <a href="/admin/content" className={styles.quickLink}>Content library</a>
+            <Link href="/admin/content" className={styles.quickLink}>Content library</Link>
             <a href="/admin/media" className={styles.quickLink}>Media library</a>
           </div>
         </section>
@@ -186,8 +198,9 @@ export default async function AdminDashboard({
           <input name="q" type="search" defaultValue={filters.query} placeholder="Search by title" aria-label="Search content by title" className={styles.field} />
           <select name="status" defaultValue={filters.status} aria-label="Filter by status" className={styles.select}>
             <option value="all">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
+            <option value="unpublished">Unpublished draft</option>
+            <option value="published">Published and unchanged</option>
+            <option value="published-draft">Published with newer private draft</option>
           </select>
           <select name="type" defaultValue={filters.type} aria-label="Filter by content type" className={styles.select}>
             <option value="all">All types</option>
@@ -219,7 +232,7 @@ export default async function AdminDashboard({
                     {published && <p className={styles.recordMeta}>{published}</p>}
                   </div>
                   <span className={styles.recordType}>{item.type}</span>
-                  <span className={`${styles.badge} ${item.status === 'published' ? styles.badgePublished : styles.badgeDraft}`}>{item.status}</span>
+                  <span className={`${styles.badge} ${item.status === 'published' ? styles.badgePublished : styles.badgeDraft}`}>{item.status === 'unpublished' ? 'unpublished draft' : item.status === 'published-draft' ? 'published + newer draft' : 'published unchanged'}</span>
                   <span className={styles.recordMeta}>{item.attachedMediaCount} photo{item.attachedMediaCount === 1 ? '' : 's'}</span>
                   {item.type === 'home' && <a href="/admin/home" className={styles.inlineLink}>Edit</a>}
                 </article>

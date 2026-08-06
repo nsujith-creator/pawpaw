@@ -114,7 +114,7 @@ export async function finalizeUploadCore(
     })
     if (attachError) {
       console.error('finalizeUploadCore content_media attach failed:', attachError)
-      return { error: 'The photo was saved but could not be attached to the Home content.' }
+      return { error: 'The photo was saved in Media Library but could not be attached to the selected content.' }
     }
   }
 

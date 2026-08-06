@@ -1,9 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { signViewerCookie, verifyViewerCookie } from '@/lib/auth/viewer-cookie'
 import { readViewerAuthConfig } from '@/lib/env'
 
 const SECRET  = 'unit-test-cookie-secret-32chars!!'
 const VERSION = 1
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('viewer cookie', () => {
   it('fails closed when the signing secret is missing', () => {
@@ -54,6 +58,15 @@ describe('viewer cookie', () => {
     const result = await verifyViewerCookie(cookie, SECRET, VERSION + 1)
     expect(result.valid).toBe(false)
     expect(result.reason).toBe('version')
+  })
+
+  it('rejects an expired cookie', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+    const cookie = await signViewerCookie(SECRET, VERSION)
+    vi.setSystemTime(new Date('2026-02-01T00:00:01.000Z'))
+    const result = await verifyViewerCookie(cookie, SECRET, VERSION)
+    expect(result).toEqual({ valid: false, reason: 'expired' })
   })
 
   it('rejects a malformed cookie that has no dot separator', async () => {

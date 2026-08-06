@@ -28,15 +28,13 @@ describe('admin dashboard', () => {
     expect(adminDashboard).toContain('media_assets')
   })
 
-  it('scopes the media count to the active admin, not all media in the system', () => {
-    // The media count query must filter by created_by = admin.id so the
-    // dashboard number matches what the admin sees in the Media Library.
-    expect(adminDashboard).toContain('created_by')
-    expect(adminDashboard).toContain('admin.id')
+  it('uses the shared Pawpaw media library for every verified active admin', () => {
+    expect(adminDashboard).toContain(".from('media_assets')")
+    expect(adminDashboard).not.toContain(".eq('created_by', admin.id)")
   })
 
   it('dashboard stat cards link to filtered content and media destinations', () => {
-    expect(adminDashboard).toContain('/admin/content?status=draft')
+    expect(adminDashboard).toContain('/admin/content?status=unpublished')
     expect(adminDashboard).toContain('/admin/content?status=published')
     // Media files card must be an <a> href, not a bare string.
     expect(adminDashboard).toContain('href="/admin/media"')

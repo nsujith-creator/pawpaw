@@ -2,9 +2,19 @@ import type { NextConfig } from 'next'
 
 const protectedCacheHeaders = [
   { key: 'Cache-Control', value: 'private, no-store, no-cache, max-age=0, must-revalidate' },
+  { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
 ]
 
-const protectedRoutes = ['/', '/admin', '/admin/content', '/admin/home', '/admin/media']
+const protectedRoutes = [
+  '/',
+  '/first-days',
+  '/chapters',
+  '/chapters/:path*',
+  '/admin',
+  '/admin/content',
+  '/admin/home',
+  '/admin/media',
+]
 
 const nextConfig: NextConfig = {
   // All media served through authenticated signed URLs — no external image domains needed.

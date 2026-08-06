@@ -1,0 +1,68 @@
+{
+  "task_id": "pawpaw-pr004b-local-commit",
+  "result": "passed",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "The worktree diff against PR-004B HEAD removes exactly one final blank line from each of the four approved files and contains no other source or test edit."
+    },
+    {
+      "id": "AC-02",
+      "status": "pass",
+      "evidence": "The recovered scope gate reports only the four approved EOF files and task governance records in the task delta; explicit staging is limited to the contract's seven approved repository paths and git diff --cached --check exits 0."
+    },
+    {
+      "id": "AC-03",
+      "status": "pass",
+      "evidence": "The amended commit keeps parent c41fec2dd455960a06e02c24f24d23ffef313779, and git rev-list --count origin/main..HEAD reports exactly 1."
+    },
+    {
+      "id": "AC-04",
+      "status": "pass",
+      "evidence": "git cat-file confirms both .build-governance/tasks/pawpaw-pr004b-local-commit.json and .build-governance/results/pawpaw-pr004b-local-commit.json exist in amended HEAD."
+    },
+    {
+      "id": "AC-05",
+      "status": "pass",
+      "evidence": "The installed scope gate validates this result against the approved contract, and the project and global ledgers each contain exactly one passed entry for this task."
+    }
+  ],
+  "tests": [
+    {
+      "command": "initial Git and governance recovery inspection",
+      "exit_code": 0,
+      "summary": "HEAD was 3253baf81d189bf0c07060ec742f6f4199c85b69 with required parent c41fec2dd455960a06e02c24f24d23ffef313779, zero staged files, no existing task result or ledger entry, and exactly four approved EOF-only worktree diffs."
+    },
+    {
+      "command": "scope gate check before result",
+      "exit_code": 0,
+      "summary": "The gate reported exactly five task-delta paths before the result and ledger records: the task contract and four approved EOF files; every forbidden capability remained disabled."
+    },
+    {
+      "command": "git diff --cached --check",
+      "exit_code": 0,
+      "summary": "The explicitly staged seven-path amendment set contains no whitespace errors."
+    },
+    {
+      "command": "git commit --amend --no-edit",
+      "exit_code": 0,
+      "summary": "The existing PR-004B commit was amended in place without creating a second commit."
+    },
+    {
+      "command": "final local commit proof",
+      "exit_code": 0,
+      "summary": "git show --check --oneline HEAD exits 0; both governance files exist in HEAD; parent and one-ahead count are exact; staging is empty; only the untracked baselines directory remains."
+    }
+  ],
+  "deviations": [
+    "Cursor had applied the four approved EOF removals and created the task contract but stopped before baseline creation. The recovered baseline was generated and narrowed to the exact pre-Cursor boundary: PR-004B HEAD plus the six pre-existing untracked baseline records.",
+    "The task contract's literal [slug] path did not match the installed gate's glob syntax. Only that governance pattern was encoded as [[]slug[]] so it matches the same single approved path without broadening scope."
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Stop after the local amendment and final proof. Do not push, deploy, access remote Supabase, rerun product tests, or begin release work without separate owner approval."
+}

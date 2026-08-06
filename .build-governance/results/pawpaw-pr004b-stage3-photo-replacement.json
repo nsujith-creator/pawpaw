@@ -1,0 +1,95 @@
+{
+  "task_id": "pawpaw-pr004b-stage3-photo-replacement",
+  "result": "passed",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "supabase test db passed pr004b_photo_replacement.sql; generated local fixtures prove both active Admin A and Admin B can replace a draft association."
+    },
+    {
+      "id": "AC-02",
+      "status": "pass",
+      "evidence": "pgTAP verifies exact sort_order, caption_override, and placement preservation; cover transfers for a cover replacement and remains unchanged for a non-cover replacement."
+    },
+    {
+      "id": "AC-03",
+      "status": "pass",
+      "evidence": "pgTAP verifies same-media, stale, cross-content, already-attached, inactive-admin, non-admin, non-ready, and missing-media requests fail while the old authoritative association remains usable."
+    },
+    {
+      "id": "AC-04",
+      "status": "pass",
+      "evidence": "pgTAP verifies the published revision count, cover_media_id, original revision-media association, and revision-media count remain unchanged after draft cover and non-cover replacements."
+    },
+    {
+      "id": "AC-05",
+      "status": "pass",
+      "evidence": "Focused Vitest passed 16/16: the server action finalizes upload before replacement, the core calls replace_draft_content_media exactly once, no direct table or Storage deletion occurs, failure is truthful, and a finalized replacement remains in Media Library on swap failure."
+    },
+    {
+      "id": "AC-06",
+      "status": "pass",
+      "evidence": "supabase db reset, supabase test db, type-check, lint, full npm test, production build, and git diff --check all completed with exit code 0."
+    }
+  ],
+  "tests": [
+    {
+      "command": "npm.cmd test -- tests/unit/manage-media.test.ts tests/unit/photo-replacement-action.test.ts",
+      "exit_code": 0,
+      "summary": "2 files passed; 16 tests passed."
+    },
+    {
+      "command": "supabase db reset",
+      "exit_code": 0,
+      "summary": "All local migrations applied through 20260806110000_pr004b_atomic_photo_replacement.sql; no remote project was used."
+    },
+    {
+      "command": "supabase test db",
+      "exit_code": 0,
+      "summary": "2 pgTAP files passed; 92 database tests passed."
+    },
+    {
+      "command": "npm.cmd run type-check",
+      "exit_code": 0,
+      "summary": "TypeScript completed with no errors."
+    },
+    {
+      "command": "npm.cmd run lint",
+      "exit_code": 0,
+      "summary": "ESLint completed with no errors."
+    },
+    {
+      "command": "npm.cmd test",
+      "exit_code": 0,
+      "summary": "29 files passed and 6 live-mode files skipped; 350 tests passed and 47 skipped by the standard non-live command."
+    },
+    {
+      "command": "npm.cmd run build",
+      "exit_code": 1,
+      "summary": "First attempt compiled, then the Windows Next.js worker exhausted local heap while the local Supabase containers were still running."
+    },
+    {
+      "command": "$env:NODE_OPTIONS='--max-old-space-size=4096'; npm.cmd run build",
+      "exit_code": 1,
+      "summary": "Second attempt compiled, then the Windows build worker exited with native code 3221226505; no source change was made."
+    },
+    {
+      "command": "$env:NODE_OPTIONS='--max-old-space-size=2048'; npm.cmd run build",
+      "exit_code": 0,
+      "summary": "After restoring the local Supabase stack to stopped state, the production build compiled, type-checked, and generated 17 static pages successfully."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors remain."
+    }
+  ],
+  "deviations": [],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Stop after ledger closure; any commit, push, deployment, remote Supabase change, or Stage 4 work requires separate owner authorization."
+}

@@ -1,0 +1,98 @@
+{
+  "task_id": "pawpaw-pr004b-service-role-private-schema-fix",
+  "result": "passed",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "The new migration grants service_role USAGE on schema private and EXECUTE only on private.publish_content_revision(uuid,uuid), private.unpublish_content_revision(uuid,uuid), and private.is_active_admin(uuid)."
+    },
+    {
+      "id": "AC-02",
+      "status": "pass",
+      "evidence": "Focused pgTAP verifies PUBLIC, anon, and authenticated lack EXECUTE on all three private functions and confirms all three existing public PR-004B wrappers remain security invoker. The migration contains no table grant, RLS, admin-rule, or Data API change."
+    },
+    {
+      "id": "AC-03",
+      "status": "pass",
+      "evidence": "Under SET LOCAL ROLE service_role, pgTAP passed first publish, draft photograph replacement by a second active admin, later draft edit and republish, and unpublish through the unchanged public wrappers. It also proved both immutable revisions and their old/new cover snapshots remain correct."
+    },
+    {
+      "id": "AC-04",
+      "status": "pass",
+      "evidence": "Clean local reset applied the new migration; all 3 pgTAP files passed 116 assertions; TypeScript, ESLint, 350 standard tests, production build, and git diff --check passed."
+    },
+    {
+      "id": "AC-05",
+      "status": "pass",
+      "evidence": "The result validates against the approved contract, records every private grant, and is used to close both project and global ledgers without release action."
+    }
+  ],
+  "tests": [
+    {
+      "command": "wrapper call graph inspection",
+      "exit_code": 0,
+      "summary": "Exact private functions reached by existing public PR-004B wrappers: private.publish_content_revision(uuid,uuid), private.unpublish_content_revision(uuid,uuid), and private.is_active_admin(uuid)."
+    },
+    {
+      "command": "scope gate init",
+      "exit_code": 0,
+      "summary": "Captured HEAD c41fec2dd455960a06e02c24f24d23ffef313779, 81 pre-existing dirty paths, and zero staged paths."
+    },
+    {
+      "command": "supabase migration new pr004b_service_role_private_schema_fix",
+      "exit_code": 0,
+      "summary": "Created the single approved forward-only migration 20260806131857_pr004b_service_role_private_schema_fix.sql."
+    },
+    {
+      "command": "supabase db reset",
+      "exit_code": 0,
+      "summary": "Reset only local Supabase and applied all existing migrations plus 20260806131857_pr004b_service_role_private_schema_fix.sql."
+    },
+    {
+      "command": "supabase test db",
+      "exit_code": 0,
+      "summary": "3 pgTAP files passed; 116 tests passed. The focused service-role test covered least-privilege grants and publish, replacement, republish, unpublish, and immutable snapshots."
+    },
+    {
+      "command": "npm.cmd run type-check",
+      "exit_code": 0,
+      "summary": "TypeScript completed with no errors."
+    },
+    {
+      "command": "npm.cmd run lint",
+      "exit_code": 0,
+      "summary": "ESLint completed with no errors on retry after stopping local containers and reducing Node heap reservation."
+    },
+    {
+      "command": "npm.cmd test",
+      "exit_code": 0,
+      "summary": "29 files passed and 6 live-mode files skipped; 350 tests passed and 47 skipped."
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=2048 npm.cmd run build",
+      "exit_code": 0,
+      "summary": "Production build compiled, type-checked, and generated all 17 static pages using localhost-only placeholder Supabase values."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors were reported."
+    },
+    {
+      "command": "final scope gate before result",
+      "exit_code": 0,
+      "summary": "Only the approved migration and focused pgTAP test were in the task delta; all forbidden capabilities remained unchanged."
+    }
+  ],
+  "deviations": [
+    "The first lint attempt hit a Windows native allocation failure while local Supabase containers were running. After stopping only those local containers and using a reduced Node heap reservation, the unchanged lint command passed.",
+    "The project .env.local points at a remote Supabase URL. Database verification used only the local CLI stack, and the production build used localhost-only placeholder values; no remote Supabase project was accessed."
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Stop after ledger closure. This is local verification only; any commit, push, deployment, remote Supabase operation, browser release verification, or follow-on product work requires separate owner authorization."
+}

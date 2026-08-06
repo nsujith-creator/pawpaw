@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-local-commit",
+  "task_name": "Amend local PR-004B commit whitespace",
+  "owner": "Sujith",
+  "approved_at": "2026-08-07T01:12:00+05:30",
+  "status": "approved",
+  "baseline_sha": "3253baf81d189bf0c07060ec742f6f4199c85b69",
+  "user_visible_outcome": "The existing local PR-004B commit is amended to remove trailing blank-line whitespace errors without changing product behavior.",
+  "user_journeys": [
+    "Sujith retains one clean local PR-004B commit ready for later owner-approved push or release action."
+  ],
+  "non_negotiable_quality": [
+    "Only the four git show --check EOF blank-line fixes and approved governance records may change.",
+    "No semantic, formatting, dependency, migration, test-rerun, push, deploy, or remote Supabase work occurs.",
+    "The amended commit keeps parent c41fec2dd455960a06e02c24f24d23ffef313779 and remains the sole commit on origin/main..HEAD."
+  ],
+  "realistic_harms_prevented": [
+    "Whitespace-only correction does not silently alter PR-004B functionality.",
+    "Forbidden paths, secrets, media, or binary files are not staged into the amended commit.",
+    "Governance evidence records the exact bounded amendment."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "The four reported EOF blank lines are removed with no other source or test edits.",
+      "proof_type": "inspection",
+      "proof_command": "git show --check HEAD"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "Only the seven approved repository paths are in the task delta and staged set for amendment.",
+      "proof_type": "inspection",
+      "proof_command": "git diff --cached --check; scope gate check"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "The amended commit keeps parent c41fec2dd455960a06e02c24f24d23ffef313779 and origin/main..HEAD contains exactly one commit.",
+      "proof_type": "inspection",
+      "proof_command": "git rev-parse HEAD^; git rev-list --count origin/main..HEAD"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Both local-commit governance files exist in HEAD after amendment.",
+      "proof_type": "inspection",
+      "proof_command": "git cat-file -e HEAD:.build-governance/tasks/pawpaw-pr004b-local-commit.json; git cat-file -e HEAD:.build-governance/results/pawpaw-pr004b-local-commit.json"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The task result JSON validates against the contract and both project and global ledgers are closed.",
+      "proof_type": "inspection",
+      "proof_command": "scope gate check --result; scope gate close --ledger project; scope gate close --ledger global"
+    }
+  ],
+  "non_goals": [
+    "Rerun product tests, change functionality, push, deploy, or access remote Supabase.",
+    "Modify any file outside the seven approved repository paths.",
+    "Create a second commit, reset, clean, or stash."
+  ],
+  "simplest_acceptable_approach": "Capture the existing PR-004B HEAD baseline, remove only the four reported EOF blank lines, write governance task and result records, close both ledgers, explicitly stage the seven approved paths, and amend the existing commit in place.",
+  "allowed_paths": [
+    "src/app/(archive)/chapters/[[]slug[]]/page.tsx",
+    "src/app/(archive)/chapters/chapters.module.css",
+    "src/components/content/block-editor.tsx",
+    "tests/unit/block-editor.test.ts",
+    ".build-governance/tasks/pawpaw-pr004b-local-commit.json",
+    ".build-governance/results/pawpaw-pr004b-local-commit.json",
+    ".build-governance/decision-ledger.jsonl"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 7,
+    "max_new_files": 2,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "scope gate init",
+    "git show --check on amended commit",
+    "git diff --cached --check",
+    "explicit seven-path staging inspection",
+    "git commit --amend --no-edit",
+    "origin/main..HEAD count",
+    "project and global ledger closure"
+  ],
+  "prompt_word_limit": 300
+}

@@ -1,0 +1,98 @@
+{
+  "task_id": "pawpaw-next-16-3-generated-types",
+  "result": "passed",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "The stable Node installation's npx.cmd executed next typegen with no added flags and reported Types generated successfully. Its exact next-env.d.ts output was retained without manual editing at SHA-256 1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37."
+    },
+    {
+      "id": "AC-02",
+      "status": "pass",
+      "evidence": "npm.cmd ls resolved next@16.3.0, sharp@0.35.3, and postcss@8.5.23 without tree errors; the live npm audit --omit=dev reported 0 vulnerabilities."
+    },
+    {
+      "id": "AC-03",
+      "status": "pass",
+      "evidence": "TypeScript exited 0, and the Next.js 16.3.0 production build compiled, type-checked, and generated 17 static pages. The retained next-env.d.ts SHA-256 remained exact after the build, with no additional product delta."
+    },
+    {
+      "id": "AC-04",
+      "status": "pass",
+      "evidence": "git diff --check exited 0, and the scope gate reported exactly next-env.d.ts in the product task delta with every capability forbidden."
+    },
+    {
+      "id": "AC-05",
+      "status": "pass",
+      "evidence": "The result matches the installed task-result schema and the final scope gate validates every contract criterion, exact check, cost, deviation, and stop-after-closure boundary."
+    }
+  ],
+  "tests": [
+    {
+      "command": "installed task-contract.schema.json validation",
+      "exit_code": 0,
+      "summary": "The approved generated-types contract matches the installed Draft 2020-12 JSON schema."
+    },
+    {
+      "command": "scope gate init",
+      "exit_code": 0,
+      "summary": "Captured HEAD c41fec2dd455960a06e02c24f24d23ffef313779, 74 pre-existing dirty paths, and zero staged paths before type generation."
+    },
+    {
+      "command": "npx next typegen",
+      "exit_code": 1,
+      "summary": "The per-user Windows npx shim failed before Next.js started because its npx-cli.js target is missing; no repository file changed."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd next typegen",
+      "exit_code": 0,
+      "summary": "Executed the identical local Next.js typegen operation with no added flags and reported Types generated successfully."
+    },
+    {
+      "command": "next-env.d.ts generated-output SHA-256",
+      "exit_code": 0,
+      "summary": "Exact retained output SHA-256 is 1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37 before and after the production build."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd ls next sharp postcss",
+      "exit_code": 0,
+      "summary": "Resolved next@16.3.0, sharp@0.35.3, and postcss@8.5.23 without invalid or extraneous tree errors."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd audit --omit=dev",
+      "exit_code": 0,
+      "summary": "The required live production-dependency audit reported 0 vulnerabilities."
+    },
+    {
+      "command": "npm.cmd run type-check",
+      "exit_code": 0,
+      "summary": "TypeScript completed with no errors."
+    },
+    {
+      "command": "npm.cmd run build",
+      "exit_code": 0,
+      "summary": "Next.js 16.3.0 compiled, type-checked, and generated 17 static pages successfully."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors were reported; Git emitted only pre-existing line-ending warnings."
+    },
+    {
+      "command": "final scope gate with result JSON",
+      "exit_code": 0,
+      "summary": "Only next-env.d.ts is in the product task delta, all capabilities remain forbidden, and the passed result validates against the contract."
+    }
+  ],
+  "deviations": [
+    "The per-user npx shim is broken, so the exact next typegen operation was executed through the stable C:\\Program Files\\nodejs\\npx.cmd executable with no added flags.",
+    "The full test suite was not rerun because neither type-check nor production build exposed a defect, as required by the approved contract."
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Stop after project and global ledger closure; do not modify further files, commit, push, deploy, access remote Supabase, or begin release verification."
+}

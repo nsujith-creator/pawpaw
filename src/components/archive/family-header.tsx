@@ -8,6 +8,7 @@ import styles from './family-header.module.css'
 const links = [
   { href: '/', label: 'Home' },
   { href: '/first-days', label: 'First Days' },
+  { href: '/chapters', label: 'Chapters' },
 ]
 
 export default function FamilyHeader() {
@@ -20,7 +21,8 @@ export default function FamilyHeader() {
       </Link>
       <nav className={styles.navigation} aria-label="Family navigation">
         {links.map(link => {
-          const current = pathname === link.href
+          const current = pathname === link.href ||
+            (link.href === '/chapters' && pathname.startsWith('/chapters/'))
           return (
             <Link
               key={link.href}

@@ -1,0 +1,109 @@
+{
+  "task_id": "pawpaw-next-16-3-security-remediation",
+  "result": "partial",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "The exact approved npm install command exited 0. npm.cmd ls resolved next@16.3.0, sharp@0.35.3, and postcss@8.5.23 with Sharp deduped under Next.js."
+    },
+    {
+      "id": "AC-02",
+      "status": "pass",
+      "evidence": "The live registry command npm.cmd audit --omit=dev exited 0 and reported 0 vulnerabilities."
+    },
+    {
+      "id": "AC-03",
+      "status": "fail",
+      "evidence": "Type-check, lint, 350 standard tests, and the Next.js 16.3.0 production build all exited 0, but the build generated a new root-params reference in next-env.d.ts. Because source/configuration changes are forbidden, the generated line was restored byte-for-byte and this criterion cannot pass."
+    },
+    {
+      "id": "AC-04",
+      "status": "pass",
+      "evidence": "After byte-for-byte restoration of the build-generated next-env.d.ts side effect, git diff --check exited 0 and the scope gate reported exactly package.json and package-lock.json in the task delta."
+    },
+    {
+      "id": "AC-05",
+      "status": "pass",
+      "evidence": "The result matches the installed task-result schema and the scope gate validates it against all contract criteria, with a partial outcome and the stop-before-release boundary recorded."
+    }
+  ],
+  "tests": [
+    {
+      "command": "installed task-contract.schema.json validation",
+      "exit_code": 0,
+      "summary": "The approved task contract matches the installed Draft 2020-12 JSON schema."
+    },
+    {
+      "command": "scope gate init",
+      "exit_code": 0,
+      "summary": "Captured HEAD c41fec2dd455960a06e02c24f24d23ffef313779, 71 pre-existing dirty paths, and zero staged paths before the dependency install."
+    },
+    {
+      "command": "npm install --save-exact next@16.3.0 sharp@0.35.3",
+      "exit_code": 0,
+      "summary": "The exact approved command removed 4 packages and changed 7 packages; only package.json and package-lock.json entered the task delta."
+    },
+    {
+      "command": "npm ls next sharp postcss",
+      "exit_code": 1,
+      "summary": "The literal npm PowerShell shim was broken because its per-user npm-cli.js target was missing; the repository was not modified."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd ls next sharp postcss",
+      "exit_code": 0,
+      "summary": "Resolved next@16.3.0, sharp@0.35.3, and postcss@8.5.23 without invalid or extraneous tree errors."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd audit --omit=dev",
+      "exit_code": 0,
+      "summary": "The required live production-dependency audit reported 0 vulnerabilities; an earlier sandboxed network attempt failed before returning audit data."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd run type-check",
+      "exit_code": 0,
+      "summary": "TypeScript completed with no errors."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd run lint",
+      "exit_code": 0,
+      "summary": "ESLint completed with no errors."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd test",
+      "exit_code": 0,
+      "summary": "29 files passed and 6 live-mode files skipped; 350 tests passed and 47 skipped by the standard non-live command. An earlier sandboxed attempt failed before loading Vitest."
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\npm.cmd run build",
+      "exit_code": 0,
+      "summary": "Next.js 16.3.0 compiled, type-checked, and generated 17 static pages, but also generated a forbidden next-env.d.ts root-params reference."
+    },
+    {
+      "command": "next-env.d.ts pre-task SHA-256 restoration",
+      "exit_code": 0,
+      "summary": "Restored SHA-256 4e4da12aa061aac172fb1bcb48e9b6e4b293080d2f494327925fdba8f39632ac exactly after removing only the task-generated line."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors were reported; Git emitted only pre-existing line-ending warnings."
+    },
+    {
+      "command": "final scope gate with result JSON",
+      "exit_code": 0,
+      "summary": "Only package.json and package-lock.json are in the task delta, and the partial result validates against the contract."
+    }
+  ],
+  "deviations": [
+    "Next.js 16.3.0 production build generated a root-params reference in next-env.d.ts, which is outside the authorized dependency-only scope; it was restored exactly and not accepted.",
+    "The literal npm verification shim was broken, so required npm verification used the equivalent stable C:\\Program Files\\nodejs\\npm.cmd executable.",
+    "Sandbox-only audit and Vitest startup failures were rerun with the required access; the authoritative reruns passed."
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Stop after project and global ledger closure. A separate owner-approved contract must explicitly allow the generated next-env.d.ts change before this remediation can be called fully passed; do not commit, push, deploy, use remote Supabase, or begin release verification."
+}

@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-stage3-photo-replacement",
+  "task_name": "Simple safe draft photograph replacement",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T13:36:00+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "An active admin can replace one photograph in a content draft without changing its position or cover meaning, while the currently published family version stays unchanged.",
+  "user_journeys": [
+    "Sujith or Paru uploads or selects a replacement photograph and replaces the chosen draft photograph.",
+    "The admin sees a truthful success or failure result and the refreshed draft state.",
+    "Family viewers continue seeing the existing published revision until an explicit republish."
+  ],
+  "non_negotiable_quality": [
+    "Only active Pawpaw admins may replace draft photographs.",
+    "The database swap of association, position, and draft cover is atomic.",
+    "Failure leaves the old draft association usable and the published revision unchanged.",
+    "The old media record and Storage object are retained in the Media Library; this task performs no deletion.",
+    "No private family photograph is used in automated verification."
+  ],
+  "realistic_harms_prevented": [
+    "A failed replacement must not leave a missing photograph or broken cover.",
+    "A stale admin page must not silently replace the wrong association.",
+    "Draft changes must not leak into the published family view."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "Either active admin can replace an existing draft media association with an eligible replacement.",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "The replacement preserves the old display position and transfers draft cover only when the old photograph was the draft cover.",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Invalid, stale, same-media, unauthorized, or cross-content requests fail with no partial relational change.",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Published revision content and revision-media snapshots remain unchanged until explicit republish.",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The server action uploads or confirms the replacement first, calls one atomic RPC, never deletes old media, and reports failure truthfully.",
+      "proof_type": "unit",
+      "proof_command": "npm.cmd test"
+    },
+    {
+      "id": "AC-06",
+      "criterion": "Type-check, lint, full tests, and production build pass after implementation.",
+      "proof_type": "build",
+      "proof_command": "npm.cmd run type-check && npm.cmd run lint && npm.cmd test && npm.cmd run build"
+    }
+  ],
+  "non_goals": [
+    "Delete old media records or Storage objects.",
+    "Automatic cleanup, cleanup queues, retry jobs, cron, workers, or generic job infrastructure.",
+    "Change immutable published revisions, publication semantics, chronology, authorship, authentication architecture, or viewer routes.",
+    "Add dependencies, services, framework upgrades, video, PWA, notifications, deployment, or remote Supabase changes.",
+    "Build for hundreds of concurrent editors or hostile trusted administrators."
+  ],
+  "simplest_acceptable_approach": "Create one forward-only migration containing one active-admin-authorized PostgreSQL RPC that locks and atomically swaps the draft association, order, and draft cover. Call it from the existing admin action after the replacement upload/media record exists. Keep the old media untouched in the Media Library. Add focused database and application tests, then run the existing full verification.",
+  "allowed_paths": [
+    "supabase/migrations/*pr004b*photo*replacement*.sql",
+    "supabase/tests/pr004b*.sql",
+    "src/app/admin/media/**",
+    "src/app/admin/content/**",
+    "src/components/admin/**",
+    "src/lib/media/**",
+    "src/lib/content/**",
+    "src/types/**",
+    "tests/unit/**",
+    "tests/integration/**",
+    "tests/e2e/**",
+    "playwright*.config.ts",
+    ".build-governance/**"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": true,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 14,
+    "max_new_files": 6,
+    "max_migrations": 1,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 2
+  },
+  "complexity_exception": null,
+  "verification": [
+    "supabase db reset",
+    "supabase test db",
+    "npm.cmd run type-check",
+    "npm.cmd run lint",
+    "npm.cmd test",
+    "npm.cmd run build",
+    "git diff --check",
+    "& \"$env:USERPROFILE\\.build-governance\\Invoke-ScopeGate.ps1\" check --repo . --contract .build-governance\\tasks\\pawpaw-pr004b-stage3-photo-replacement.json"
+  ],
+  "prompt_word_limit": 550
+}

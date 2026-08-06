@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-service-role-private-schema-fix",
+  "task_name": "PR-004B least-privilege private schema service-role fix",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T19:00:00+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "Existing PR-004B public security-invoker wrappers work for the server's service-role client without exposing private functions or broadening database access.",
+  "user_journeys": [
+    "An active admin can publish, later edit and republish, and unpublish a shared chapter through the existing server path.",
+    "An active admin can use the existing public draft photograph replacement wrapper without a private-schema permission error.",
+    "Anon and authenticated clients remain unable to execute the private PR-004B functions."
+  ],
+  "non_negotiable_quality": [
+    "The existing public wrappers remain security invoker.",
+    "Only service_role receives USAGE on the private schema.",
+    "Only the exact three private functions reached by public PR-004B wrappers receive service_role EXECUTE.",
+    "PUBLIC, anon, and authenticated retain no EXECUTE privilege on those private functions.",
+    "No table grants, RLS policies, admin rules, Data API exposure, source code, seed data, email configuration, dependencies, or existing migrations change.",
+    "All verification uses only the local Supabase stack and synthetic fixtures."
+  ],
+  "realistic_harms_prevented": [
+    "A server-side admin action must not fail after passing application authorization because PostgreSQL cannot enter the private schema.",
+    "A permission repair must not expose privileged private functions to browsers or ordinary authenticated users.",
+    "A migration must not silently bypass RLS or change the public wrapper trust boundary."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "The migration grants service_role USAGE on private and grants service_role EXECUTE only on private.publish_content_revision(uuid,uuid), private.unpublish_content_revision(uuid,uuid), and private.is_active_admin(uuid).",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "PUBLIC, anon, and authenticated cannot execute each granted private function, and no table privilege, RLS policy, admin rule, Data API exposure, or public-wrapper security mode changes.",
+      "proof_type": "database",
+      "proof_command": "supabase test db; migration inspection"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Under service_role, the existing public wrappers complete first publish, later draft edit and republish, unpublish, and draft photograph replacement while both active-admin authorization and immutable revision semantics remain enforced.",
+      "proof_type": "database",
+      "proof_command": "supabase test db"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "A clean local reset, full pgTAP, type-check, lint, full tests, production build, and git diff whitespace validation pass.",
+      "proof_type": "build",
+      "proof_command": "supabase db reset; supabase test db; npm.cmd run type-check; npm.cmd run lint; npm.cmd test; npm.cmd run build; git diff --check"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The task result validates against this contract, records every granted private function, and closes project and global decision ledgers without release action.",
+      "proof_type": "inspection",
+      "proof_command": "scope gate check and close"
+    }
+  ],
+  "non_goals": [
+    "Convert any public wrapper to security definer.",
+    "Grant private-schema access or private-function execution to PUBLIC, anon, or authenticated.",
+    "Change any table grants, RLS policies, admin-user rules, Data API exposure, seed data, email configuration, product source, dependencies, or prior migrations.",
+    "Access remote Supabase, commit, push, deploy, or begin production verification."
+  ],
+  "simplest_acceptable_approach": "Add one forward-only migration that grants service_role only the private-schema USAGE and three exact existing private-function EXECUTE privileges required by the current public security-invoker PR-004B wrappers, repeats restrictive revocations for untrusted roles, and adds focused pgTAP service-role execution proof without changing application code or any broader permission boundary.",
+  "allowed_paths": [
+    "supabase/migrations/*pr004b*service*role*private*schema*.sql",
+    "supabase/tests/pr004b*service*role*.sql",
+    ".build-governance/**"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": true,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 5,
+    "max_new_files": 3,
+    "max_migrations": 1,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "wrapper call graph and grant inspection",
+    "scope gate init",
+    "supabase migration new",
+    "supabase db reset",
+    "focused service-role pgTAP publish/republish/unpublish/media verification",
+    "supabase test db",
+    "npm.cmd run type-check",
+    "npm.cmd run lint",
+    "npm.cmd test",
+    "npm.cmd run build",
+    "git diff --check",
+    "final scope gate with result JSON",
+    "project and global ledger closure"
+  ],
+  "prompt_word_limit": 500
+}

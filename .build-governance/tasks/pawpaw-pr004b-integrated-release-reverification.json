@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-integrated-release-reverification",
+  "task_name": "PR-004B integrated local release re-verification",
+  "owner": "Sujith",
+  "approved_at": "2026-08-06T19:45:00+05:30",
+  "status": "approved",
+  "baseline_sha": "c41fec2dd455960a06e02c24f24d23ffef313779",
+  "user_visible_outcome": "Reverify the previously failed or unproven PR-004B integrated journeys through the real local service and browser paths, using only synthetic non-private fixtures.",
+  "user_journeys": [
+    "Two active admins manage the same synthetic chapter through draft, publish, edit, republish, and unpublish.",
+    "A viewer sees only the selected immutable published revision, including the published Chapters detail on desktop Chromium and mobile Chrome.",
+    "After logout, immediate browser Back exposes no private chapter detail.",
+    "A draft photograph replacement preserves position and cover meaning while the published photograph stays unchanged until republish.",
+    "Letter remains disabled and every synthetic fixture is removed."
+  ],
+  "non_negotiable_quality": [
+    "All database and API verification uses a clean local Supabase reset with explicit localhost configuration; remote Supabase is forbidden.",
+    "Fixtures are generated, synthetic, non-private, and independent of email delivery and canonical Home or First Days seed records.",
+    "The proof crosses the real service-role API and application browser paths; direct database assertions alone are insufficient for the integrated claims.",
+    "Published revisions and revision-media snapshots remain immutable, and draft changes remain invisible until explicit republish.",
+    "All fixture residue returns to zero after focused integration and browser verification.",
+    "Product source, migrations, dependencies, production seed data, email configuration, and infrastructure remain unchanged."
+  ],
+  "realistic_harms_prevented": [
+    "A trusted active admin must not be blocked from continuing another active admin's shared content work.",
+    "A viewer must not see a later draft or replacement photograph before republish.",
+    "Browser history after logout must not reveal private family detail.",
+    "Verification must not leave synthetic users, content, media, associations, objects, or throttle records behind.",
+    "Local proof must not be represented as deployment or production proof."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "After a clean local reset, the full pgTAP suite passes and the focused real service-role API path proves two active admins can manage one chapter through draft, publish, later draft edit, republish, and unpublish while viewer reads select only the active immutable revision.",
+      "proof_type": "integration",
+      "proof_command": "supabase db reset; supabase test db; focused local content-management integration test"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "The focused real service-role API path proves draft photograph replacement preserves sort position and cover meaning, the published photograph stays unchanged until republish, and Letter publication remains rejected and unavailable.",
+      "proof_type": "integration",
+      "proof_command": "focused local content-management integration test"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "A synthetic published Chapters detail renders for an authorized viewer in desktop Chromium and mobile Chrome, and logout followed by immediate Back exposes no private detail in either project.",
+      "proof_type": "browser",
+      "proof_command": "focused Chapters detail and logout-Back Playwright tests on chromium and mobile-chrome"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Focused integration and browser cleanup leaves zero synthetic users, content, media, associations, Storage objects, and throttle rows without relying on canonical Home or First Days records.",
+      "proof_type": "integration",
+      "proof_command": "focused fixture residue reconciliation"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "Type-check, production build, production dependency audit, and git diff whitespace validation pass without rerunning unrelated tests unless a defect appears.",
+      "proof_type": "build",
+      "proof_command": "npm.cmd run type-check; npm.cmd run build; npm.cmd audit --omit=dev; git diff --check"
+    },
+    {
+      "id": "AC-06",
+      "criterion": "The result JSON validates, the final scope gate passes with only governance and directly required local-only test or configuration deltas, and project and global decision ledgers close with the exact result.",
+      "proof_type": "inspection",
+      "proof_command": "scope gate check and close"
+    }
+  ],
+  "non_goals": [
+    "Fix any product defect found during verification.",
+    "Reverify criteria already conclusively passed except where explicitly required as an integrated regression safeguard in this task.",
+    "Modify product source, migrations, dependencies, production seed data, email configuration, authentication, or infrastructure.",
+    "Depend on email delivery or canonical Home or First Days seed records.",
+    "Use private family data or access any remote Supabase project.",
+    "Commit, push, deploy, or perform production verification.",
+    "Run unrelated tests unless the focused checks expose a defect."
+  ],
+  "simplest_acceptable_approach": "Capture the preserved dirty worktree with the installed scope gate, reset only local Supabase, run the full pgTAP suite, use or minimally adjust focused synthetic integration and browser tests to cover the listed integrated claims, prove zero residue, run only the mandated type-check, build, production audit, and whitespace checks, then record the exact outcome and close both ledgers.",
+  "allowed_paths": [
+    ".build-governance/**",
+    "tests/integration/**",
+    "tests/e2e/**",
+    "tests/support/**",
+    "playwright*.config.ts"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 5,
+    "max_new_files": 3,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "installed task-contract.schema.json validation",
+    "scope gate init",
+    "supabase db reset",
+    "supabase test db",
+    "focused real-service content lifecycle, shared-admin, viewer revision, photograph replacement, Letter, and cleanup integration tests",
+    "focused Chapters published-detail and logout-Back browser tests in desktop Chromium and mobile Chrome",
+    "fixture residue zero reconciliation",
+    "npm.cmd run type-check",
+    "npm.cmd run build",
+    "npm.cmd audit --omit=dev",
+    "git diff --check",
+    "final scope gate with result JSON",
+    "project and global ledger closure"
+  ],
+  "prompt_word_limit": 650
+}

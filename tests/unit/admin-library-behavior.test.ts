@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   filterAndSortContent,
+  derivePublicationState,
   filterAndSortMedia,
   formatAdminDateTime,
   parseContentFilters,
@@ -18,7 +19,7 @@ const content: ContentViewItem[] = [
     updatedAt: '2026-07-17T10:00:00.000Z', publishedAt: '2026-07-17T09:00:00.000Z',
   },
   {
-    id: 'a', title: 'Bedtime Story', type: 'story', status: 'draft',
+    id: 'a', title: 'Bedtime Story', type: 'story', status: 'unpublished',
     updatedAt: '2026-07-17T10:00:00.000Z', publishedAt: null,
   },
   {
@@ -56,6 +57,12 @@ describe('admin content view behavior', () => {
     expect(publishedTimestamp(content[0])).toMatch(/^Published /)
     expect(publishedTimestamp(content[1])).toBeNull()
     expect(publishedTimestamp({ ...content[0], publishedAt: null })).toBeNull()
+  })
+
+  it('distinguishes unpublished, selected unchanged, and selected with a newer saved draft', () => {
+    expect(derivePublicationState(null, '2026-08-02T00:00:00Z', null)).toBe('unpublished')
+    expect(derivePublicationState('r1', '2026-08-01T00:00:00Z', '2026-08-02T00:00:00Z')).toBe('published')
+    expect(derivePublicationState('r1', '2026-08-03T00:00:00Z', '2026-08-02T00:00:00Z')).toBe('published-draft')
   })
 
   it('counts every attachment and selects the first valid image by sort order', () => {

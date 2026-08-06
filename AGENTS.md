@@ -60,21 +60,16 @@ EXPECTED OUTPUT: [success description]
 WHAT THIS CANNOT DO: [scope limit]
 NEXT STEP IF THIS PASSES: [one sentence]
 
-## Non-negotiable Pawpaw quality gate
+## Pawpaw fit-for-purpose quality gate
 
-Pawpaw is Varada’s website. Design quality is not approved through compromise scoring.
+Pawpaw must be beautiful, private, dependable, maintainable, and complete for the approved family journey. It does not need perfection in every category before unrelated work may proceed.
 
-No product philosophy, design system, visual direction, component system, visual prototype, or UI implementation may advance while any relevant assessed category is below the project’s required excellence standard.
-
-For audit scoring:
-
-- 10/10 means exceptional, distinctive, coherent, evidenced, implementable, accessible, and explicitly approved by Sujith.
-- Anything below 10/10 means the area remains unfinished.
-- “Approve with revisions,” “good enough,” “tasteful,” “professional,” “industry standard,” or a high average score does not satisfy this gate.
-- Strong scores in privacy, scope control, or documentation cannot compensate for weak distinctiveness, typography, colour, illustration, components, motion, emotional coherence, or visual execution.
-- Scores must not be inflated. Every 10/10 requires concrete evidence, including visual proof where the category is visual.
-- Documentation alone cannot establish a 10/10 visual score.
-- UI coding must not begin until the selected visual direction and its required proof are approved by Sujith.
-- Sujith may explicitly override this gate, but no agent may silently lower it for convenience, speed, cost, or implementation simplicity.
-
-The objective is not perfection through endless documentation. The objective is an unmistakably Pawpaw result: childlike imagination with adult-level art direction, backed by visual evidence.
+- Judge each task only against its approved outcome and acceptance criteria.
+- Privacy, realistic data-loss prevention, truthful content, accessibility, approved visual direction, and core family/admin journeys are non-negotiable.
+- Do not improve unrelated areas merely because improvement is possible.
+- Do not cut an approved journey or safeguard merely to reduce work.
+- Use the simplest implementation that fully meets the criteria.
+- More complexity requires evidence that the simpler option fails a realistic Pawpaw need.
+- Hypothetical scale, generic extensibility, enterprise auditability, hostile trusted admins, perfect cleanup, and broad automation are deferred unless Sujith explicitly approves them.
+- Improvements outside the task are recorded separately and never block completion.
+- No numeric perfection score replaces concrete acceptance evidence.

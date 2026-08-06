@@ -74,7 +74,7 @@
   }
 
   .navigation {
-    max-width: 13rem;
+    max-width: 20rem;
     justify-content: flex-end;
   }
 
@@ -83,7 +83,7 @@
   }
 }
 
-@media (max-width: 340px) {
+@media (max-width: 410px) {
   .navigation {
     width: 100%;
     max-width: none;

@@ -2,14 +2,14 @@ export interface ContentViewItem {
   id: string
   title: string | null
   type: string
-  status: string
+  status: 'unpublished' | 'published' | 'published-draft'
   updatedAt: string
   publishedAt: string | null
 }
 
 export interface ContentFilters {
   query: string
-  status: 'all' | 'draft' | 'published'
+  status: 'all' | 'unpublished' | 'published' | 'published-draft'
   type: string
 }
 
@@ -54,7 +54,7 @@ export function parseContentFilters(params: {
   status?: string
   type?: string
 }): ContentFilters {
-  const status = params.status === 'draft' || params.status === 'published'
+  const status = params.status === 'unpublished' || params.status === 'published' || params.status === 'published-draft'
     ? params.status
     : 'all'
 
@@ -108,8 +108,13 @@ export function formatAdminDateTime(value: string): string {
 }
 
 export function publishedTimestamp(item: ContentViewItem): string | null {
-  if (item.status !== 'published' || !item.publishedAt) return null
+  if ((item.status !== 'published' && item.status !== 'published-draft') || !item.publishedAt) return null
   return `Published ${formatAdminDateTime(item.publishedAt)}`
+}
+
+export function derivePublicationState(activeRevisionId: string | null, updatedAt: string, revisionCreatedAt: string | null): ContentViewItem['status'] {
+  if (!activeRevisionId || !revisionCreatedAt) return 'unpublished'
+  return Date.parse(updatedAt) > Date.parse(revisionCreatedAt) ? 'published-draft' : 'published'
 }
 
 export function safeStorageBasename(storagePath: string): string {

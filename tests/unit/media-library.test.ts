@@ -16,10 +16,9 @@ describe('media library server page', () => {
     expect(mediaLibraryPage).toContain("redirect('/admin/login')")
   })
 
-  it('fetches media assets filtered to the active admin', () => {
+  it('fetches the shared media library for the verified active admin', () => {
     expect(mediaLibraryPage).toContain('media_assets')
-    expect(mediaLibraryPage).toContain('created_by')
-    expect(mediaLibraryPage).toContain('admin.id')
+    expect(mediaLibraryPage).not.toContain(".eq('created_by', admin.id)")
   })
 
   it('generates signed URLs for thumbnails', () => {
@@ -61,9 +60,10 @@ describe('media library server page', () => {
 })
 
 describe('media library client component', () => {
-  it('offers an Attach to Home action for each media item', () => {
-    expect(mediaLibraryClient).toContain('attachMediaToHome')
-    expect(mediaLibraryClient).toContain('Attach to Home')
+  it('offers a real target selector for Home and owned chapters', () => {
+    expect(mediaLibraryClient).toContain('attachMediaToContent')
+    expect(mediaLibraryClient).toContain('Attach to content')
+    expect(mediaLibraryClient).toContain('targets.map')
   })
 
   it('offers a permanent delete with a confirmation step', () => {
@@ -103,11 +103,11 @@ describe('attachMediaToHome server action', () => {
     expect(mediaActions).toContain('export async function attachMediaToHome')
   })
 
-  it('verifies admin owns the media asset before attaching', () => {
+  it('uses the shared active-admin attachment rule instead of a creator silo', () => {
     const pos = mediaActions.indexOf('export async function attachMediaToHome')
     const fn  = mediaActions.slice(pos)
-    expect(fn).toContain('created_by')
-    expect(fn).toContain('admin.id')
+    expect(fn).not.toContain(".eq('created_by', admin.id)")
+    expect(fn).toContain('attachMediaCore(db, admin.id')
   })
 
   it('delegates duplicate prevention to the transactional attach function', () => {
@@ -115,18 +115,16 @@ describe('attachMediaToHome server action', () => {
   })
 
   it('returns an error when no Home content item exists yet', () => {
-    expect(mediaActions).toContain('No Home page owned by you is available')
+    expect(mediaActions).toContain('The shared Home page is not available')
   })
 
-  it('revalidates the viewer page, admin home, and media library on success', () => {
-    // attachMediaToHome delegates to revalidateHome() which covers all three paths.
+  it('revalidates the exact selected Home target and shared media surfaces on success', () => {
     const fnPos = mediaActions.indexOf('export async function attachMediaToHome')
     const fn    = mediaActions.slice(fnPos)
-    expect(fn).toContain('revalidateHome()')
+    expect(fn).toContain('revalidateTarget(homes[0].id)')
 
-    // Verify revalidateHome itself covers all three routes.
-    const helperPos = mediaActions.indexOf('function revalidateHome')
-    const helperEnd = mediaActions.indexOf('\n}', helperPos)
+    const helperPos = mediaActions.indexOf('async function revalidateTarget')
+    const helperEnd = mediaActions.indexOf('\n}\n', helperPos)
     const helper    = mediaActions.slice(helperPos, helperEnd + 2)
     expect(helper).toContain("revalidatePath('/')")
     expect(helper).toContain("revalidatePath('/admin/home')")
