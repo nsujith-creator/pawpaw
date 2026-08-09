@@ -107,7 +107,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm run dev > "$RUNNER_TEMP/pawpaw-dev.log" 2>&1 &
+          npm run dev -- --hostname 127.0.0.1 > "$RUNNER_TEMP/pawpaw-dev.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/pawpaw-dev.pid"
           for i in $(seq 1 60); do
             if curl --fail --silent --output /dev/null http://127.0.0.1:3000/family-login; then exit 0; fi
