@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { makeViewerCookieValue } from './viewer-session'
 
+// Product-owner model: two human admins deliberately share one Auth identity; fresh browser contexts prove session independence.
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
 const run = `pawpaw-test-shared-admin-${randomUUID().slice(0, 8)}`
