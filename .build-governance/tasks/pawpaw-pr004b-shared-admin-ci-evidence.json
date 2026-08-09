@@ -7,6 +7,7 @@
   "status": "approved",
   "baseline_sha": "9c321ecd25c8b32d39918121ebeca5cc9a6a7286",
   "owner_amendment": "Sujith and Paru are both human administrators but intentionally share the single Supabase/Auth administrator account nsujith@gmail.com. Separate administrator identities are not a Pawpaw requirement.",
+  "execution_note": "Verification harness corrections may change only the isolated CI workflow or these evidence files; they do not alter Pawpaw product requirements or production state.",
   "user_visible_outcome": "Prove the PR-004B publish, edit, photograph replacement, republish, viewer transition, and unpublish journey through the real application using one shared administrator identity in two fresh browser sessions.",
   "non_negotiable_quality": "Use the real Pawpaw UI, one disposable local Auth/allowlist identity, two independent browser contexts using that same identity, and exact immutable viewer transitions.",
   "realistic_harms_prevented": "Prevent production crossover, false two-user requirements, service-role-only release proof, synthetic production residue, and product-code changes made solely for testing.",
