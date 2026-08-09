@@ -1,0 +1,41 @@
+name: PR004B admin content hotfix
+
+on:
+  pull_request:
+    branches:
+      - verification/pr004b-admin-content-hotfix-base-20260810
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scope gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='${{ github.event.pull_request.base.sha }}'
+          git diff --name-only "$BASE"...HEAD | sort > /tmp/actual.txt
+          printf '%s\n' \
+            '.build-governance/tasks/pawpaw-pr004b-admin-content-relationship-hotfix.json' \
+            'src/app/admin/content/page.tsx' | sort > /tmp/allowed.txt
+          diff -u /tmp/allowed.txt /tmp/actual.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Verify relationship disambiguation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'content_revision_media!content_revision_media_revision_id_fkey (' src/app/admin/content/page.tsx
+          ! grep -Fq '      content_revision_media (revision_id, media_id, sort_order' src/app/admin/content/page.tsx
+      - run: npm run type-check
+      - run: npm run lint -- --max-warnings=0
