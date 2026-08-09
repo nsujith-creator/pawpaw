@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 env:
   NODE_VERSION: '24'
@@ -140,3 +141,11 @@ jobs:
         run: |
           npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir '${{ steps.local.outputs.workdir }}' stop --no-backup || true
           rm -rf '${{ steps.local.outputs.workdir }}'
+
+      - name: Report run on verification PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh pr comment 4 --body "PR004B_EVIDENCE_RUN=${{ github.run_id }} STATUS=${{ job.status }} SHA=${{ github.sha }}"
