@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-two-admin-ci-evidence",
+  "task_name": "Pawpaw PR-004B two-admin browser evidence",
+  "owner": "Sujith",
+  "approved_at": "2026-08-09T16:31:00+05:30",
+  "status": "approved",
+  "baseline_sha": "9c321ecd25c8b32d39918121ebeca5cc9a6a7286",
+  "user_visible_outcome": "Prove the missing PR-004B two-admin publish, edit, photograph replacement, republish, viewer transition, and unpublish journey through the real application UI without touching production.",
+  "user_journeys": [
+    "Admin A signs in through the real local UI, creates a Story, attaches a photograph, and publishes revision one.",
+    "Admin B signs in independently through the real local UI, edits the Story, replaces the photograph, republishes revision two, and unpublishes it.",
+    "A family viewer sees revision one and the old photograph before republish, revision two and the replacement after republish, then loses access after unpublish."
+  ],
+  "non_negotiable_quality": [
+    "Run only against an isolated localhost Supabase stack with disposable users and data.",
+    "Do not modify Pawpaw product source, migrations, production configuration, dependencies, or production data.",
+    "Use two independent administrator browser contexts and the real admin login and mutation controls.",
+    "Reset the isolated database between desktop and mobile runs and prove zero residue at the end."
+  ],
+  "realistic_harms_prevented": [
+    "False release proof based only on service-role API calls rather than the administrator application path.",
+    "Accidental crossover to the shared production Supabase project.",
+    "Permanent synthetic revision or Storage residue.",
+    "Product-code changes made solely to satisfy a verification harness."
+  ],
+  "acceptance_criteria": [
+    {"id":"AC-01","criterion":"The test rejects every Supabase host except localhost or 127.0.0.1 and uses two disposable active administrators with independent real login sessions.","proof_type":"browser","proof_command":"Run focused Playwright spec on Chromium and mobile-chrome against isolated CI Supabase."},
+    {"id":"AC-02","criterion":"Admin A creates and saves a Story, attaches the old photograph through the real UI, sets it as cover, and publishes revision one.","proof_type":"browser","proof_command":"Focused Playwright lifecycle assertions."},
+    {"id":"AC-03","criterion":"Before republish the family viewer still sees revision one and the old photograph after Admin B edits and confirms replacement through the real UI.","proof_type":"browser","proof_command":"Fresh viewer context assertion before republish."},
+    {"id":"AC-04","criterion":"Admin B publishes a new revision and a fresh viewer sees revision two and the replacement photograph, while database snapshots attribute revisions one and two to Admin A and Admin B respectively.","proof_type":"integration","proof_command":"Playwright plus read-only service-role revision assertions."},
+    {"id":"AC-05","criterion":"Admin B unpublishes through the real UI and a fresh viewer can no longer retrieve the Story.","proof_type":"browser","proof_command":"Focused Playwright unpublish assertion."},
+    {"id":"AC-06","criterion":"Chromium and mobile-chrome both pass independently and the isolated local stack is reset/stopped with no durable fixture residue.","proof_type":"integration","proof_command":"Workflow project runs, local reset between runs, final stop --no-backup and Docker resource check."}
+  ],
+  "non_goals": [
+    "Change production or the shared Supabase project.",
+    "Change Pawpaw runtime product behavior, migrations, dependencies, or main branch.",
+    "Re-run unrelated full test suites or earlier release criteria.",
+    "Create permanent test accounts, chapters, revisions, or media."
+  ],
+  "simplest_acceptable_approach": "Add one focused Playwright evidence spec and one branch-only GitHub Actions workflow that copies the committed Supabase directory into an ephemeral workdir, enables email signup only in that copy, runs desktop and mobile sequentially with resets, and removes the stack afterward.",
+  "allowed_paths": [
+    ".build-governance/tasks/pawpaw-pr004b-two-admin-ci-evidence.json",
+    "tests/e2e/pr004b-two-admin-ci-evidence.spec.ts",
+    ".github/workflows/pr004b-two-admin-ci-evidence.yml"
+  ],
+  "capabilities": {"dependencies":false,"migrations":false,"auth":false,"infrastructure":true,"new_services":false,"remote_writes":true,"deletion":false},
+  "complexity_budget": {"max_changed_files":3,"max_new_files":3,"max_migrations":0,"max_new_dependencies":0,"max_new_services":0,"max_implementation_runs":1},
+  "complexity_exception": null,
+  "verification": [
+    "GitHub branch begins at exact approved SHA 9c321ecd25c8b32d39918121ebeca5cc9a6a7286.",
+    "Branch compare contains only the contract, focused test, and branch-only workflow.",
+    "The workflow copies Supabase config outside the checkout and changes only local auth signup flags in that temporary copy.",
+    "Run Chromium, reset local DB, run mobile-chrome, reset again, stop with --no-backup.",
+    "No production URL, Supabase project ref, credentials, deployment, migration push, or main-branch write is used."
+  ],
+  "prompt_word_limit": 800
+}
