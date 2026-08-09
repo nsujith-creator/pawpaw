@@ -1,0 +1,139 @@
+name: PR004B two-admin local evidence
+
+on:
+  push:
+    branches:
+      - verification/pr004b-evidence-closure-20260809
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24'
+  SUPABASE_CLI_VERSION: '2.109.1'
+  PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:3000'
+  NEXT_PUBLIC_SITE_URL: 'http://127.0.0.1:3000'
+  VIEWER_SESSION_VERSION: '1'
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove exact product base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='9c321ecd25c8b32d39918121ebeca5cc9a6a7286'
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE"...HEAD | tee /tmp/branch-diff.txt
+          printf '%s\n' \
+            '.build-governance/tasks/pawpaw-pr004b-two-admin-ci-evidence.json' \
+            '.github/workflows/pr004b-two-admin-ci-evidence.yml' \
+            'tests/e2e/pr004b-two-admin-ci-evidence.spec.ts' | sort > /tmp/allowed.txt
+          sort /tmp/branch-diff.txt > /tmp/actual.txt
+          diff -u /tmp/allowed.txt /tmp/actual.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install repository dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Build isolated local Supabase workdir
+        id: local
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORKDIR="$RUNNER_TEMP/pawpaw-pr004b-local"
+          mkdir -p "$WORKDIR/supabase"
+          cp -a supabase/. "$WORKDIR/supabase/"
+          rm -f "$WORKDIR/supabase/seed.sql"
+          python - "$WORKDIR/supabase/config.toml" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path(sys.argv[1])
+          text = path.read_text()
+          text = 'project_id = "pawpaw-pr004b-ci-evidence"\n' + text if 'project_id =' not in text else text
+          text = text.replace('enable_signup = false', 'enable_signup = true', 1)
+          marker = '[auth.email]'
+          head, tail = text.split(marker, 1)
+          tail = tail.replace('enable_signup = false', 'enable_signup = true', 1)
+          path.write_text(head + marker + tail)
+          PY
+          grep -A12 '^\[auth\]' "$WORKDIR/supabase/config.toml"
+          grep -A4 '^\[auth.email\]' "$WORKDIR/supabase/config.toml"
+          echo "workdir=$WORKDIR" >> "$GITHUB_OUTPUT"
+
+      - name: Start isolated Supabase and export local-only environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORKDIR='${{ steps.local.outputs.workdir }}'
+          npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir "$WORKDIR" start -x studio,realtime,imgproxy,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit
+          npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir "$WORKDIR" db reset --local --no-seed
+          npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir "$WORKDIR" status -o env > "$RUNNER_TEMP/supabase.env"
+          set -a
+          source "$RUNNER_TEMP/supabase.env"
+          set +a
+          case "$API_URL" in http://127.0.0.1:*|http://localhost:*) ;; *) echo "Rejected non-local API_URL"; exit 1;; esac
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "VIEWER_COOKIE_SECRET=$(node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\")"
+            echo "THROTTLE_KEY_SECRET=$(node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\")"
+            echo "VIEWER_PASSPHRASE_HASH=$(node -e \"const c=require('crypto');const s=c.randomBytes(16);const h=c.scryptSync('local-only',s,64);console.log('scrypt:'+s.toString('hex')+':'+h.toString('hex'))\")"
+          } >> "$GITHUB_ENV"
+
+      - name: Chromium complete two-admin journey
+        run: npx playwright test tests/e2e/pr004b-two-admin-ci-evidence.spec.ts --project=chromium --workers=1 --reporter=line
+
+      - name: Reset isolated database between browser projects
+        shell: bash
+        run: npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir '${{ steps.local.outputs.workdir }}' db reset --local --no-seed
+
+      - name: Mobile Chrome complete two-admin journey
+        run: npx playwright test tests/e2e/pr004b-two-admin-ci-evidence.spec.ts --project=mobile-chrome --workers=1 --reporter=line
+
+      - name: Final reset and zero-residue proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir '${{ steps.local.outputs.workdir }}' db reset --local --no-seed
+          node <<'NODE'
+          const { createClient } = require('@supabase/supabase-js')
+          const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {auth:{persistSession:false,autoRefreshToken:false}})
+          ;(async()=>{
+            const users = await db.auth.admin.listUsers({page:1,perPage:100})
+            if (users.error) throw users.error
+            const checks = [['admin_users','user_id'],['content_items','id'],['content_media','content_id'],['media_assets','id'],['content_revisions','id'],['content_revision_media','revision_id'],['viewer_login_attempts','key_hash']]
+            const out = {auth_users: users.data.users.length}
+            for (const [table,col] of checks) {
+              const r = await db.from(table).select(col,{count:'exact',head:true})
+              if (r.error) throw r.error
+              out[table] = r.count ?? -1
+            }
+            const objects = await db.storage.from('media').list('', {limit:100})
+            if (objects.error) throw objects.error
+            out.storage_objects = objects.data.length
+            console.log(JSON.stringify(out))
+            if (Object.values(out).some(v => v !== 0)) process.exit(2)
+          })().catch(e=>{console.error(e);process.exit(1)})
+          NODE
+
+      - name: Stop and erase isolated Supabase stack
+        if: always()
+        shell: bash
+        run: |
+          npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir '${{ steps.local.outputs.workdir }}' stop --no-backup || true
+          rm -rf '${{ steps.local.outputs.workdir }}'
