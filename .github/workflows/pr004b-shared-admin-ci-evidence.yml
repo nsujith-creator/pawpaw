@@ -35,6 +35,7 @@ jobs:
           git diff --name-only '${{ github.event.pull_request.base.sha }}'...HEAD | tee /tmp/branch-diff.txt
           printf '%s\n' \
             '.build-governance/tasks/pawpaw-pr004b-shared-admin-ci-evidence.json' \
+            '.github/workflows/pr004b-shared-admin-ci-evidence.yml' \
             'tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts' | sort > /tmp/allowed.txt
           sort /tmp/branch-diff.txt > /tmp/actual.txt
           diff -u /tmp/allowed.txt /tmp/actual.txt
