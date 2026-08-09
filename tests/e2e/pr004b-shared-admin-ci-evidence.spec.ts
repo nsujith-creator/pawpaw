@@ -113,10 +113,14 @@ test('one shared admin identity completes the real revision and photograph lifec
       await first.page.goto('/admin/content/new')
       await first.page.getByLabel('Chapter type').selectOption('story')
       await first.page.getByLabel('Title').fill(titleOne)
+      const address = first.page.getByLabel('Chapter address')
+      await expect(address).not.toHaveValue('', { timeout: 20_000 })
       slug = `${run}-story`
-      await first.page.getByLabel('Chapter address').fill(slug)
+      await address.fill(slug)
       await first.page.getByRole('button', { name: 'Add paragraph' }).click()
-      await first.page.getByLabel('Paragraph').fill('The first published version.')
+      const paragraph = first.page.getByLabel('Paragraph')
+      await expect(paragraph).toBeVisible()
+      await paragraph.fill('The first published version.')
       await first.page.getByRole('button', { name: 'Save private draft' }).click()
       await expect(first.page).toHaveURL(/\/admin\/content\/[0-9a-f-]+$/, { timeout: 20_000 })
       storyId = new URL(first.page.url()).pathname.split('/').pop()!
