@@ -33,11 +33,14 @@ jobs:
           PRODUCT='9c321ecd25c8b32d39918121ebeca5cc9a6a7286'
           git cat-file -e "$PRODUCT^{commit}"
           git diff --name-only '${{ github.event.pull_request.base.sha }}'...HEAD | tee /tmp/branch-diff.txt
-          printf '%s\n' \
-            '.build-governance/tasks/pawpaw-pr004b-two-admin-ci-evidence.json' \
-            'tests/e2e/pr004b-two-admin-ci-evidence.spec.ts' | sort > /tmp/allowed.txt
-          sort /tmp/branch-diff.txt > /tmp/actual.txt
-          diff -u /tmp/allowed.txt /tmp/actual.txt
+          while IFS= read -r path; do
+            case "$path" in
+              '.build-governance/tasks/pawpaw-pr004b-two-admin-ci-evidence.json'|'tests/e2e/pr004b-two-admin-ci-evidence.spec.ts'|'.github/workflows/pr004b-two-admin-ci-evidence.yml') ;;
+              *) echo "Unexpected verification delta: $path"; exit 1 ;;
+            esac
+          done < /tmp/branch-diff.txt
+          grep -Fxq '.build-governance/tasks/pawpaw-pr004b-two-admin-ci-evidence.json' /tmp/branch-diff.txt
+          grep -Fxq 'tests/e2e/pr004b-two-admin-ci-evidence.spec.ts' /tmp/branch-diff.txt
           git diff --quiet "$PRODUCT" -- . ':!.build-governance/tasks/pawpaw-pr004b-two-admin-ci-evidence.json' ':!tests/e2e/pr004b-two-admin-ci-evidence.spec.ts' ':!.github/workflows/pr004b-two-admin-ci-evidence.yml'
 
       - uses: actions/setup-node@v4
