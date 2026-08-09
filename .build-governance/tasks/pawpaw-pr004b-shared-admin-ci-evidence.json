@@ -7,13 +7,13 @@
   "status": "approved",
   "baseline_sha": "9c321ecd25c8b32d39918121ebeca5cc9a6a7286",
   "owner_amendment": "Sujith and Paru are both human administrators but intentionally share the single Supabase/Auth administrator account nsujith@gmail.com. Separate administrator identities are not a Pawpaw requirement.",
-  "execution_note": "Verification harness corrections may change only the isolated CI workflow or these evidence files; they do not alter Pawpaw product requirements or production state. The isolated Next dev server must bind to the same 127.0.0.1 hostname used by Playwright so Next development-origin protection does not block client chunks.",
+  "execution_note": "Verification harness corrections may change only the isolated CI workflow or evidence files; they do not alter Pawpaw product requirements or production state. The isolated Next dev server binds to 127.0.0.1. Because published revisions are intentionally immutable, this evidence run uses a dedicated Playwright config without the repository's row-deletion global cleanup and relies on a full disposable local database reset after each browser project.",
   "user_visible_outcome": "Prove the PR-004B publish, edit, photograph replacement, republish, viewer transition, and unpublish journey through the real application using one shared administrator identity in two fresh browser sessions.",
   "non_negotiable_quality": "Use the real Pawpaw UI, one disposable local Auth/allowlist identity, two independent browser contexts using that same identity, and exact immutable viewer transitions.",
   "realistic_harms_prevented": "Prevent production crossover, false two-user requirements, service-role-only release proof, synthetic production residue, and product-code changes made solely for testing.",
   "simplest_acceptable_approach": "One focused Playwright spec against one isolated localhost Supabase stack; Chromium then reset; mobile Chrome then reset; no runtime or migration changes.",
   "non_goals": "No separate Paru account, no human-attribution claim from Auth, no production mutation, no main-branch change, no dependency or migration change, no full-suite rerun.",
-  "complexity_budget": "Two evidence files on the head branch plus one workflow isolated on the verification base; INR 0/month; no new dependency or service.",
+  "complexity_budget": "Three evidence files on the head branch plus one workflow isolated on the verification base; INR 0/month; no new dependency or service.",
   "verification": "Both browser projects pass, both revisions are attributed to the same shared admin UUID, viewer sees old media until republish then new media, unpublish hides the chapter, and final isolated residue is zero.",
   "decision": "PROCEED",
   "acceptance_criteria": [
@@ -22,10 +22,11 @@
     {"id":"AC-03","criterion":"Browser session 2 independently signs in with the same shared identity, edits the Chapter and replaces its photograph; before republish a fresh viewer still sees revision one and the old photograph."},
     {"id":"AC-04","criterion":"Session 2 republishes; a fresh viewer sees revision two and the replacement photograph; database snapshots show revisions one and two both attributed to the same shared administrator UUID."},
     {"id":"AC-05","criterion":"Session 2 unpublishes through the real UI and a fresh viewer can no longer retrieve the Chapter."},
-    {"id":"AC-06","criterion":"The complete journey passes independently in Chromium and 375px touch/mobile Chrome, with database reset between runs and zero final Auth, content, media, revision, Storage, association, allowlist, and throttle residue."}
+    {"id":"AC-06","criterion":"The complete journey passes independently in Chromium and 375px touch/mobile Chrome, with full disposable database reset between runs and zero final Auth, content, media, revision, Storage, association, allowlist, and throttle residue."}
   ],
   "allowed_paths": [
     ".build-governance/tasks/pawpaw-pr004b-shared-admin-ci-evidence.json",
+    "playwright.pr004b-evidence.config.ts",
     "tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts"
   ],
   "prompt_word_limit": 800
