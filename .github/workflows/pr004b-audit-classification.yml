@@ -40,3 +40,19 @@ jobs:
           const out={}; for (const [k,v] of Object.entries(a.vulnerabilities ?? {})) out[k]={severity:v.severity,isDirect:v.isDirect,via:(v.via??[]).map(x=>typeof x==='string'?x:{source:x.source,name:x.name,severity:x.severity,title:x.title,range:x.range,url:x.url}),effects:v.effects,range:v.range,nodes:v.nodes,fixAvailable:v.fixAvailable};
           console.log('AUDIT_PROD_VULNERABILITIES='+JSON.stringify(out));
           NODE
+      - name: Preview audit lockfile fix
+        shell: bash
+        run: |
+          cp package-lock.json /tmp/package-lock.before.json
+          npm audit fix --package-lock-only || true
+          echo 'AUDIT_FIX_DIFF_BEGIN'
+          git diff -- package-lock.json
+          echo 'AUDIT_FIX_DIFF_END'
+          npm audit --omit=dev --json > /tmp/audit-prod-after.json || true
+          node - <<'NODE'
+          const fs=require('fs'); const a=JSON.parse(fs.readFileSync('/tmp/audit-prod-after.json','utf8'));
+          console.log('AUDIT_PROD_AFTER_METADATA='+JSON.stringify(a.metadata?.vulnerabilities ?? {}));
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          console.log('AUDIT_FIX_NANOID='+JSON.stringify(lock.packages?.['node_modules/nanoid'] ?? null));
+          console.log('AUDIT_FIX_POSTCSS='+JSON.stringify(lock.packages?.['node_modules/postcss'] ?? null));
+          NODE
