@@ -1,0 +1,42 @@
+name: PR004B dependency audit classification
+
+on:
+  pull_request:
+    branches:
+      - verification/pr004b-actions-base-20260809
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Full audit
+        shell: bash
+        run: |
+          npm audit --json > /tmp/audit-full.json || true
+          node - <<'NODE'
+          const fs=require('fs'); const a=JSON.parse(fs.readFileSync('/tmp/audit-full.json','utf8'));
+          console.log('AUDIT_FULL_METADATA='+JSON.stringify(a.metadata?.vulnerabilities ?? {}));
+          const out={}; for (const [k,v] of Object.entries(a.vulnerabilities ?? {})) out[k]={severity:v.severity,isDirect:v.isDirect,via:(v.via??[]).map(x=>typeof x==='string'?x:{source:x.source,name:x.name,severity:x.severity,title:x.title,range:x.range,url:x.url}),effects:v.effects,range:v.range,nodes:v.nodes,fixAvailable:v.fixAvailable};
+          console.log('AUDIT_FULL_VULNERABILITIES='+JSON.stringify(out));
+          NODE
+      - name: Production-only audit
+        shell: bash
+        run: |
+          npm audit --omit=dev --json > /tmp/audit-prod.json || true
+          node - <<'NODE'
+          const fs=require('fs'); const a=JSON.parse(fs.readFileSync('/tmp/audit-prod.json','utf8'));
+          console.log('AUDIT_PROD_METADATA='+JSON.stringify(a.metadata?.vulnerabilities ?? {}));
+          const out={}; for (const [k,v] of Object.entries(a.vulnerabilities ?? {})) out[k]={severity:v.severity,isDirect:v.isDirect,via:(v.via??[]).map(x=>typeof x==='string'?x:{source:x.source,name:x.name,severity:x.severity,title:x.title,range:x.range,url:x.url}),effects:v.effects,range:v.range,nodes:v.nodes,fixAvailable:v.fixAvailable};
+          console.log('AUDIT_PROD_VULNERABILITIES='+JSON.stringify(out));
+          NODE
