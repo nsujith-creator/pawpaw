@@ -165,7 +165,8 @@ test('one shared admin identity completes the real revision and photograph lifec
       await first.page.getByRole('button', { name: 'Set as cover' }).click()
       await expect(first.page.getByRole('status').filter({ hasText: 'cover updated' })).toBeVisible()
       await first.page.getByRole('button', { name: 'Publish', exact: true }).click()
-      await expect(first.page.getByText('Status: published')).toBeVisible()
+      await expect(first.page.getByText('Revision 1 published for the family.', { exact: true })).toBeVisible()
+      await expect(first.page.getByText('Status: published', { exact: true })).toBeVisible()
     } finally {
       await first.context.close()
     }
@@ -182,7 +183,7 @@ test('one shared admin identity completes the real revision and photograph lifec
       await waitForReactHydration(second.page, '#chapter-title')
       await second.page.getByLabel('Title').fill(titleTwo)
       await second.page.getByRole('button', { name: 'Save private draft' }).click()
-      await expect(second.page.getByText('Status: published with newer private draft')).toBeVisible()
+      await expect(second.page.getByText('Status: published with newer private draft', { exact: true })).toBeVisible()
 
       await second.page.getByRole('button', { name: 'Replace photograph…' }).click()
       const panel = second.page.locator('[aria-label^="Replace photograph in"]')
@@ -205,7 +206,8 @@ test('one shared admin identity completes the real revision and photograph lifec
       expect(formTitleBeforePublish).toBe(titleTwo)
 
       await second.page.getByRole('button', { name: 'Publish new revision' }).click()
-      await expect(second.page.getByText('Status: published')).toBeVisible()
+      await expect(second.page.getByText('Revision 2 published for the family.', { exact: true })).toBeVisible()
+      await expect(second.page.getByText('Status: published', { exact: true })).toBeVisible()
 
       const afterPublishItem = await db.from('content_items').select('title, cover_media_id, active_published_revision_id').eq('id', storyId).single()
       expect(afterPublishItem.error).toBeNull()
@@ -245,7 +247,8 @@ test('one shared admin identity completes the real revision and photograph lifec
       await expectPublished(browser, mobile, titleTwo, newAlt, oldAlt)
 
       await second.page.getByRole('button', { name: 'Unpublish' }).click()
-      await expect(second.page.getByText('Status: unpublished')).toBeVisible()
+      await expect(second.page.getByText('Chapter unpublished. Revision history and the private draft were preserved.', { exact: true })).toBeVisible()
+      await expect(second.page.getByText('Status: unpublished', { exact: true })).toBeVisible()
     } finally {
       await second.context.close()
     }
