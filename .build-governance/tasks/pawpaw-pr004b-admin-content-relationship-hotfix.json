@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pr004b-admin-content-relationship-hotfix",
+  "task_name": "PR-004B admin Content relationship hotfix",
+  "owner": "Sujith",
+  "approved_at": "2026-08-10T01:47:00+05:30",
+  "status": "approved",
+  "baseline_sha": "9c321ecd25c8b32d39918121ebeca5cc9a6a7286",
+  "user_visible_outcome": "The production Admin Content library loads publication state normally and allows the shared administrator to open Chapter editors.",
+  "non_negotiable_quality": "Preserve all PR-004B revision, publication, privacy, Letter-blocking, shared-admin and immutable-history behavior.",
+  "realistic_harms_prevented": "Do not mutate database schema/data, Auth, Storage, migrations or unrelated product behavior while fixing the failed production query.",
+  "simplest_acceptable_approach": "Disambiguate the existing content_revisions to content_revision_media PostgREST embed with the intended revision_id foreign-key relationship.",
+  "non_goals": "No UI redesign, dependency update, migration, revision-model change, admin-account change or release-scope expansion.",
+  "complexity_budget": "One production source file; no dependency; INR 0/month. Add no abstraction unless verification proves it necessary.",
+  "verification": "Confirm bounded diff, build/type/test evidence, deploy only the verified patch, then verify production /admin/content no longer logs PGRST201 and the administrator can open a Chapter editor without mutation.",
+  "decision": "PROCEED",
+  "acceptance_criteria": [
+    {"id":"AC-01","criterion":"The revision embed explicitly selects content_revision_media_revision_id_fkey, eliminating PGRST201 ambiguity while retaining all revision media rows."},
+    {"id":"AC-02","criterion":"No database, migration, dependency, Auth, Storage, publication-rule or unrelated source change is introduced."},
+    {"id":"AC-03","criterion":"The verified patch builds successfully and production /admin/content loads without the publication-state error or ContentLibraryPage revision-query PGRST201 log."},
+    {"id":"AC-04","criterion":"The shared administrator can open an existing non-Home Chapter editor read-only and Letter publication remains unavailable; sign-out/Back privacy remains previously passed."}
+  ],
+  "allowed_paths": [
+    ".build-governance/tasks/pawpaw-pr004b-admin-content-relationship-hotfix.json",
+    "src/app/admin/content/page.tsx"
+  ],
+  "prompt_word_limit": 600
+}
