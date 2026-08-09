@@ -76,7 +76,7 @@ export default async function ContentLibraryPage({
       authored_date, authored_date_precision, authored_date_is_approximate,
       author_display_name, recipient_display_name, place_text, relationship_context,
       created_at, created_by,
-      content_revision_media (revision_id, media_id, sort_order, caption_override, placement, storage_path, alt_text, caption, width, height, mime_type, byte_size)
+      content_revision_media!content_revision_media_revision_id_fkey (revision_id, media_id, sort_order, caption_override, placement, storage_path, alt_text, caption, width, height, mime_type, byte_size)
     `).in('id', revisionIds)
     if (revisions.error) {
       console.error('ContentLibraryPage revision query failed:', revisions.error)
