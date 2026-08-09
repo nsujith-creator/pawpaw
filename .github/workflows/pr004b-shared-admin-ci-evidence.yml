@@ -97,7 +97,7 @@ jobs:
           const crypto = require('crypto')
           const salt = crypto.randomBytes(16)
           const hash = crypto.scryptSync('local-only', salt, 64)
-          console.log(`VIEWER_COOKIE_SECRET=${crypto.randomBytes(32).toString('hex')}`)
+          console.log(`VIEWER_COOKIE_SECRET=${crypto.randomBytes(48).toString('base64url')}`)
           console.log(`THROTTLE_KEY_SECRET=${crypto.randomBytes(32).toString('hex')}`)
           console.log(`VIEWER_PASSPHRASE_HASH=scrypt:${salt.toString('hex')}:${hash.toString('hex')}`)
           NODE
