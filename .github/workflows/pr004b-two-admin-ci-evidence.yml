@@ -71,8 +71,6 @@ jobs:
           tail = tail.replace('enable_signup = false', 'enable_signup = true', 1)
           path.write_text(head + marker + tail)
           PY
-          grep -A12 '^\[auth\]' "$WORKDIR/supabase/config.toml"
-          grep -A4 '^\[auth.email\]' "$WORKDIR/supabase/config.toml"
           echo "workdir=$WORKDIR" >> "$GITHUB_OUTPUT"
 
       - name: Start isolated Supabase and export local-only environment
@@ -91,10 +89,28 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
-            echo "VIEWER_COOKIE_SECRET=$(node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\")"
-            echo "THROTTLE_KEY_SECRET=$(node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\")"
-            echo "VIEWER_PASSPHRASE_HASH=$(node -e \"const c=require('crypto');const s=c.randomBytes(16);const h=c.scryptSync('local-only',s,64);console.log('scrypt:'+s.toString('hex')+':'+h.toString('hex'))\")"
           } >> "$GITHUB_ENV"
+          node <<'NODE' >> "$GITHUB_ENV"
+          const crypto = require('crypto')
+          const salt = crypto.randomBytes(16)
+          const hash = crypto.scryptSync('local-only', salt, 64)
+          console.log(`VIEWER_COOKIE_SECRET=${crypto.randomBytes(32).toString('hex')}`)
+          console.log(`THROTTLE_KEY_SECRET=${crypto.randomBytes(32).toString('hex')}`)
+          console.log(`VIEWER_PASSPHRASE_HASH=scrypt:${salt.toString('hex')}:${hash.toString('hex')}`)
+          NODE
+
+      - name: Start Pawpaw application
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run dev > "$RUNNER_TEMP/pawpaw-dev.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/pawpaw-dev.pid"
+          for i in $(seq 1 60); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:3000/family-login; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/pawpaw-dev.log"
+          exit 1
 
       - name: Chromium complete two-admin journey
         run: npx playwright test tests/e2e/pr004b-two-admin-ci-evidence.spec.ts --project=chromium --workers=1 --reporter=line
@@ -132,10 +148,11 @@ jobs:
           })().catch(e=>{console.error(e);process.exit(1)})
           NODE
 
-      - name: Stop and erase isolated Supabase stack
+      - name: Stop and erase isolated environment
         if: always()
         shell: bash
         run: |
+          if [ -f "$RUNNER_TEMP/pawpaw-dev.pid" ]; then kill "$(cat "$RUNNER_TEMP/pawpaw-dev.pid")" 2>/dev/null || true; fi
           npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir '${{ steps.local.outputs.workdir }}' stop --no-backup || true
           rm -rf '${{ steps.local.outputs.workdir }}'
 
