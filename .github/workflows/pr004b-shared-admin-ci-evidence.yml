@@ -36,11 +36,13 @@ jobs:
           printf '%s\n' \
             '.build-governance/tasks/pawpaw-pr004b-shared-admin-ci-evidence.json' \
             '.github/workflows/pr004b-shared-admin-ci-evidence.yml' \
+            'playwright.pr004b-evidence.config.ts' \
             'tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts' | sort > /tmp/allowed.txt
           sort /tmp/branch-diff.txt > /tmp/actual.txt
           diff -u /tmp/allowed.txt /tmp/actual.txt
           git diff --quiet "$PRODUCT" -- . \
             ':!.build-governance/tasks/pawpaw-pr004b-shared-admin-ci-evidence.json' \
+            ':!playwright.pr004b-evidence.config.ts' \
             ':!tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts' \
             ':!.github/workflows/pr004b-shared-admin-ci-evidence.yml'
 
@@ -117,15 +119,17 @@ jobs:
           exit 1
 
       - name: Chromium shared-admin lifecycle
-        run: npx playwright test tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts --project=chromium --workers=1 --reporter=line --trace=retain-on-failure
+        run: npx playwright test tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts --config=playwright.pr004b-evidence.config.ts --project=chromium --workers=1 --reporter=line
 
-      - name: Reset isolated database between browser projects
+      - name: Reset isolated database after Chromium
+        if: always()
         run: npx --yes supabase@${SUPABASE_CLI_VERSION} --workdir '${{ steps.local.outputs.workdir }}' db reset --local --no-seed
 
       - name: Mobile Chrome shared-admin lifecycle
-        run: npx playwright test tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts --project=mobile-chrome --workers=1 --reporter=line --trace=retain-on-failure
+        run: npx playwright test tests/e2e/pr004b-shared-admin-ci-evidence.spec.ts --config=playwright.pr004b-evidence.config.ts --project=mobile-chrome --workers=1 --reporter=line
 
       - name: Final reset and zero-residue proof
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
