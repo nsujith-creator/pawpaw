@@ -121,6 +121,9 @@ async function expectPublished(browser: Browser, mobile: boolean, expectedTitle:
   try {
     const response = await viewer.page.goto(`/chapters/${slug}`, { waitUntil: 'networkidle' })
     expect(response?.status()).toBe(200)
+    const actualHeadings = await viewer.page.locator('h1').allTextContents()
+    const actualImageAlts = await viewer.page.locator('img').evaluateAll(images => images.map(image => image.getAttribute('alt') ?? ''))
+    console.log(`VIEWER_SNAPSHOT=${JSON.stringify({ expectedTitle, actualHeadings, expectedAlt, absentAlt, actualImageAlts })}`)
     await expect(viewer.page.getByRole('heading', { level: 1, name: expectedTitle })).toBeVisible()
     await expect(viewer.page.getByRole('img', { name: expectedAlt })).toBeVisible()
     await expect(viewer.page.getByRole('img', { name: absentAlt })).toHaveCount(0)
@@ -189,21 +192,37 @@ test('one shared admin identity completes the real revision and photograph lifec
       await panel.getByRole('button', { name: 'Confirm replacement' }).click()
       await expect(second.page.getByRole('status').filter({ hasText: 'Photograph replaced.' })).toBeVisible()
 
-      const draft = await db.from('content_items').select('cover_media_id').eq('id', storyId).single()
-      expect(draft.error).toBeNull()
-      expect(draft.data.cover_media_id).toBe(newMediaId)
+      const draftBeforePublish = await db.from('content_items').select('title, cover_media_id, active_published_revision_id').eq('id', storyId).single()
+      expect(draftBeforePublish.error).toBeNull()
+      console.log(`DB_BEFORE_REPUBLISH=${JSON.stringify({ title: draftBeforePublish.data.title, titleIsRevisionTwo: draftBeforePublish.data.title === titleTwo, coverIsReplacement: draftBeforePublish.data.cover_media_id === newMediaId, hasActiveRevision: Boolean(draftBeforePublish.data.active_published_revision_id) })}`)
+      expect(draftBeforePublish.data.title).toBe(titleTwo)
+      expect(draftBeforePublish.data.cover_media_id).toBe(newMediaId)
 
       await expectPublished(browser, mobile, titleOne, oldAlt, newAlt)
 
+      const formTitleBeforePublish = await second.page.getByLabel('Title').inputValue()
+      console.log(`FORM_BEFORE_REPUBLISH=${JSON.stringify({ title: formTitleBeforePublish, titleIsRevisionTwo: formTitleBeforePublish === titleTwo })}`)
+      expect(formTitleBeforePublish).toBe(titleTwo)
+
       await second.page.getByRole('button', { name: 'Publish new revision' }).click()
       await expect(second.page.getByText('Status: published')).toBeVisible()
-      await expectPublished(browser, mobile, titleTwo, newAlt, oldAlt)
 
+      const afterPublishItem = await db.from('content_items').select('title, cover_media_id, active_published_revision_id').eq('id', storyId).single()
+      expect(afterPublishItem.error).toBeNull()
       const revisions = await db.from('content_revisions')
         .select('id, revision_number, created_by, title, created_at')
         .eq('content_item_id', storyId)
         .order('revision_number', { ascending: true })
       expect(revisions.error).toBeNull()
+      const revisionSummary = (revisions.data ?? []).map(row => ({
+        revisionNumber: row.revision_number,
+        title: row.title,
+        sameSharedAdmin: row.created_by === adminId,
+        active: row.id === afterPublishItem.data.active_published_revision_id,
+      }))
+      console.log(`DB_AFTER_REPUBLISH=${JSON.stringify({ draftTitle: afterPublishItem.data.title, draftTitleIsRevisionTwo: afterPublishItem.data.title === titleTwo, coverIsReplacement: afterPublishItem.data.cover_media_id === newMediaId, revisions: revisionSummary })}`)
+
+      expect(afterPublishItem.data.title).toBe(titleTwo)
       expect(revisions.data).toHaveLength(2)
       expect(revisions.data?.map(row => [row.revision_number, row.created_by, row.title])).toEqual([
         [1, adminId, titleOne],
@@ -212,6 +231,8 @@ test('one shared admin identity completes the real revision and photograph lifec
 
       const rev1 = revisions.data![0].id
       const rev2 = revisions.data![1].id
+      expect(afterPublishItem.data.active_published_revision_id).toBe(rev2)
+
       const snapshots = await db.from('content_revision_media').select('revision_id, media_id').in('revision_id', [rev1, rev2])
       expect(snapshots.error).toBeNull()
       expect(snapshots.data).toEqual(expect.arrayContaining([
@@ -219,11 +240,9 @@ test('one shared admin identity completes the real revision and photograph lifec
         { revision_id: rev2, media_id: newMediaId },
       ]))
 
-      const item = await db.from('content_items').select('active_published_revision_id').eq('id', storyId).single()
-      expect(item.error).toBeNull()
-      expect(item.data.active_published_revision_id).toBe(rev2)
+      console.log(`SHARED_ADMIN_EVIDENCE=${JSON.stringify({ project: testInfo.project.name, revisionNumbers: [1, 2], bothRevisionsSameAdmin: true, activeRevision: 2, revisionOneHasOldMedia: true, revisionTwoHasNewMedia: true })}`)
 
-      console.log(`SHARED_ADMIN_EVIDENCE=${JSON.stringify({ project: testInfo.project.name, adminId, revisionNumbers: [1, 2], bothRevisionsSameAdmin: true, oldMediaId, newMediaId, activeRevision: 2 })}`)
+      await expectPublished(browser, mobile, titleTwo, newAlt, oldAlt)
 
       await second.page.getByRole('button', { name: 'Unpublish' }).click()
       await expect(second.page.getByText('Status: unpublished')).toBeVisible()
