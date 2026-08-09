@@ -226,7 +226,7 @@ test('one shared admin identity completes the real revision and photograph lifec
       console.log(`SHARED_ADMIN_EVIDENCE=${JSON.stringify({ project: testInfo.project.name, adminId, revisionNumbers: [1, 2], bothRevisionsSameAdmin: true, oldMediaId, newMediaId, activeRevision: 2 })}`)
 
       await second.page.getByRole('button', { name: 'Unpublish' }).click()
-      await expect(second.page.getByText('Status: draft')).toBeVisible()
+      await expect(second.page.getByText('Status: unpublished')).toBeVisible()
     } finally {
       await second.context.close()
     }
