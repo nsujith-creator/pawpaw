@@ -72,11 +72,34 @@ function contextOptions(mobile: boolean) {
     : { baseURL, viewport: { width: 1440, height: 1000 } }
 }
 
+function instrumentPage(page: Page) {
+  page.on('pageerror', error => console.log(`BROWSER_PAGEERROR=${error.message}`))
+  page.on('console', message => {
+    if (message.type() === 'error' || message.type() === 'warning') {
+      console.log(`BROWSER_CONSOLE_${message.type().toUpperCase()}=${message.text()}`)
+    }
+  })
+  page.on('response', response => {
+    if (response.status() >= 400 && ['script', 'document', 'xhr', 'fetch'].includes(response.request().resourceType())) {
+      console.log(`BROWSER_HTTP_${response.status()}=${response.request().resourceType()} ${response.url()}`)
+    }
+  })
+}
+
+async function waitForReactHydration(page: Page, selector: string) {
+  await page.waitForLoadState('networkidle')
+  await page.waitForFunction((target) => {
+    const element = document.querySelector(target)
+    return Boolean(element && Object.keys(element).some(key => key.startsWith('__reactProps$')))
+  }, selector, { timeout: 30_000 })
+}
+
 async function newAdminPage(browser: Browser, mobile: boolean): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext(contextOptions(mobile))
   const page = await context.newPage()
+  instrumentPage(page)
   page.setDefaultTimeout(20_000)
-  await page.goto('/admin/login')
+  await page.goto('/admin/login', { waitUntil: 'networkidle' })
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Sign in' }).click()
@@ -88,6 +111,7 @@ async function newViewerPage(browser: Browser, mobile: boolean): Promise<{ conte
   const context = await browser.newContext(contextOptions(mobile))
   await context.addCookies([{ name: 'pawpaw_viewer', value: viewerCookie, url: baseURL }])
   const page = await context.newPage()
+  instrumentPage(page)
   page.setDefaultTimeout(20_000)
   return { context, page }
 }
@@ -95,7 +119,7 @@ async function newViewerPage(browser: Browser, mobile: boolean): Promise<{ conte
 async function expectPublished(browser: Browser, mobile: boolean, expectedTitle: string, expectedAlt: string, absentAlt: string) {
   const viewer = await newViewerPage(browser, mobile)
   try {
-    const response = await viewer.page.goto(`/chapters/${slug}`)
+    const response = await viewer.page.goto(`/chapters/${slug}`, { waitUntil: 'networkidle' })
     expect(response?.status()).toBe(200)
     await expect(viewer.page.getByRole('heading', { level: 1, name: expectedTitle })).toBeVisible()
     await expect(viewer.page.getByRole('img', { name: expectedAlt })).toBeVisible()
@@ -111,7 +135,8 @@ test('one shared admin identity completes the real revision and photograph lifec
   await test.step('session 1 signs in and creates the private chapter', async () => {
     const first = await newAdminPage(browser, mobile)
     try {
-      await first.page.goto('/admin/content/new')
+      await first.page.goto('/admin/content/new', { waitUntil: 'networkidle' })
+      await waitForReactHydration(first.page, '#chapter-title')
       await first.page.getByLabel('Chapter type').selectOption('story')
       await first.page.getByLabel('Title').fill(titleOne)
       const address = first.page.getByLabel('Chapter address')
@@ -126,13 +151,14 @@ test('one shared admin identity completes the real revision and photograph lifec
       await expect(first.page).toHaveURL(/\/admin\/content\/[0-9a-f-]+$/, { timeout: 20_000 })
       storyId = new URL(first.page.url()).pathname.split('/').pop()!
 
-      await first.page.goto('/admin/media')
+      await first.page.goto('/admin/media', { waitUntil: 'networkidle' })
       const oldCard = first.page.getByRole('article').filter({ has: first.page.locator(`input[value="${oldAlt}"]`) })
       await oldCard.getByLabel('Attach to content').selectOption(storyId)
       await oldCard.getByRole('button', { name: 'Attach photograph' }).click()
       await expect(first.page.getByRole('status').filter({ hasText: titleOne })).toBeVisible()
 
-      await first.page.goto(`/admin/content/${storyId}`)
+      await first.page.goto(`/admin/content/${storyId}`, { waitUntil: 'networkidle' })
+      await waitForReactHydration(first.page, '#chapter-title')
       await first.page.getByRole('button', { name: 'Set as cover' }).click()
       await expect(first.page.getByRole('status').filter({ hasText: 'cover updated' })).toBeVisible()
       await first.page.getByRole('button', { name: 'Publish', exact: true }).click()
@@ -149,7 +175,8 @@ test('one shared admin identity completes the real revision and photograph lifec
   await test.step('fresh session 2 signs into the same shared account, edits and replaces the photograph', async () => {
     const second = await newAdminPage(browser, mobile)
     try {
-      await second.page.goto(`/admin/content/${storyId}`)
+      await second.page.goto(`/admin/content/${storyId}`, { waitUntil: 'networkidle' })
+      await waitForReactHydration(second.page, '#chapter-title')
       await second.page.getByLabel('Title').fill(titleTwo)
       await second.page.getByRole('button', { name: 'Save private draft' }).click()
       await expect(second.page.getByText('Status: published with newer private draft')).toBeVisible()
@@ -208,7 +235,7 @@ test('one shared admin identity completes the real revision and photograph lifec
   await test.step('fresh viewer loses access after unpublish', async () => {
     const viewer = await newViewerPage(browser, mobile)
     try {
-      const response = await viewer.page.goto(`/chapters/${slug}`)
+      const response = await viewer.page.goto(`/chapters/${slug}`, { waitUntil: 'networkidle' })
       expect(response?.status()).toBe(404)
       await expect(viewer.page.getByText(titleTwo)).toHaveCount(0)
     } finally {
