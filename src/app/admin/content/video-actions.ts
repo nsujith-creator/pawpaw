@@ -67,8 +67,12 @@ export async function listAttachedVideos(formData: FormData) {
   const db = createAdminClient()
   const { data, error } = await db.from('content_videos').select('sort_order, video_assets (id, status, duration_seconds, caption)').eq('content_id', contentId).order('sort_order', { ascending: true })
   if (error) return { error: 'Attached videos could not be loaded.' }
-  const rows = (data ?? []) as unknown as Array<{ video_assets: Array<{ id: string; status: AttachedVideo['status']; duration_seconds: number | null; caption: string | null }> }>
-  const videos = rows.flatMap(row => row.video_assets.map(video => ({ id: video.id, status: video.status, durationSeconds: video.duration_seconds, caption: video.caption })))
+  type VideoRow = { id: string; status: AttachedVideo['status']; duration_seconds: number | null; caption: string | null }
+  const rows = (data ?? []) as unknown as Array<{ video_assets: VideoRow | VideoRow[] | null }>
+  const videos = rows.flatMap(row => {
+    const video = Array.isArray(row.video_assets) ? row.video_assets[0] : row.video_assets
+    return video ? [{ id: video.id, status: video.status, durationSeconds: video.duration_seconds, caption: video.caption }] : []
+  })
   return { videos }
 }
 
