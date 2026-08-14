@@ -23,7 +23,7 @@ export async function getVideoState(cloudflareUid: string) {
 }
 export async function deletePrivateVideo(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${normalizeCloudflareUid(cloudflareUid)}`, { method: 'DELETE', headers: authHeaders(apiToken), cache: 'no-store' })
-  if (!response.ok) throw new Error(`Cloudflare Stream could not remove the video (${response.status})`)
+  if (!response.ok && response.status !== 404) throw new Error(`Cloudflare Stream could not remove the video (${response.status})`)
 }
 export async function createPrivatePlayerUrl(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const uid = normalizeCloudflareUid(cloudflareUid); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}/token`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Content-Type': 'application/json' }, body: JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 300, downloadable: false }), cache: 'no-store' })
