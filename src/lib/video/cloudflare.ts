@@ -10,7 +10,7 @@ export async function createPrivateTusUpload(size: number, fileName: string) {
   const encoded = (value: string) => Buffer.from(value).toString('base64')
   const metadata = [`filename ${encoded(fileName)}`, `maxDurationSeconds ${encoded(String(MAX_DURATION_SECONDS))}`, 'requiresignedurls', `expiry ${encoded(expiry)}`].join(',')
   const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream?direct_user=true`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Tus-Resumable': '1.0.0', 'Upload-Length': String(size), 'Upload-Metadata': metadata } })
-  const uploadUrl = response.headers.get('location'); const cloudflareUid = uploadUrl?.split('/').filter(Boolean).at(-1)
+  const uploadUrl = response.headers.get('location'); const cloudflareUid = uploadUrl ? new URL(uploadUrl).pathname.split('/').filter(Boolean).at(-1) : null
   if (!response.ok || !uploadUrl || !cloudflareUid) throw new Error('Cloudflare Stream did not create an upload')
   return { uploadUrl, cloudflareUid }
 }
@@ -19,6 +19,11 @@ export async function getVideoState(cloudflareUid: string) {
   const body = await response.json() as CloudflareResult<{ readyToStream?: boolean; duration?: number; status?: { state?: string } }>
   if (!response.ok || !body.success || !body.result) throw new Error('Cloudflare Stream could not read the video')
   return { status: body.result.readyToStream ? 'ready' : body.result.status?.state === 'error' ? 'errored' : 'processing', durationSeconds: body.result.duration ?? null }
+}
+export async function deletePrivateVideo(cloudflareUid: string) {
+  const { accountId, apiToken } = config(); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${cloudflareUid}`, { method: 'DELETE', headers: authHeaders(apiToken), cache: 'no-store' })
+  const body = await response.json() as CloudflareResult<unknown>
+  if (!response.ok || !body.success) throw new Error('Cloudflare Stream could not remove the video')
 }
 export async function createPrivatePlayerUrl(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${cloudflareUid}/token`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Content-Type': 'application/json' }, body: JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 300, downloadable: false }), cache: 'no-store' })
