@@ -413,6 +413,13 @@ describe('PR-004B family and preview truthfulness', () => {
     expect(chapterEditor).toContain('Letter publication remains disabled')
   })
 
+  it('explains each memory format and the simple writing-to-photographs sequence', () => {
+    expect(chapterEditor).toContain('TYPE_GUIDANCE')
+    expect(chapterEditor).toContain('Write the memory')
+    expect(chapterEditor).toContain('Add a paragraph for the story')
+    expect(chapterEditor).toContain('Save this first private draft to unlock photograph upload')
+  })
+
   it('keeps a truthful Chapters empty state in the real index branch', () => {
     expect(chaptersIndex).toContain('result.items.length === 0')
     expect(chaptersIndex).toContain('No other chapters are published yet.')

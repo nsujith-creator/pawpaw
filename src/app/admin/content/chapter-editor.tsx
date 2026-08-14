@@ -29,6 +29,13 @@ const TYPE_LABELS: Record<ManagedContentType, string> = {
   moment: 'Moment',
 }
 
+const TYPE_GUIDANCE: Record<ManagedContentType, string> = {
+  story: 'Use a Story for a written memory. Add photographs after you save the first draft.',
+  gallery: 'Use a Gallery for a photo-led memory. Add a short introduction now, then add photographs after you save the first draft.',
+  letter: 'Letters can be kept as drafts, but publication is not available yet.',
+  moment: 'Use a Moment for a dated milestone. An event date is required before it can be published.',
+}
+
 export default function ChapterEditor({ existing, replacementCandidates = [] }: Props) {
   const router = useRouter()
   const [type, setType] = useState<ManagedContentType>(existing?.type ?? 'story')
@@ -175,6 +182,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
             {CREATABLE_CONTENT_TYPES.map(value => <option key={value} value={value}>{TYPE_LABELS[value]}</option>)}
           </select>
         )}
+        <p className={styles.help}>{TYPE_GUIDANCE[type]}</p>
         {fieldErrors.type && <p role="alert" className={styles.fieldError}>{fieldErrors.type}</p>}
       </div>
 
@@ -259,7 +267,11 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         <p className={styles.help}>These are family facts. Leave them blank when unknown; administrator identity is never used as the family author.</p>
       </section>
 
-      <BlockEditor blocks={blocks} onChange={setBlocks} error={fieldErrors.bodyBlocks} />
+      <section className={styles.fieldGroup} aria-labelledby="write-memory-heading">
+        <h2 id="write-memory-heading" className={styles.subsectionTitle}>Write the memory</h2>
+        <p className={styles.help}>Add a paragraph for the story, a heading to begin a new part, or a quote for someone’s exact words. You can keep it simple and add more later.</p>
+        <BlockEditor blocks={blocks} onChange={setBlocks} error={fieldErrors.bodyBlocks} />
+      </section>
 
       <div className={styles.editorActionBar}>
         <button type="button" disabled={busy} onClick={() => submit('save')} className={styles.secondaryAction}>
@@ -280,7 +292,9 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
       <p className={styles.help}>
         {existing?.type === 'letter'
           ? 'Letter publication remains disabled until its required family fields are implemented.'
-          : 'Saving changes only the private draft. Publishing creates a new immutable family revision; unpublishing hides it without deleting history.'}
+          : existing
+            ? 'Saving changes only the private draft. Add photographs below whenever you are ready; publishing creates a new immutable family revision.'
+            : 'Save this first private draft to unlock photograph upload, preview, and publication.'}
       </p>
 
       {busy && <p role="status" className={styles.informationNotice}>Saving your changes…</p>}

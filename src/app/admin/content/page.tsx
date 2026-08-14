@@ -126,10 +126,10 @@ export default async function ContentLibraryPage({
           <h1 className={styles.pageTitle}>Content library</h1>
           <p className={styles.lede}>Find every saved page and see what is still a draft or already published.</p>
         </div>
-        <Link href="/admin/content/new" className={styles.action}>Create chapter</Link>
+        <Link href="/admin/content/new" className={styles.action}>Create a memory</Link>
       </header>
       <p className={styles.informationNotice}>
-        Home remains a protected singleton in its own editor. Story, Gallery, Letter, and Moment records use the shared private chapter editor.
+        Start with a Story for writing, a Gallery for a photo-led memory, or a Moment for a dated milestone. Save a private draft first; then add photographs, preview, and publish when it is ready. Letters are not ready to publish yet.
       </p>
 
       <form method="GET" className={`${styles.filterBar} ${styles.filterBarCompact}`}>

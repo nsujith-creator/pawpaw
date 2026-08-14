@@ -35,9 +35,10 @@ describe('content library page', () => {
   })
 
   it('offers the authorised shared chapter creator without changing the Home route', () => {
-    expect(contentLibrary).toContain('Create chapter')
+    expect(contentLibrary).toContain('Create a memory')
     expect(contentLibrary).toContain('href="/admin/content/new"')
-    expect(contentLibrary).toContain('Home remains a protected singleton')
+    expect(contentLibrary).toContain('Start with a Story for writing')
+    expect(contentLibrary).toContain('Letters are not ready to publish yet.')
   })
 
   it('keeps query errors distinct from a genuine empty library', () => {
@@ -57,7 +58,7 @@ describe('content library page', () => {
   })
 
   it('states the exact four non-Home types handled by the shared editor', () => {
-    expect(contentLibrary).toContain('Story, Gallery, Letter, and Moment')
+    expect(contentLibrary).toContain('Gallery for a photo-led memory')
   })
 
   it('does not have a redundant Home editor link in the page header', () => {
