@@ -415,7 +415,8 @@ describe('PR-004B family and preview truthfulness', () => {
 
   it('keeps a truthful Chapters empty state in the real index branch', () => {
     expect(chaptersIndex).toContain('result.items.length === 0')
-    expect(chaptersIndex).toContain('No chapters are published yet.')
+    expect(chaptersIndex).toContain('No other chapters are published yet.')
+    expect(chaptersIndex).toContain('<Link href="/first-days">Read First Days.</Link>')
   })
 
   it('renders optional First Days copy only inside its approved reading surface', () => {

@@ -40,7 +40,9 @@ export default async function ChaptersPage() {
       </header>
 
       {result.items.length === 0 ? (
-        <p className={styles.empty}>No chapters are published yet.</p>
+        <p className={styles.empty}>
+          No other chapters are published yet. <Link href="/first-days">Read First Days.</Link>
+        </p>
       ) : (
         <div className={styles.grid}>
           {result.items.map(item => {
