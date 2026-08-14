@@ -15,6 +15,7 @@ describe('private family video', () => {
     expect(stream).toContain('direct_user=true')
     expect(stream).toContain("'Tus-Resumable': '1.0.0'")
     expect(stream).toContain('new URL(uploadUrl).pathname')
+    expect(stream).toContain("cloudflareUid.split('?')[0]")
     expect(actions).not.toContain('CLOUDFLARE_STREAM_API_TOKEN')
   })
 
