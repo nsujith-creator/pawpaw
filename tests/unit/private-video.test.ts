@@ -21,6 +21,7 @@ describe('private family video', () => {
 
   it('lets an administrator refresh processing and remove an unpublished private video', () => {
     expect(actions).toContain('deleteAttachedVideo')
+    expect(stream).toContain("if (!response.ok) throw new Error('Cloudflare Stream could not remove the video')")
     expect(actions).toContain('Array.isArray(row.video_assets)')
     expect(actions).toContain('content_revision_videos')
     expect(uploader).toContain('Check status')
