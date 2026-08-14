@@ -91,8 +91,8 @@ export async function deleteAttachedVideo(formData: FormData) {
   if (!attached) return { error: 'That video is not attached to this memory.' }
   try {
     await deletePrivateVideo(video.cloudflare_uid)
-  } catch {
-    return { error: 'Cloudflare could not remove the private video. Nothing was changed.' }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Cloudflare could not remove the private video. Nothing was changed.' }
   }
   const { error: detachError } = await db.from('content_videos').delete().eq('content_id', contentId).eq('video_id', videoId)
   if (detachError) return { error: 'The video was removed from Cloudflare but could not be detached. Please contact support.' }
