@@ -15,6 +15,7 @@ import {
 import { deleteChapter, saveChapter, unpublishChapter, type ContentActionResult } from './actions'
 import AttachmentList, { type AttachmentItem, type ReplacementCandidate } from '../media/attachment-list'
 import UploadForm from '../media/upload-form'
+import VideoUploadForm from './video-upload-form'
 import styles from '../admin.module.css'
 
 interface Props {
@@ -319,6 +320,10 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
           <section className={styles.editorSection} aria-labelledby="upload-photo-title">
             <h2 id="upload-photo-title" className={styles.sectionTitle}>Upload a photograph</h2>
             <UploadForm contentItemId={existing.id} targetLabel={existing.title} />
+          </section>
+          <section className={styles.editorSection} aria-labelledby="upload-video-title">
+            <h2 id="upload-video-title" className={styles.sectionTitle}>Upload a video</h2>
+            <VideoUploadForm contentId={existing.id} />
           </section>
 
           {!firstDays && existing.revisionNumber === null && (

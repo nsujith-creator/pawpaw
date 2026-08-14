@@ -1,10 +1,12 @@
 import type { ChapterContent, ChapterMedia } from '@/lib/content/chapters'
+import type { PublishedVideo } from '@/lib/video/published-videos'
 import styles from './chapter-renderer.module.css'
 
 interface Props {
   content: ChapterContent
   mediaState: 'complete' | 'degraded'
   preview?: boolean
+  videos?: PublishedVideo[]
 }
 
 function Photo({ item }: { item: ChapterMedia }) {
@@ -43,7 +45,7 @@ function formatFamilyDate(value: string, precision: 'day' | 'month' | 'year', ap
   return `${approximate ? 'Around ' : ''}${new Intl.DateTimeFormat('en-IN', options).format(date)}`
 }
 
-export default function ChapterRenderer({ content, mediaState, preview = false }: Props) {
+export default function ChapterRenderer({ content, mediaState, preview = false, videos = [] }: Props) {
   const mediaById = new Map(content.media.map(item => [item.id, item]))
   const placed = new Set<string>()
 
@@ -96,6 +98,12 @@ export default function ChapterRenderer({ content, mediaState, preview = false }
           ))}
         </div>
       )}
+      {videos.length > 0 && <section className={styles.videoGallery} aria-label="Chapter videos">
+        {videos.map(video => <figure key={video.id} className={styles.videoFigure}>
+          {video.playerUrl ? <iframe src={video.playerUrl} title={video.caption || 'Family video'} className={styles.video} allow="accelerometer; gyroscope; encrypted-media; picture-in-picture;" allowFullScreen /> : <div className={styles.unavailable}>Video temporarily unavailable</div>}
+          {video.caption && <figcaption>{video.caption}</figcaption>}
+        </figure>)}
+      </section>}
     </article>
   )
 }
