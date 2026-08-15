@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -12,6 +13,7 @@ function isAppleMobile() {
 }
 
 export default function PwaControls() {
+  const pathname = usePathname()
   const [online, setOnline] = useState(true)
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
   const [updateWorker, setUpdateWorker] = useState<ServiceWorker | null>(null)
@@ -73,6 +75,8 @@ export default function PwaControls() {
   function applyUpdate() {
     updateWorker?.postMessage({ type: 'SKIP_WAITING' })
   }
+
+  if (pathname.startsWith('/admin')) return null
 
   return (
     <aside className="pwaStatus" aria-live="polite">

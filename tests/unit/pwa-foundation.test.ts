@@ -132,6 +132,8 @@ describe('web-app manifest foundation', () => {
 
     expect(dependencyNames.some(name => /workbox|pwa/i.test(name))).toBe(false)
     expect(layout).toContain('<PwaControls />')
+    expect(controls).toContain("import { usePathname } from 'next/navigation'")
+    expect(controls).toContain("pathname.startsWith('/admin')")
     expect(controls).toContain("navigator.serviceWorker.register('/service-worker.js')")
     expect(controls).toContain('beforeinstallprompt')
     expect(controls).toContain('navigator.onLine')
