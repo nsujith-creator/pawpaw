@@ -29,11 +29,12 @@ export async function createPrivatePlayerUrl(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const uid = normalizeCloudflareUid(cloudflareUid); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}/token`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Content-Type': 'application/json' }, body: JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 300, downloadable: false }), cache: 'no-store' })
   const body = await response.json() as CloudflareResult<{ token?: string }>
   if (!response.ok || !body.success || !body.result?.token) throw new Error('Cloudflare Stream could not create private playback')
-  const embedResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}/embed`, { headers: authHeaders(apiToken), cache: 'no-store' })
-  const embed = await embedResponse.json() as CloudflareResult<string>
-  const origin = typeof embed.result === 'string' && embed.result.match(/https:\/\/customer-[^/]+\.cloudflarestream\.com/)
-  if (!embedResponse.ok || !embed.success || !origin) throw new Error('Cloudflare Stream could not prepare private playback')
-  return `${origin[0]}/${body.result.token}/iframe`
+  const videoResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}`, { headers: authHeaders(apiToken), cache: 'no-store' })
+  const video = await videoResponse.json() as CloudflareResult<{ thumbnail?: string }>
+  const thumbnail = video.result?.thumbnail
+  const origin = thumbnail ? new URL(thumbnail).origin : null
+  if (!videoResponse.ok || !video.success || !origin?.endsWith('.cloudflarestream.com')) throw new Error('Cloudflare Stream could not prepare private playback')
+  return `${origin}/${body.result.token}/iframe`
 }
 export const VIDEO_ACCEPT = 'video/mp4,video/quicktime,video/webm'
 export const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024

@@ -32,6 +32,8 @@ describe('private family video', () => {
     expect(stream).toContain("'requiresignedurls'")
     expect(stream).toContain('downloadable: false')
     expect(stream).toContain('+ 300')
+    expect(stream).toContain('thumbnail')
+    expect(stream).not.toContain('/embed')
   })
 
   it('snapshots videos on publication and forbids later revision edits', () => {
