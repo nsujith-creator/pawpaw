@@ -67,6 +67,7 @@ export default async function ChaptersPage() {
                     {item.summary && <p className={styles.summary}>{item.summary}</p>}
                     {item.eventDate && item.eventDatePrecision && <p className={styles.date}>{formatEventDate(item.eventDate, item.eventDatePrecision, item.eventDateIsApproximate)}</p>}
                     {item.authorDisplayName && <p className={styles.date}>By {item.authorDisplayName}</p>}
+                    {item.recipientDisplayName && <p className={styles.date}>For {item.recipientDisplayName}</p>}
                     <span className={styles.read}>Read chapter →</span>
                   </div>
                 </Link>

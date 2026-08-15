@@ -264,7 +264,7 @@ export async function loadPublishedChapterContent(source: PublishedChapterDataSo
   if (result.error) return { state: 'error', reason: 'content-query' }
   if (!result.data) return { state: 'empty' }
   const row = result.data
-  if (!MANAGED_CONTENT_TYPES.includes(row.type as ManagedContentType) || row.type === 'letter' || row.type === 'home') {
+  if (!MANAGED_CONTENT_TYPES.includes(row.type as ManagedContentType) || row.type === 'home') {
     return { state: 'empty' }
   }
   const parsed = bodyBlocksSchema.safeParse(row.body_blocks)
@@ -364,7 +364,7 @@ export async function listPublishedChapters(): Promise<ChapterIndexResult> {
   return loadAuthorizedFamilyData(async () => {
     const db = createAdminClient()
     const itemsResult = await db.from('content_items').select('id, active_published_revision_id')
-      .not('active_published_revision_id', 'is', null).neq('type', 'home').neq('type', 'letter').neq('slug', 'first-days')
+      .not('active_published_revision_id', 'is', null).neq('type', 'home').neq('slug', 'first-days')
     if (itemsResult.error) return { state: 'error' }
     const pointers = new Map((itemsResult.data ?? []).map(item => [item.active_published_revision_id as string, item.id]))
     if (pointers.size === 0) return { state: 'ready', items: [] }

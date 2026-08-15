@@ -3,7 +3,7 @@ import { bodyBlocksSchema, type ContentBlock } from './schema'
 
 export const MANAGED_CONTENT_TYPES = ['story', 'gallery', 'letter', 'moment'] as const
 export type ManagedContentType = typeof MANAGED_CONTENT_TYPES[number]
-export const CREATABLE_CONTENT_TYPES = ['story', 'gallery', 'moment'] as const
+export const CREATABLE_CONTENT_TYPES = ['story', 'gallery', 'letter', 'moment'] as const
 export const DATE_PRECISIONS = ['day', 'month', 'year'] as const
 export type DatePrecision = typeof DATE_PRECISIONS[number]
 export type PublicationState = 'unpublished' | 'published' | 'published-draft'
@@ -99,7 +99,7 @@ export function isValidId(value: string): boolean {
 }
 
 export function canPublishContentType(type: string): boolean {
-  return type !== 'letter' && CREATABLE_CONTENT_TYPES.includes(type as typeof CREATABLE_CONTENT_TYPES[number])
+  return CREATABLE_CONTENT_TYPES.includes(type as typeof CREATABLE_CONTENT_TYPES[number])
 }
 
 export function normalizeSlug(value: string): string {
@@ -141,8 +141,7 @@ function normalizeDateForPrecision(value: string | null, datePrecision: DatePrec
 export function validateContentInput(input: ContentInput, existing: ExistingContent | null = null): ContentValidationResult {
   const fieldErrors: FieldErrors = {}
   const type = MANAGED_CONTENT_TYPES.includes(input.type as ManagedContentType) ? input.type as ManagedContentType : null
-  if (!type) fieldErrors.type = 'Choose Story, Gallery, or Moment.'
-  else if (type === 'letter' && existing?.type !== 'letter') fieldErrors.type = 'Letters are not available yet.'
+  if (!type) fieldErrors.type = 'Choose Story, Gallery, Letter, or Moment.'
 
   const title = input.title.trim()
   if (!title) fieldErrors.title = 'Enter a title.'
@@ -203,8 +202,16 @@ export function planContentWrite({ input, existing, intent, attachmentCount }: {
   if (!existing && intent !== 'save') return { error: 'Save the draft before publishing it.', fieldErrors: { form: 'Save the draft first.' } }
   if (existing?.type === 'home') return { error: 'Home is managed only through the Home editor.', fieldErrors: { form: 'Open the Home editor.' } }
   if (existing && input.type !== existing.type) return { error: 'The chapter type cannot be changed after creation.', fieldErrors: { type: 'The saved chapter type is locked.' } }
-  if (intent === 'publish' && !canPublishContentType(input.type)) {
-    return { error: 'Letters cannot be published yet.', fieldErrors: { form: 'Letter publication stays disabled.' } }
+  if (intent === 'publish' && !canPublishContentType(input.type)) return { error: 'This chapter type cannot be published.', fieldErrors: { form: 'Choose a supported chapter type.' } }
+  if (intent === 'publish' && input.type === 'letter' && (!input.authorDisplayName || !input.recipientDisplayName || !input.authoredDate || !input.authoredDatePrecision)) {
+    return {
+      error: 'A Letter needs an author, recipient, and authored date before publication.',
+      fieldErrors: {
+        ...(input.authorDisplayName ? {} : { authorDisplayName: 'Enter the family-facing author of this Letter.' }),
+        ...(input.recipientDisplayName ? {} : { recipientDisplayName: 'Enter who this Letter is for.' }),
+        ...(!input.authoredDate || !input.authoredDatePrecision ? { authoredDate: 'Enter the authored date and its known precision.' } : {}),
+      },
+    }
   }
   if (intent === 'publish' && input.type === 'moment' && (!input.eventDate || !input.eventDatePrecision)) {
     return { error: 'A Moment needs its event date before publication.', fieldErrors: { eventDate: 'Enter the Moment date and precision.' } }

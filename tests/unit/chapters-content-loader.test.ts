@@ -94,12 +94,13 @@ describe('immutable family revision loader', () => {
     expect(result).toHaveProperty('mediaState', 'degraded')
   })
 
-  it('rejects Letter and invalid snapshot blocks before media reads', async () => {
+  it('loads a published Letter and rejects invalid snapshot blocks before media reads', async () => {
     const listRevisionMedia = vi.fn(publishedSource().listRevisionMedia)
-    expect(await loadPublishedChapterContent(publishedSource({
+    const letter = await loadPublishedChapterContent(publishedSource({
       findRevision: async () => ({ data: { ...revision, type: 'letter' }, error: null }), listRevisionMedia,
-    }))).toEqual({ state: 'empty' })
-    expect(listRevisionMedia).not.toHaveBeenCalled()
+    }))
+    expect(letter).toHaveProperty('content.type', 'letter')
+    expect(listRevisionMedia).toHaveBeenCalledOnce()
     expect(await loadPublishedChapterContent(publishedSource({
       findRevision: async () => ({ data: { ...revision, body_blocks: [{ type: 'script' }] }, error: null }),
     }))).toEqual({ state: 'error', reason: 'invalid-content' })

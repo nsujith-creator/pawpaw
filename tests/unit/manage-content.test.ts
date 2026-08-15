@@ -32,13 +32,17 @@ describe('chapter slug contract', () => {
 })
 
 describe('draft and publication validation', () => {
-  it('keeps Letter creation and publication disabled', () => {
-    expect(CREATABLE_CONTENT_TYPES).toEqual(['story', 'gallery', 'moment'])
-    expect(validateContentInput({ ...input(), type: 'letter' }, null)).toHaveProperty('fieldErrors.type')
+  it('allows Letter drafts and requires their family-facing fields at publication', () => {
+    expect(CREATABLE_CONTENT_TYPES).toEqual(['story', 'gallery', 'letter', 'moment'])
+    expect(validateContentInput({ ...input(), type: 'letter' }, null)).toHaveProperty('ok', true)
     const letter = { ...existing, type: 'letter' }
-    expect(canPublishContentType('letter')).toBe(false)
+    expect(canPublishContentType('letter')).toBe(true)
     expect(planContentWrite({ input: { ...input(), type: 'letter' }, existing: letter, intent: 'publish', attachmentCount: 1 }))
-      .toHaveProperty('error', 'Letters cannot be published yet.')
+      .toHaveProperty('fieldErrors.recipientDisplayName')
+    expect(planContentWrite({
+      input: input({ type: 'letter', authorDisplayName: 'Paru', recipientDisplayName: 'Varada', authoredDate: '2026-08-15', authoredDatePrecision: 'day' }),
+      existing: letter, intent: 'publish', attachmentCount: 1,
+    })).toHaveProperty('ok', true)
   })
 
   it('keeps optional unknown chronology and authorship null on draft save', () => {

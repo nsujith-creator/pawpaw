@@ -406,11 +406,11 @@ describe('viewer logout control', () => {
 })
 
 describe('PR-004B family and preview truthfulness', () => {
-  it('keeps Letter out of creation choices and gates its publish control', () => {
+  it('includes Letter in creation choices and explains its publication fields', () => {
     expect(chapterEditor).toContain('CREATABLE_CONTENT_TYPES.map')
     expect(chapterEditor).toContain('canPublishContentType(existing.type)')
     expect(chapterEditor).toContain('{canPublish && (')
-    expect(chapterEditor).toContain('Letter publication remains disabled')
+    expect(chapterEditor).toContain('author, recipient, and authored date are required before publication')
   })
 
   it('explains each memory format and the simple writing-to-photographs sequence', () => {

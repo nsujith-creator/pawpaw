@@ -33,7 +33,7 @@ const TYPE_LABELS: Record<ManagedContentType, string> = {
 const TYPE_GUIDANCE: Record<ManagedContentType, string> = {
   story: 'Use a Story for a written memory. Add photographs after you save the first draft.',
   gallery: 'Use a Gallery for a photo-led memory. Add a short introduction now, then add photographs after you save the first draft.',
-  letter: 'Letters can be kept as drafts, but publication is not available yet.',
+  letter: 'Use a Letter for words to a specific person. An author, recipient, and authored date are required before publication.',
   moment: 'Use a Moment for a dated milestone. An event date is required before it can be published.',
 }
 
@@ -246,7 +246,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         </>}
         {fieldErrors.eventDate && <p role="alert" className={styles.fieldError}>{fieldErrors.eventDate}</p>}
 
-        <label htmlFor="chapter-authored-date" className={styles.fieldLabel}>Authored date (optional)</label>
+        <label htmlFor="chapter-authored-date" className={styles.fieldLabel}>Authored date {type === 'letter' ? '(required to publish a Letter)' : '(optional)'}</label>
         <input id="chapter-authored-date" type="date" value={authoredDate} onChange={event => setAuthoredDate(event.target.value)} className={styles.field} aria-invalid={Boolean(fieldErrors.authoredDate)} />
         {authoredDate && <>
           <label htmlFor="chapter-authored-precision" className={styles.fieldLabel}>Authored date precision</label>
@@ -257,9 +257,9 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         </>}
         {fieldErrors.authoredDate && <p role="alert" className={styles.fieldError}>{fieldErrors.authoredDate}</p>}
 
-        <label htmlFor="chapter-author" className={styles.fieldLabel}>Family-facing author (optional)</label>
+        <label htmlFor="chapter-author" className={styles.fieldLabel}>Family-facing author {type === 'letter' ? '(required to publish a Letter)' : '(optional)'}</label>
         <input id="chapter-author" value={authorDisplayName} onChange={event => setAuthorDisplayName(event.target.value)} className={styles.field} aria-invalid={Boolean(fieldErrors.authorDisplayName)} />
-        <label htmlFor="chapter-recipient" className={styles.fieldLabel}>Recipient (optional; Letters remain disabled)</label>
+        <label htmlFor="chapter-recipient" className={styles.fieldLabel}>Recipient {type === 'letter' ? '(required to publish a Letter)' : '(optional)'}</label>
         <input id="chapter-recipient" value={recipientDisplayName} onChange={event => setRecipientDisplayName(event.target.value)} className={styles.field} aria-invalid={Boolean(fieldErrors.recipientDisplayName)} />
         <label htmlFor="chapter-place" className={styles.fieldLabel}>Place (optional)</label>
         <input id="chapter-place" value={placeText} onChange={event => setPlaceText(event.target.value)} className={styles.field} aria-invalid={Boolean(fieldErrors.placeText)} />
@@ -292,7 +292,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
       </div>
       <p className={styles.help}>
         {existing?.type === 'letter'
-          ? 'Letter publication remains disabled until its required family fields are implemented.'
+          ? 'Saving changes only the private draft. A Letter needs its author, recipient, and authored date before publishing creates an immutable family revision.'
           : existing
             ? 'Saving changes only the private draft. Add photographs below whenever you are ready; publishing creates a new immutable family revision.'
             : 'Save this first private draft to unlock photograph upload, preview, and publication.'}
