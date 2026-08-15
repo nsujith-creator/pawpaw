@@ -92,10 +92,12 @@ describe('Pawpaw icon source and generated assets', () => {
 })
 
 describe('web-app manifest foundation', () => {
-  it('makes only the generated manifest path public at the archive gate', () => {
+  it('makes only the generated manifest and neutral PWA shell paths public at the archive gate', () => {
     const proxy = read('src/proxy.ts').toString('utf8')
 
     expect(proxy).toContain("pathname === '/manifest.webmanifest'")
+    expect(proxy).toContain("pathname === '/service-worker.js'")
+    expect(proxy).toContain("pathname === '/offline.html'")
     expect(proxy).not.toMatch(/startsWith\(['"]\/manifest/)
   })
 
@@ -117,19 +119,27 @@ describe('web-app manifest foundation', () => {
     })
   })
 
-  it('adds no PWA dependency or service-worker registration', () => {
+  it('uses a native service worker that caches only the harmless app shell', () => {
     const packageJson = JSON.parse(read('package.json').toString('utf8')) as {
       dependencies: Record<string, string>
       devDependencies: Record<string, string>
     }
     const dependencyNames = Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies })
-    const applicationSource = [
-      read('src/app/layout.tsx').toString('utf8'),
-      read('src/app/manifest.ts').toString('utf8'),
-      read('src/proxy.ts').toString('utf8'),
-    ].join('\n')
+    const layout = read('src/app/layout.tsx').toString('utf8')
+    const controls = read('src/components/pwa/pwa-controls.tsx').toString('utf8')
+    const worker = read('public/service-worker.js').toString('utf8')
+    const offline = read('public/offline.html').toString('utf8')
 
     expect(dependencyNames.some(name => /workbox|pwa/i.test(name))).toBe(false)
-    expect(applicationSource).not.toMatch(/serviceWorker|navigator\.serviceWorker|workbox/i)
+    expect(layout).toContain('<PwaControls />')
+    expect(controls).toContain("navigator.serviceWorker.register('/service-worker.js')")
+    expect(controls).toContain('beforeinstallprompt')
+    expect(controls).toContain('navigator.onLine')
+    expect(worker).toContain("const PRELOAD = ['/offline.html'")
+    expect(worker).toContain("url.pathname.startsWith('/icons/')")
+    expect(worker).toContain("url.pathname.startsWith('/_next/static/')")
+    expect(worker).toContain("request.mode === 'navigate'")
+    expect(worker).not.toMatch(/supabase|cookie|token|video|media|\/admin/i)
+    expect(offline).toContain('Nothing has been saved while you were offline.')
   })
 })

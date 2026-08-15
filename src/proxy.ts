@@ -23,7 +23,7 @@ function withPrivateHeaders(res: NextResponse): NextResponse {
 }
 
 export function isArchiveRoute(pathname: string): boolean {
-  if (pathname === '/manifest.webmanifest' || pathname === '/robots.txt') return false
+  if (pathname === '/manifest.webmanifest' || pathname === '/robots.txt' || pathname === '/service-worker.js' || pathname === '/offline.html') return false
 
   // Everything that is not a public route, static asset, or API path.
   const publicPrefixes = [
