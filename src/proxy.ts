@@ -4,6 +4,7 @@
 // Injects X-Robots-Tag: noindex, nofollow, noarchive on every permitted protected response.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { verifyViewerCookie, VIEWER_COOKIE_NAME } from '@/lib/auth/viewer-cookie'
 import { readViewerAuthConfig } from '@/lib/env'
 
@@ -47,6 +48,33 @@ export function hasAdminSessionCandidate(req: NextRequest): boolean {
   )
 }
 
+async function refreshAdminSession(req: NextRequest): Promise<NextResponse> {
+  let response = NextResponse.next({ request: req })
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return response
+
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll()
+      },
+      setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
+        response = NextResponse.next({ request: req })
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+      },
+    },
+  })
+
+  try {
+    await supabase.auth.getClaims()
+  } catch {
+    // The page authorization gate handles invalid or unavailable sessions.
+  }
+  return response
+}
+
 function familyLoginRedirect(req: NextRequest, clearViewerCookie = false): NextResponse {
   const response = withPrivateHeaders(
     NextResponse.redirect(new URL('/family-login', req.url)),
@@ -64,14 +92,14 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
 
     if (!cookieValue) {
       return hasAdminCandidate
-        ? withPrivateHeaders(NextResponse.next())
+        ? withPrivateHeaders(await refreshAdminSession(req))
         : familyLoginRedirect(req)
     }
 
     const authConfig = readViewerAuthConfig()
     if (!authConfig.valid) {
       if (hasAdminCandidate) {
-        const response = withPrivateHeaders(NextResponse.next())
+        const response = withPrivateHeaders(await refreshAdminSession(req))
         response.cookies.delete(VIEWER_COOKIE_NAME)
         return response
       }
@@ -86,14 +114,14 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
 
     if (!valid) {
       if (hasAdminCandidate) {
-        const response = withPrivateHeaders(NextResponse.next())
+        const response = withPrivateHeaders(await refreshAdminSession(req))
         response.cookies.delete(VIEWER_COOKIE_NAME)
         return response
       }
       return familyLoginRedirect(req, true)
     }
 
-    return withPrivateHeaders(NextResponse.next())
+    return withPrivateHeaders(hasAdminSessionCandidate(req) ? await refreshAdminSession(req) : NextResponse.next())
   }
 
   if (isProtectedAdminRoute(pathname)) {
@@ -103,7 +131,7 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
     if (!hasSession) {
       return withPrivateHeaders(NextResponse.redirect(new URL('/admin/login', req.url)))
     }
-    return withPrivateHeaders(NextResponse.next())
+    return withPrivateHeaders(await refreshAdminSession(req))
   }
 
   return NextResponse.next()

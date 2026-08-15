@@ -1,4 +1,5 @@
 import { runInNewContext } from 'node:vm'
+import { readFileSync } from 'node:fs'
 import { NextRequest } from 'next/server'
 import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server'
 import { describe, expect, it, vi } from 'vitest'
@@ -13,6 +14,8 @@ import { HISTORY_GUARD } from '@/components/auth/private-history-guard'
 
 const SECRET = 'test-viewer-cookie-secret-32-chars!!'
 const VERSION = 1
+const serverClientSource = readFileSync(new URL('../../src/lib/supabase/server.ts', import.meta.url), 'utf8')
+const proxySource = readFileSync(new URL('../../src/proxy.ts', import.meta.url), 'utf8')
 
 function accessChecks(overrides: Partial<FamilyAccessChecks> = {}): FamilyAccessChecks {
   return {
@@ -52,6 +55,13 @@ function runHistoryGuard(pathname: string, navigationType: 'navigate' | 'back_fo
 }
 
 describe('Next proxy route coverage', () => {
+  it('refreshes Supabase sessions in the proxy and never crashes a Server Component on a cookie write', () => {
+    expect(proxySource).toContain('async function refreshAdminSession')
+    expect(proxySource).toContain('await supabase.auth.getClaims()')
+    expect(serverClientSource).toContain('try {')
+    expect(serverClientSource).toContain('Server Components can read cookies but cannot write them.')
+  })
+
   it.each([
     '/chapters',
     '/chapters/',
