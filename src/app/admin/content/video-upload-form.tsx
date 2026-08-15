@@ -8,6 +8,7 @@ import styles from '../admin.module.css'
 
 export default function VideoUploadForm({ contentId }: { contentId: string }) {
   const [message, setMessage] = useState('')
+  const [messageIsError, setMessageIsError] = useState(false)
   const [busy, setBusy] = useState(false)
   const [videos, setVideos] = useState<AttachedVideo[]>([])
 
@@ -16,7 +17,10 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
     form.set('content_id', contentId)
     const result = await listAttachedVideos(form)
     if ('videos' in result && result.videos) setVideos(result.videos)
-    else setMessage(result.error ?? 'Attached videos could not be loaded.')
+    else {
+      setMessageIsError(true)
+      setMessage(result.error ?? 'Attached videos could not be loaded.')
+    }
   }, [contentId])
 
   useEffect(() => {
@@ -31,7 +35,13 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
     form.set('video_id', videoId)
     const result = await refreshVideoStatus(form)
     setBusy(false)
-    setMessage('error' in result ? result.error ?? 'The video is still being prepared.' : result.status === 'ready' ? 'Video is ready to publish.' : 'The video is still being prepared.')
+    if ('error' in result || result.status === 'errored') {
+      setMessageIsError(true)
+      setMessage('error' in result ? result.error ?? 'Video processing failed. Check the status again or remove the private video.' : 'Video processing failed. Check the status again or remove the private video.')
+    } else {
+      setMessageIsError(false)
+      setMessage(result.status === 'ready' ? 'Video is ready to publish.' : 'The video is still being prepared.')
+    }
     await loadVideos()
   }
 
@@ -43,6 +53,7 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
     form.set('video_id', videoId)
     const result = await deleteAttachedVideo(form)
     setBusy(false)
+    setMessageIsError('error' in result)
     setMessage('error' in result ? result.error ?? 'The private video could not be removed.' : 'Private video removed.')
     await loadVideos()
   }
@@ -50,6 +61,7 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
+    setMessageIsError(false)
     const form = event.currentTarget
     const formData = new FormData(form)
     const file = formData.get('file') as File | null
@@ -65,6 +77,7 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
     const result = await startVideoUpload(start)
     if (!('ok' in result)) {
       setBusy(false)
+      setMessageIsError(true)
       setMessage(result.error ?? 'The private upload could not be prepared.')
       return
     }
@@ -73,7 +86,7 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
       retryDelays: [0, 1000, 3000, 5000],
       removeFingerprintOnSuccess: true,
       onProgress: (sent, total) => setMessage(`Uploading… ${Math.round(sent / total * 100)}%`),
-      onError: () => { setBusy(false); setMessage('The upload paused or failed. Choose the video again to resume.') },
+      onError: () => { setBusy(false); setMessageIsError(true); setMessage('The upload paused or failed. Choose the video again to resume.') },
       onSuccess: async () => { setBusy(false); await refresh(result.videoId) },
     })
     upload.start()
@@ -81,7 +94,10 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
 
   return <div className={styles.formStack}>
     {videos.map(video => <div key={video.id} className={styles.fieldGroup}>
-      <p className={styles.meta}>Video: {video.status}{video.durationSeconds !== null ? ` · ${Math.round(video.durationSeconds)} sec` : ''}</p>
+      <p role={video.status === 'errored' ? 'alert' : video.status === 'ready' ? 'status' : undefined} className={styles.meta}>
+        {video.status === 'errored' ? 'Private video needs attention: processing failed.' : video.status === 'ready' ? 'Private video is ready to publish.' : `Video: ${video.status}`}
+        {video.durationSeconds !== null ? ` · ${Math.round(video.durationSeconds)} sec` : ''}
+      </p>
       {video.caption && <p className={styles.help}>{video.caption}</p>}
       <div className={styles.editorActionBar}>
         <button type="button" disabled={busy} onClick={() => void refresh(video.id)} className={styles.secondaryAction}>Check status</button>
@@ -96,6 +112,6 @@ export default function VideoUploadForm({ contentId }: { contentId: string }) {
       <p className={styles.help}>Videos stay private, have no autoplay, and can publish only after processing is complete.</p>
       <button type="submit" disabled={busy} className={styles.action}>{busy ? 'Uploading…' : 'Upload video'}</button>
     </form>
-    {message && <p role="status" className={styles.informationNotice}>{message}</p>}
+    {message && <p role={messageIsError ? 'alert' : 'status'} className={messageIsError ? styles.errorNotice : styles.informationNotice}>{message}</p>}
   </div>
 }

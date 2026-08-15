@@ -82,14 +82,16 @@ describe('admin dashboard', () => {
     expect(adminDashboard).toContain('Promise.all')
   })
 
-  it('deduplicates missing-alt media and renders only factual attention states', () => {
-    expect(adminDashboard).toContain('const missingAltMediaIds = new Set<string>()')
-    expect(adminDashboard).toContain('missingAltMediaIds.add(media.id)')
-    expect(adminDashboard).toContain('const missingAltCount = missingAltMediaIds.size')
+  it('shows only actionable, linked attention states', () => {
+    expect(adminDashboard).toContain('const missingAltMediaIdsByContent = new Map<string, Set<string>>()')
+    expect(adminDashboard).toContain('missingAltMediaIdsByContent.set(row.id, mediaIds)')
+    expect(adminDashboard).toContain(".from('content_videos')")
+    expect(adminDashboard).toContain("video?.status === 'errored'")
+    expect(adminDashboard).toContain('private video')
     expect(adminDashboard).toContain('attached photo')
-    expect(adminDashboard).toContain('unpublished draft')
+    expect(adminDashboard).toContain('Link href={item.href}')
+    expect(adminDashboard).not.toContain('{draftCount > 0 && (')
     expect(adminDashboard).toContain('Nothing needs attention.')
-    expect(adminDashboard).not.toContain('ready to review')
   })
 })
 

@@ -25,6 +25,15 @@ interface DashboardAttachmentRow {
   } | null
 }
 
+interface DashboardVideoRow {
+  content_id: string
+  video_assets: {
+    status: 'uploading' | 'processing' | 'ready' | 'errored'
+  } | {
+    status: 'uploading' | 'processing' | 'ready' | 'errored'
+  }[] | null
+}
+
 interface DashboardItem extends ContentViewItem {
   attachedMediaCount: number
   firstMedia: AttachmentCandidate['media']
@@ -47,7 +56,7 @@ export default async function AdminDashboard({
   const filters = parseContentFilters(await searchParams)
   const db = createAdminClient()
 
-  const [contentResult, mediaResult] = await Promise.all([
+  const [contentResult, mediaResult, videosResult] = await Promise.all([
     db
       .from('content_items')
       .select(`
@@ -62,10 +71,13 @@ export default async function AdminDashboard({
     db
       .from('media_assets')
       .select('id', { count: 'exact', head: true }),
+    db
+      .from('content_videos')
+      .select('content_id, video_assets (status)'),
   ])
 
-  if (contentResult.error || mediaResult.error) {
-    console.error('AdminDashboard query failed:', contentResult.error ?? mediaResult.error)
+  if (contentResult.error || mediaResult.error || videosResult.error) {
+    console.error('AdminDashboard query failed:', contentResult.error ?? mediaResult.error ?? videosResult.error)
     return (
       <div className={styles.page}>
         <p className={styles.eyebrow}>Author&apos;s studio</p>
@@ -126,15 +138,43 @@ export default async function AdminDashboard({
 
   const draftCount = allItems.filter(item => item.status === 'unpublished' || item.status === 'published-draft').length
   const publishedCount = allItems.filter(item => item.status === 'published' || item.status === 'published-draft').length
-  const missingAltMediaIds = new Set<string>()
+  const missingAltMediaIdsByContent = new Map<string, Set<string>>()
   for (const row of contentResult.data ?? []) {
     const attachments = ((row.content_media ?? []) as unknown as DashboardAttachmentRow[])
     for (const attachment of attachments) {
       const media = attachment.media_assets
-      if (media && !media.alt_text?.trim()) missingAltMediaIds.add(media.id)
+      if (media && !media.alt_text?.trim()) {
+        const mediaIds = missingAltMediaIdsByContent.get(row.id) ?? new Set<string>()
+        mediaIds.add(media.id)
+        missingAltMediaIdsByContent.set(row.id, mediaIds)
+      }
     }
   }
-  const missingAltCount = missingAltMediaIds.size
+  const erroredVideoCountByContent = new Map<string, number>()
+  for (const row of (videosResult.data ?? []) as unknown as DashboardVideoRow[]) {
+    const video = Array.isArray(row.video_assets) ? row.video_assets[0] : row.video_assets
+    if (video?.status === 'errored') {
+      erroredVideoCountByContent.set(row.content_id, (erroredVideoCountByContent.get(row.content_id) ?? 0) + 1)
+    }
+  }
+  const attentionItems = allItems.flatMap(item => {
+    const href = item.type === 'home' ? '/admin/home' : `/admin/content/${item.id}`
+    const label = item.type === 'home' ? 'Home page' : item.title?.trim() || 'Untitled memory'
+    const missingAltCount = missingAltMediaIdsByContent.get(item.id)?.size ?? 0
+    const erroredVideoCount = erroredVideoCountByContent.get(item.id) ?? 0
+    return [
+      ...(missingAltCount > 0 ? [{
+        id: `alt-${item.id}`,
+        href,
+        label: `${missingAltCount} attached photo${missingAltCount === 1 ? '' : 's'} missing alt text in ${label}`,
+      }] : []),
+      ...(erroredVideoCount > 0 ? [{
+        id: `video-${item.id}`,
+        href,
+        label: `${erroredVideoCount} private video${erroredVideoCount === 1 ? '' : 's'} needs attention in ${label}`,
+      }] : []),
+    ]
+  })
   const hasFilters = Boolean(filters.query || filters.status !== 'all' || filters.type !== 'all')
 
   return (
@@ -174,14 +214,13 @@ export default async function AdminDashboard({
 
         <section className={styles.panel} aria-labelledby="needs-attention-title">
           <h2 id="needs-attention-title" className={styles.sectionTitle}>Needs attention</h2>
-          {missingAltCount > 0 || draftCount > 0 ? (
+          {attentionItems.length > 0 ? (
             <ul className={styles.attentionList}>
-              {missingAltCount > 0 && (
-                <li className={styles.attentionItem}>{missingAltCount} attached photo{missingAltCount === 1 ? '' : 's'} missing alt text</li>
-              )}
-              {draftCount > 0 && (
-                <li className={styles.attentionItem}>{draftCount} unpublished draft{draftCount === 1 ? '' : 's'}</li>
-              )}
+              {attentionItems.map(item => (
+                <li key={item.id} className={styles.attentionItem}>
+                  <Link href={item.href} className={styles.inlineLink}>{item.label}</Link>
+                </li>
+              ))}
             </ul>
           ) : (
             <p className={styles.emptyState}>Nothing needs attention.</p>

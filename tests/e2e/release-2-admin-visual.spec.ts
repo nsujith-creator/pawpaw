@@ -179,8 +179,8 @@ async function expectStudioPrivacy(page: Page) {
 }
 
 async function expectDashboardAttention(page: Page) {
-  await expect(page.getByText('1 attached photo missing alt text', { exact: true })).toHaveCount(1)
-  await expect(page.getByText('1 unpublished draft', { exact: true })).toHaveCount(1)
+  await expect(page.getByRole('link', { name: /^1 attached photo missing alt text in / })).toHaveCount(1)
+  await expect(page.getByText('1 unpublished draft', { exact: true })).toHaveCount(0)
 }
 
 test('Admin login has complete desktop/mobile, focus, error, reduced-motion, and overflow evidence', async ({ page }) => {
