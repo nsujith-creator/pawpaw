@@ -6,54 +6,55 @@ import festiveChild from '@/assets/varada/varada-festive-child-alpha.png'
 import gardener from '@/assets/varada/varada-gardener-alpha.png'
 import reader from '@/assets/varada/varada-reader-alpha.png'
 
-export type VaradaSceneId =
-  | 'artist'
-  | 'base-wave'
-  | 'explorer'
-  | 'festive-child'
-  | 'gardener'
-  | 'reader'
+export const VARADA_SCENE_IDS = [
+  'artist',
+  'base-wave',
+  'explorer',
+  'festive-child',
+  'gardener',
+  'reader',
+] as const
+
+export type VaradaSceneId = typeof VARADA_SCENE_IDS[number]
 
 export type VaradaScene = {
   image: StaticImageData
-  alt: string
+  label: string
 }
 
-// This is deliberately local and explicit until an approved authoring control
-// exists. New pages receive no illustration unless a person adds a page key.
+export const VARADA_SCENE_OPTIONS: ReadonlyArray<{ id: VaradaSceneId; label: string; description: string }> = [
+  { id: 'artist', label: 'Artist', description: 'Varada paints a golden star.' },
+  { id: 'base-wave', label: 'Wave', description: 'Varada waves hello.' },
+  { id: 'explorer', label: 'Explorer', description: 'Varada studies a map with a small backpack.' },
+  { id: 'festive-child', label: 'Festive child', description: 'Varada holds marigold flowers.' },
+  { id: 'gardener', label: 'Gardener', description: 'Varada waters a small plant.' },
+  { id: 'reader', label: 'Reader', description: 'Varada looks at a storybook.' },
+]
+
 const scenes: Record<VaradaSceneId, VaradaScene> = {
-  artist: {
-    image: artist,
-    alt: 'Illustration of baby Varada painting a golden star.',
-  },
-  'base-wave': {
-    image: baseWave,
-    alt: 'Illustration of baby Varada waving in a lavender romper.',
-  },
-  explorer: {
-    image: explorer,
-    alt: 'Illustration of baby Varada exploring with a map and small backpack.',
-  },
-  'festive-child': {
-    image: festiveChild,
-    alt: 'Illustration of baby Varada holding marigold flowers in a festive outfit.',
-  },
-  gardener: {
-    image: gardener,
-    alt: 'Illustration of baby Varada watering a small potted plant.',
-  },
-  reader: {
-    image: reader,
-    alt: 'Illustration of baby Varada looking at a storybook.',
-  },
+  artist: { image: artist, label: 'Artist' },
+  'base-wave': { image: baseWave, label: 'Wave' },
+  explorer: { image: explorer, label: 'Explorer' },
+  'festive-child': { image: festiveChild, label: 'Festive child' },
+  gardener: { image: gardener, label: 'Gardener' },
+  reader: { image: reader, label: 'Reader' },
 }
 
+// Family surfaces without a person-selected scene keep no illustration.
 const pageSceneSelections = {
   'family-home': 'base-wave',
   'chapters-index': 'reader',
 } as const satisfies Record<string, VaradaSceneId>
 
 export type VaradaScenePageKey = keyof typeof pageSceneSelections
+
+export function isVaradaSceneId(value: string | null | undefined): value is VaradaSceneId {
+  return Boolean(value && VARADA_SCENE_IDS.includes(value as VaradaSceneId))
+}
+
+export function getVaradaSceneById(sceneId: string | null | undefined): VaradaScene | null {
+  return isVaradaSceneId(sceneId) ? scenes[sceneId] : null
+}
 
 export function getVaradaScene(pageKey: VaradaScenePageKey): VaradaScene {
   return scenes[pageSceneSelections[pageKey]]
