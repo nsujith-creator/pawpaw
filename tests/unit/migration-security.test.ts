@@ -14,6 +14,24 @@ const allMigrationSql = readdirSync(MIGRATIONS_DIR)
   .map(f => readFileSync(join(MIGRATIONS_DIR, f), 'utf8'))
   .join('\n')
 
+const stage4SceneMigration = readFileSync(
+  join(MIGRATIONS_DIR, '20260816121500_stage4_explicit_visual_scenes.sql'),
+  'utf8',
+)
+
+describe('Stage 4 visual-scene migration security', () => {
+  it('adds a bounded nullable choice to drafts and immutable revisions', () => {
+    expect(stage4SceneMigration).toMatch(/content_items[\s\S]*visual_scene/)
+    expect(stage4SceneMigration).toMatch(/content_revisions[\s\S]*visual_scene/)
+    expect(stage4SceneMigration).toMatch(/check \(visual_scene is null or visual_scene in/)
+  })
+
+  it('snapshots the explicit scene without broadening policies or public grants', () => {
+    expect(stage4SceneMigration).toContain('v_item.visual_scene')
+    expect(stage4SceneMigration).not.toMatch(/create policy|alter policy|grant (select|insert|update|delete|all) on/i)
+  })
+})
+
 const rls = readFileSync(join(MIGRATIONS_DIR, '0002_rls_and_admin_policies.sql'), 'utf8')
 const bucket = readFileSync(join(MIGRATIONS_DIR, '0003_private_media_bucket.sql'), 'utf8')
 const privileges = readFileSync(join(MIGRATIONS_DIR, '0005_table_privileges.sql'), 'utf8')
