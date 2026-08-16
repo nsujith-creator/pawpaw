@@ -75,6 +75,7 @@ export async function saveChapter(formData: FormData): Promise<ContentActionResu
     authorDisplayName: text(formData, 'author_display_name'),
     recipientDisplayName: text(formData, 'recipient_display_name'),
     placeText: text(formData, 'place_text'), relationshipContext: text(formData, 'relationship_context'),
+    visualScene: text(formData, 'visual_scene'),
   }, existing)
   if ('error' in validated) return validated
 
