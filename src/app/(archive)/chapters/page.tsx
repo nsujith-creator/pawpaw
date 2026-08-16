@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import VaradaScene from '@/components/archive/varada-scene'
 import { listPublishedChapters } from '@/lib/content/chapters'
 import styles from './chapters.module.css'
 
@@ -34,9 +35,16 @@ export default async function ChaptersPage() {
   return (
     <main className={styles.index}>
       <header className={styles.header}>
-        <p className={styles.eyebrow}>Private family archive</p>
-        <h1>Chapters</h1>
-        <p>Published stories, photographs, letters, and moments kept for Varada and her family.</p>
+        <div>
+          <p className={styles.eyebrow}>Private family archive</p>
+          <h1>Chapters</h1>
+          <p>Published stories, photographs, letters, and moments kept for Varada and her family.</p>
+        </div>
+        <VaradaScene
+          pageKey="chapters-index"
+          sizes="(max-width: 52rem) 10rem, 15rem"
+          className={styles.character}
+        />
       </header>
 
       {result.items.length === 0 ? (

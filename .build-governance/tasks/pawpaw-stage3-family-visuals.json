@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-stage3-family-visuals",
+  "task_name": "Approved Family Home and Chapters visual direction",
+  "owner": "Sujith",
+  "approved_at": "2026-08-16T11:47:43.5227016+05:30",
+  "status": "approved",
+  "user_visible_outcome": "Family Home and Chapters use the approved Varada scene direction without altering private content, publishing, or family access.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "Family Home and Chapters use explicit, deterministic scene selections from the approved six-scene alpha asset pack; there is no random or inferred selection.",
+      "proof_type": "authenticated local browser proof"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "Photos remain contained and separate from illustrations, captions, and controls; navigation and Leave remain usable at desktop and 375px.",
+      "proof_type": "owner-reviewed screenshots"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "The reduced-motion equivalent is static, and there is no autoplay.",
+      "proof_type": "read-only Playwright proof and owner-reviewed screenshot"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "The owner has reviewed the five runtime screenshots and explicitly approved Stage 3.",
+      "proof_type": "owner decision"
+    }
+  ],
+  "non_goals": [
+    "Admin authoring controls for scene selection.",
+    "Database writes, migrations, publishing, test-data creation, commits, pushes, or deployment.",
+    "Changing First Days or legacy July illustration assets."
+  ],
+  "allowed_paths": [
+    "src/assets/varada/**",
+    "src/lib/varada-scenes.ts",
+    "src/components/archive/varada-scene.*",
+    "src/app/(archive)/page.tsx",
+    "src/app/(archive)/home.module.css",
+    "src/app/(archive)/chapters/page.tsx",
+    "src/app/(archive)/chapters/chapters.module.css",
+    "tests/e2e/stage3-visual-proof.spec.ts",
+    "playwright.stage3-readonly.config.ts",
+    "tests/e2e/release-2-family-visual.spec.ts",
+    "tests/unit/ui-acceptance.test.ts",
+    "docs/visual-proof/stage3-*/**",
+    ".build-governance/**"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": false,
+    "deletion": false,
+    "commit": false,
+    "push": false,
+    "deployment": false
+  },
+  "approval": {
+    "decision": "approved",
+    "evidence": [
+      "docs/visual-proof/stage3-runtime/family-home-1440.png",
+      "docs/visual-proof/stage3-runtime/family-home-375.png",
+      "docs/visual-proof/stage3-runtime/chapters-1440.png",
+      "docs/visual-proof/stage3-runtime/chapters-375.png",
+      "docs/visual-proof/stage3-runtime/family-home-reduced-motion.png"
+    ],
+    "owner_statement": "5 screenshots reviewed. approved stage 3."
+  }
+}

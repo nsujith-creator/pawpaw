@@ -9,6 +9,10 @@
 .header {
   width: min(100%, 74rem);
   margin: 0 auto clamp(2.5rem, 5vw, 4.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 15rem);
+  align-items: end;
+  gap: clamp(1rem, 4vw, 3rem);
 }
 
 .eyebrow,
@@ -30,12 +34,18 @@
   line-height: 0.92;
 }
 
-.header > p:last-child {
+.header > div > p:last-child {
   max-width: 43rem;
   margin-top: 1.25rem;
   color: var(--color-ink-secondary);
   font-size: clamp(1rem, 2vw, 1.2rem);
   line-height: 1.65;
+}
+
+.character {
+  width: min(15rem, 100%);
+  justify-self: end;
+  pointer-events: none;
 }
 
 .grid {
@@ -192,6 +202,15 @@
 }
 
 @media (max-width: 52rem) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
+  .character {
+    width: min(10rem, 42%);
+    justify-self: end;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }

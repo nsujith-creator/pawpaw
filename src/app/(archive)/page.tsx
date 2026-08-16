@@ -1,6 +1,6 @@
-import Image from 'next/image'
 import { getPublishedHomeContent } from '@/lib/content/home'
 import ContentDateline from '@/components/archive/content-dateline'
+import VaradaScene from '@/components/archive/varada-scene'
 import HomeCarousel from '@/components/home/home-carousel'
 import styles from './home.module.css'
 
@@ -78,12 +78,9 @@ export default async function HomePage() {
             })}
           </div>
 
-          <div className={styles.characterStage} aria-hidden="true">
-            <Image
-              src="/illustrations/varada/varada-wonder.png"
-              alt=""
-              width={1024}
-              height={1024}
+          <div className={styles.characterStage}>
+            <VaradaScene
+              pageKey="family-home"
               sizes="(max-width: 767px) 10rem, 15rem"
               className={styles.character}
             />

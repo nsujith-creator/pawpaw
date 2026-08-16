@@ -32,6 +32,7 @@ const firstDaysPage = read('app/(archive)/first-days/page.tsx')
 const chapterPreview = read('app/admin/content/[id]/preview/page.tsx')
 const chapterRenderer = read('components/content/chapter-renderer.tsx')
 const chapterEditor = read('app/admin/content/chapter-editor.tsx')
+const varadaScenes = read('lib/varada-scenes.ts')
 
 describe('Release 2 visual foundation', () => {
   it('loads the three approved font families through the installed Next font support', () => {
@@ -358,11 +359,14 @@ describe('Release 2 bounded Home treatment', () => {
     expect(viewerPage).not.toMatch(/\.replace\(/)
   })
 
-  it('uses only the approved Wonder character as a decorative Home asset', () => {
-    expect(viewerPage).toContain('/illustrations/varada/varada-wonder.png')
-    expect(viewerPage).not.toContain('varada-delight.png')
-    expect(viewerPage).not.toContain('varada-sleepy.png')
-    expect(viewerPage).toMatch(/src="\/illustrations\/varada\/varada-wonder\.png"[\s\S]*?alt=""/)
+  it('uses the approved deterministic Varada scene manifest, not a legacy mascot', () => {
+    expect(viewerPage).toContain('pageKey="family-home"')
+    expect(viewerPage).not.toContain('/illustrations/varada/')
+    expect(varadaScenes).toContain("'family-home': 'base-wave'")
+    expect(varadaScenes).toContain("'chapters-index': 'reader'")
+    expect(varadaScenes).toContain('varada-artist-alpha.png')
+    expect(varadaScenes).toContain('varada-explorer-alpha.png')
+    expect(varadaScenes).not.toContain('Math.random')
     expect(familyLogin).not.toContain('/illustrations/varada/')
   })
 

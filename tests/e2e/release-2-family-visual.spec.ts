@@ -259,7 +259,11 @@ test('Authenticated Home visual foundation, reflow, focus, and privacy', async (
   await expect(page.locator('a[href*="/storage/v1/object/sign/"]')).toHaveCount(0)
 
   const frameBox = await page.getByRole('img').first().locator('..').boundingBox()
-  const characterBox = await page.locator('img[src*="varada-wonder"]').boundingBox()
+  const character = page.locator('img[src*="varada-base-wave-alpha"]')
+  await expect(character).toBeVisible()
+  await expect(character).toHaveAttribute('alt', '')
+  await expect(character).toHaveAttribute('aria-hidden', 'true')
+  const characterBox = await character.boundingBox()
   expect(frameBox).not.toBeNull()
   expect(characterBox).not.toBeNull()
   const overlap = !(
