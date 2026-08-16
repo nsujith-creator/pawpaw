@@ -10,7 +10,7 @@ const valid: ValidContentInput = {
   summary: 'A truthful introduction.', bodyBlocks: [{ type: 'paragraph', text: 'A paragraph.' }],
   eventDate: null, eventDatePrecision: null, eventDateIsApproximate: false,
   authoredDate: null, authoredDatePrecision: null, authoredDateIsApproximate: false,
-  authorDisplayName: null, recipientDisplayName: null, placeText: null, relationshipContext: null,
+  authorDisplayName: null, recipientDisplayName: null, placeText: null, relationshipContext: null, visualScene: null,
 }
 const existing: ExistingContent = {
   id: '00000000-0000-4000-8000-000000000001', type: 'story', slug: 'a-first-story', hasRevisionHistory: false,
@@ -76,6 +76,13 @@ describe('draft and publication validation', () => {
       input: input({ type: 'moment', eventDate: '2026-08-01', eventDatePrecision: 'day' }),
       existing: { ...existing, type: 'moment' }, intent: 'publish', attachmentCount: 1,
     })).toHaveProperty('ok', true)
+  })
+
+  it('allows only explicit approved visual scenes and carries the choice into a write plan', () => {
+    expect(validateContentInput({ ...input(), visualScene: 'reader' }, existing)).toHaveProperty('data.visualScene', 'reader')
+    expect(validateContentInput({ ...input(), visualScene: 'astronaut' }, existing)).toHaveProperty('fieldErrors.visualScene')
+    expect(planContentWrite({ input: input({ visualScene: 'gardener' }), existing, intent: 'save', attachmentCount: 0 }))
+      .toHaveProperty('payload.visual_scene', 'gardener')
   })
 
   it('allows empty drafts but requires one meaningful publication source', () => {
