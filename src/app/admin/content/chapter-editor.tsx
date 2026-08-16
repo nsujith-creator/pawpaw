@@ -12,6 +12,7 @@ import {
   type FieldErrors,
   type ManagedContentType,
 } from '@/lib/content/manage-content'
+import { VARADA_SCENE_OPTIONS } from '@/lib/varada-scenes'
 import { deleteChapter, saveChapter, unpublishChapter, type ContentActionResult } from './actions'
 import AttachmentList, { type AttachmentItem, type ReplacementCandidate } from '../media/attachment-list'
 import UploadForm from '../media/upload-form'
@@ -54,6 +55,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
   const [recipientDisplayName, setRecipientDisplayName] = useState(existing?.recipientDisplayName ?? '')
   const [placeText, setPlaceText] = useState(existing?.placeText ?? '')
   const [relationshipContext, setRelationshipContext] = useState(existing?.relationshipContext ?? '')
+  const [visualScene, setVisualScene] = useState(existing?.visualScene ?? '')
   const [blocks, setBlocks] = useState<ContentBlock[]>(existing?.bodyBlocks ?? [])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -114,6 +116,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
       data.set('recipient_display_name', recipientDisplayName)
       data.set('place_text', placeText)
       data.set('relationship_context', relationshipContext)
+      data.set('visual_scene', visualScene)
       const result = await saveChapter(data)
       if (!applyResult(result)) return
       if (!existing && result.id) {
@@ -163,6 +166,13 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
 
   return (
     <div className={styles.editorStack}>
+      <nav className={styles.studioSteps} aria-label="Memory authoring steps">
+        <a href="#memory-details">1 Details</a>
+        <a href="#memory-story">2 Story</a>
+        <a href="#memory-scene">3 Scene</a>
+        <a href="#memory-media">4 Media</a>
+        <a href="#memory-review">5 Review</a>
+      </nav>
       {existing && (
         <div className={styles.editorStatusRow}>
           <p className={`${styles.statusLine} ${existing.activeRevisionId ? styles.statusPublished : styles.statusDraft}`}>
@@ -174,7 +184,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         </div>
       )}
 
-      <div className={styles.fieldGroup}>
+      <div id="memory-details" className={styles.fieldGroup}>
         <label htmlFor="chapter-type" className={styles.fieldLabel}>Chapter type</label>
         {existing ? (
           <p className={styles.readOnlyField}>{TYPE_LABELS[existing.type]}</p>
@@ -268,13 +278,24 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         <p className={styles.help}>These are family facts. Leave them blank when unknown; administrator identity is never used as the family author.</p>
       </section>
 
-      <section className={styles.fieldGroup} aria-labelledby="write-memory-heading">
+      <section id="memory-scene" className={styles.fieldGroup} aria-labelledby="memory-scene-heading">
+        <h2 id="memory-scene-heading" className={styles.subsectionTitle}>Choose a decorative scene</h2>
+        <label htmlFor="visual-scene" className={styles.fieldLabel}>Illustration for this memory</label>
+        <select id="visual-scene" value={visualScene} onChange={event => setVisualScene(event.target.value)} className={styles.select} aria-invalid={Boolean(fieldErrors.visualScene)}>
+          <option value="">No illustration</option>
+          {VARADA_SCENE_OPTIONS.map(scene => <option key={scene.id} value={scene.id}>{scene.label}</option>)}
+        </select>
+        <p className={styles.help}>Choose only when it fits the memory. The illustration stays separate from family photographs, captions, and controls. It is saved with this private draft and becomes part of the published revision only when you publish.</p>
+        {fieldErrors.visualScene && <p role="alert" className={styles.fieldError}>{fieldErrors.visualScene}</p>}
+      </section>
+
+      <section id="memory-story" className={styles.fieldGroup} aria-labelledby="write-memory-heading">
         <h2 id="write-memory-heading" className={styles.subsectionTitle}>Write the memory</h2>
         <p className={styles.help}>Add a paragraph for the story, a heading to begin a new part, or a quote for someone’s exact words. You can keep it simple and add more later.</p>
         <BlockEditor blocks={blocks} onChange={setBlocks} error={fieldErrors.bodyBlocks} />
       </section>
 
-      <div className={styles.editorActionBar}>
+      <div id="memory-review" className={styles.editorActionBar}>
         <button type="button" disabled={busy} onClick={() => submit('save')} className={styles.secondaryAction}>
           Save private draft
         </button>
@@ -305,7 +326,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
       {existing ? (
         <>
           <hr className={styles.sectionDivider} />
-          <section aria-labelledby="chapter-photos-title">
+          <section id="memory-media" aria-labelledby="chapter-photos-title">
             <h2 id="chapter-photos-title" className={styles.sectionTitle}>Chapter photographs</h2>
             <p className={styles.lede}>Photographs remain private. Set a cover explicitly for the Chapters index; no cover is chosen automatically.</p>
             <AttachmentList
