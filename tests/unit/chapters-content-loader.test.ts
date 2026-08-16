@@ -7,7 +7,7 @@ import {
 const semantics = {
   event_date: null, event_date_precision: null, event_date_is_approximate: false,
   authored_date: null, authored_date_precision: null, authored_date_is_approximate: false,
-  author_display_name: 'Paru', recipient_display_name: null, place_text: null, relationship_context: null, visual_scene: null,
+  author_display_name: 'Paru', recipient_display_name: null, place_text: null, relationship_context: null, visual_scene: 'reader',
 }
 const row: ChapterRow = {
   id: '00000000-0000-4000-8000-000000000001', type: 'story', slug: 'a-story',
@@ -58,6 +58,7 @@ describe('private draft loader', () => {
     expect(result.content.title).toBe('Private draft title')
     expect(result.content.publicationState).toBe('published-draft')
     expect(result.content.activeRevisionId).toBe(revision.id)
+    expect(result.content.visualScene).toBe('reader')
   })
 
   it('reports published unchanged when draft fields and media equal the selected snapshot', async () => {
