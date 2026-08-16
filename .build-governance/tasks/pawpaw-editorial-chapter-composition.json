@@ -4,8 +4,10 @@
   "task_name": "Interleave attached chapter media in the shared editorial renderer",
   "owner": "Sujit",
   "approved_at": "2026-08-16T21:43:14+05:30",
-  "status": "in_progress",
+  "status": "deployed_pending_owner_preview",
   "baseline_sha": "eacebca5caa78fd7388ba781949aa5108dd3f9fc",
+  "source_commit": "82fc27c0ef270e394d93ba93409730e4c56b466c",
+  "production_deployment_id": "dpl_EnavGS5cn5VMSS8pYf1frtqaBQfu",
   "user_visible_outcome": "An editor can place attached photos and video between story passages, and private preview matches the eventual family chapter composition.",
   "user_journeys": [
     "An editor places already-attached media between selected story blocks and safely reorders or removes only the placement.",
