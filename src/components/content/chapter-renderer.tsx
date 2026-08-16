@@ -1,5 +1,6 @@
 import type { ChapterContent, ChapterMedia } from '@/lib/content/chapters'
 import type { PublishedVideo } from '@/lib/video/published-videos'
+import VaradaScene from '@/components/archive/varada-scene'
 import styles from './chapter-renderer.module.css'
 
 interface Props {
@@ -52,6 +53,7 @@ export default function ChapterRenderer({ content, mediaState, preview = false, 
   return (
     <article className={`${styles.chapter} ${styles[content.type]}`} data-content-type={content.type}>
       <header className={styles.header}>
+        <div className={styles.headerCopy}>
         <p className={styles.eyebrow}>{preview ? 'Private chapter preview' : `Private family ${content.type}`}</p>
         <h1>{content.title}</h1>
         {content.summary && <p className={styles.summary}>{content.summary}</p>}
@@ -61,6 +63,8 @@ export default function ChapterRenderer({ content, mediaState, preview = false, 
         {content.recipientDisplayName && <p className={styles.publicationContext}>For {content.recipientDisplayName}</p>}
         {content.placeText && <p className={styles.publicationContext}>{content.placeText}</p>}
         {content.relationshipContext && <p className={styles.publicationContext}>{content.relationshipContext}</p>}
+        </div>
+        <VaradaScene sceneId={content.visualScene} className={styles.scene} sizes="(max-width: 52rem) 11rem, 17rem" />
       </header>
 
       {mediaState === 'degraded' && (
