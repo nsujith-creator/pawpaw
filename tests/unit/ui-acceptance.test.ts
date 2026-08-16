@@ -33,6 +33,7 @@ const chapterPreview = read('app/admin/content/[id]/preview/page.tsx')
 const chapterRenderer = read('components/content/chapter-renderer.tsx')
 const chapterEditor = read('app/admin/content/chapter-editor.tsx')
 const varadaScenes = read('lib/varada-scenes.ts')
+const varadaScene = read('components/archive/varada-scene.tsx')
 
 describe('Release 2 visual foundation', () => {
   it('loads the three approved font families through the installed Next font support', () => {
@@ -406,6 +407,26 @@ describe('viewer logout control', () => {
     expect(familyHeader).toContain("{ href: '/chapters', label: 'Chapters' }")
     expect(familyHeader).toContain('<LeaveButton />')
     expect(familyHeader).toContain("aria-current={current ? 'page' : undefined}")
+  })
+})
+
+describe('Stage 4 authoring-studio journey', () => {
+  it('keeps a clear details, story, scene, media, and review flow in the chapter editor', () => {
+    expect(chapterEditor).toContain('aria-label="Memory authoring steps"')
+    expect(chapterEditor).toContain('id="memory-details"')
+    expect(chapterEditor).toContain('id="memory-story"')
+    expect(chapterEditor).toContain('id="memory-scene"')
+    expect(chapterEditor).toContain('id="memory-media"')
+    expect(chapterEditor).toContain('id="memory-review"')
+  })
+
+  it('requires an explicit approved scene choice and keeps illustrations decorative', () => {
+    expect(chapterEditor).toContain("data.set('visual_scene', visualScene)")
+    expect(chapterEditor).toContain('No illustration')
+    expect(varadaScenes).toContain('VARADA_SCENE_OPTIONS')
+    expect(chapterRenderer).toContain('sceneId={content.visualScene}')
+    expect(varadaScene).toContain('alt=""')
+    expect(varadaScene).toContain('aria-hidden="true"')
   })
 })
 
