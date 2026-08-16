@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireActiveAdmin } from '@/lib/auth/admin'
 import { getAdminChapter } from '@/lib/content/chapters'
+import { getAdminVideos } from '@/lib/video/published-videos'
 import ChapterRenderer from '@/components/content/chapter-renderer'
 import styles from '../../../admin.module.css'
 
@@ -36,6 +37,7 @@ export default async function ChapterPreviewPage({
       </div>
     )
   }
+  const videoResult = await getAdminVideos(result.content.id)
 
   return (
     <div className={styles.previewSurface}>
@@ -44,7 +46,12 @@ export default async function ChapterPreviewPage({
         <span>Current private draft only. Previewing does not publish it; family continues to receive only the selected immutable revision.</span>
         <a href={`/admin/content/${result.content.id}`} className={styles.secondaryAction}>Edit chapter</a>
       </div>
-      <ChapterRenderer content={result.content} mediaState={result.mediaState} preview />
+      <ChapterRenderer
+        content={result.content}
+        mediaState={result.mediaState}
+        videos={videoResult.videos}
+        preview
+      />
     </div>
   )
 }

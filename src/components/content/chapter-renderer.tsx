@@ -10,10 +10,14 @@ interface Props {
   videos?: PublishedVideo[]
 }
 
-function Photo({ item }: { item: ChapterMedia }) {
+function Photo({ item, inline = false }: { item: ChapterMedia; inline?: boolean }) {
   const caption = item.captionOverride?.trim() || item.caption?.trim()
+  const portrait = Boolean(item.width && item.height && item.height > item.width)
+  const className = [styles.figure, inline ? styles.inlineMedia : '', portrait ? styles.portraitFigure : '']
+    .filter(Boolean)
+    .join(' ')
   return (
-    <figure className={styles.figure}>
+    <figure className={className}>
       <div className={styles.photoFrame}>
         {item.signedUrl ? (
           // Signed private media is short-lived and must not be statically optimised.
@@ -36,6 +40,25 @@ function Photo({ item }: { item: ChapterMedia }) {
   )
 }
 
+function Video({ item, inline = false }: { item: PublishedVideo; inline?: boolean }) {
+  return (
+    <figure className={`${styles.videoFigure} ${inline ? styles.inlineMedia : ''}`}>
+      {item.playerUrl ? (
+        <iframe
+          src={item.playerUrl}
+          title={item.caption || 'Family video'}
+          className={styles.video}
+          allow="accelerometer; gyroscope; encrypted-media; picture-in-picture;"
+          allowFullScreen
+        />
+      ) : (
+        <div className={styles.unavailable}>Video temporarily unavailable</div>
+      )}
+      {item.caption && <figcaption>{item.caption}</figcaption>}
+    </figure>
+  )
+}
+
 function formatFamilyDate(value: string, precision: 'day' | 'month' | 'year', approximate: boolean): string {
   const date = new Date(`${value}T00:00:00Z`)
   const options: Intl.DateTimeFormatOptions = precision === 'day'
@@ -48,7 +71,9 @@ function formatFamilyDate(value: string, precision: 'day' | 'month' | 'year', ap
 
 export default function ChapterRenderer({ content, mediaState, preview = false, videos = [] }: Props) {
   const mediaById = new Map(content.media.map(item => [item.id, item]))
-  const placed = new Set<string>()
+  const videoById = new Map(videos.map(item => [item.id, item]))
+  const placedMedia = new Set<string>()
+  const placedVideos = new Set<string>()
 
   return (
     <article className={`${styles.chapter} ${styles[content.type]}`} data-content-type={content.type}>
@@ -88,26 +113,32 @@ export default function ChapterRenderer({ content, mediaState, preview = false, 
               </blockquote>
             )
           }
-          const item = mediaById.get(block.mediaId)
-          if (!item) return null
-          placed.add(item.id)
-          return <Photo key={`${index}-${item.id}`} item={item} />
+          const photo = mediaById.get(block.mediaId)
+          if (photo) {
+            placedMedia.add(photo.id)
+            return <Photo key={`${index}-${photo.id}`} item={photo} inline />
+          }
+          const video = videoById.get(block.mediaId)
+          if (video) {
+            placedVideos.add(video.id)
+            return <Video key={`${index}-${video.id}`} item={video} inline />
+          }
+          return null
         })}
       </div>
 
-      {content.media.some(item => !placed.has(item.id)) && (
+      {content.media.some(item => !placedMedia.has(item.id)) && (
         <div className={styles.mediaGallery} aria-label="Chapter photographs">
-          {content.media.filter(item => !placed.has(item.id)).map(item => (
+          {content.media.filter(item => !placedMedia.has(item.id)).map(item => (
             <Photo key={item.id} item={item} />
           ))}
         </div>
       )}
-      {videos.length > 0 && <section className={styles.videoGallery} aria-label="Chapter videos">
-        {videos.map(video => <figure key={video.id} className={styles.videoFigure}>
-          {video.playerUrl ? <iframe src={video.playerUrl} title={video.caption || 'Family video'} className={styles.video} allow="accelerometer; gyroscope; encrypted-media; picture-in-picture;" allowFullScreen /> : <div className={styles.unavailable}>Video temporarily unavailable</div>}
-          {video.caption && <figcaption>{video.caption}</figcaption>}
-        </figure>)}
-      </section>}
+      {videos.some(video => !placedVideos.has(video.id)) && (
+        <section className={styles.videoGallery} aria-label="Chapter videos">
+          {videos.filter(video => !placedVideos.has(video.id)).map(video => <Video key={video.id} item={video} />)}
+        </section>
+      )}
     </article>
   )
 }

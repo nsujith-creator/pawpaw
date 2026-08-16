@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireActiveAdmin } from '@/lib/auth/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
 import { getAdminChapter } from '@/lib/content/chapters'
+import { getAdminVideos } from '@/lib/video/published-videos'
 import ChapterEditor from '../chapter-editor'
 import type { ReplacementCandidate } from '../../media/attachment-list'
 import styles from '../../admin.module.css'
@@ -31,6 +32,7 @@ export default async function EditChapterPage({
       </div>
     )
   }
+  const videoResult = await getAdminVideos(result.content.id)
 
   const db = createAdminClient()
   const { data: mediaRows, error: mediaError } = await db
@@ -68,7 +70,11 @@ export default async function EditChapterPage({
         <p role="alert" className={styles.warningNotice}>Some private photo previews are unavailable. The saved copy and photo records remain intact.</p>
       )}
       <section className={styles.editorSection}>
-        <ChapterEditor existing={result.content} replacementCandidates={replacementCandidates} />
+        <ChapterEditor
+          existing={result.content}
+          replacementCandidates={replacementCandidates}
+          attachedVideos={videoResult.videos}
+        />
       </section>
     </div>
   )

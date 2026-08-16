@@ -14,9 +14,18 @@ import {
 import type { ContentBlock } from '@/lib/content/schema'
 import styles from '@/app/admin/admin.module.css'
 
+export interface MediaPlacementOption {
+  id: string
+  kind: 'photo' | 'video'
+  label: string
+  previewUrl?: string | null
+  status?: string
+}
+
 interface Props {
   blocks: ContentBlock[]
   onChange: (blocks: ContentBlock[]) => void
+  mediaOptions?: MediaPlacementOption[]
   error?: string
 }
 
@@ -26,11 +35,12 @@ function blockName(block: ContentBlock): string {
   return block.type
 }
 
-export default function BlockEditor({ blocks, onChange, error }: Props) {
+export default function BlockEditor({ blocks, onChange, mediaOptions = [], error }: Props) {
   const id = useId()
   const [advanced, setAdvanced] = useState(false)
   const [advancedValue, setAdvancedValue] = useState(() => JSON.stringify(blocks, null, 2))
   const [advancedError, setAdvancedError] = useState('')
+  const [selectedMediaId, setSelectedMediaId] = useState('')
 
   function update(index: number, block: ContentBlock) {
     const next = blocks.map((item, itemIndex) => itemIndex === index ? block : item)
@@ -44,6 +54,15 @@ export default function BlockEditor({ blocks, onChange, error }: Props) {
     setAdvancedValue(JSON.stringify(next, null, 2))
   }
 
+  function addMedia() {
+    const selected = mediaOptions.find(item => item.id === selectedMediaId)
+    if (!selected || blocks.some(block => block.type === 'media' && block.mediaId === selected.id)) return
+    const next: ContentBlock[] = [...blocks, { type: 'media', mediaId: selected.id }]
+    onChange(next)
+    setAdvancedValue(JSON.stringify(next, null, 2))
+    setSelectedMediaId('')
+  }
+
   function changeType(index: number, type: EditableBlockType) {
     const current = blocks[index]
     if (current.type === 'quote' && current.attribution?.trim() && type !== 'quote' &&
@@ -53,7 +72,15 @@ export default function BlockEditor({ blocks, onChange, error }: Props) {
   }
 
   function remove(index: number) {
-    if (isBlockNonEmpty(blocks[index]) &&
+    const block = blocks[index]
+    if (block.type === 'media') {
+      if (!window.confirm('Remove this placement from the story? The photo or video stays safely attached to the chapter.')) return
+      const next = blocks.filter((_, blockIndex) => blockIndex !== index)
+      onChange(next)
+      setAdvancedValue(JSON.stringify(next, null, 2))
+      return
+    }
+    if (isBlockNonEmpty(block) &&
         !window.confirm('Remove this non-empty copy block?')) return
     const next = removeBlock(blocks, index)
     onChange(next)
@@ -87,7 +114,7 @@ export default function BlockEditor({ blocks, onChange, error }: Props) {
     <fieldset className={styles.blockEditor} aria-describedby={error ? `${id}-error` : undefined}>
       <legend className={styles.fieldLabel}>Structured copy</legend>
       <p className={styles.help}>
-        Build the chapter with headings, paragraphs, and quotations. Photographs are managed separately below.
+        Build the chapter with headings, paragraphs, quotations, and placements for attached photos or videos.
       </p>
 
       {blocks.length === 0 ? (
@@ -96,6 +123,9 @@ export default function BlockEditor({ blocks, onChange, error }: Props) {
         <ol className={styles.blockList}>
           {blocks.map((block, index) => {
             const editable = isEditableBlock(block)
+            const mediaOption = block.type === 'media'
+              ? mediaOptions.find(item => item.id === block.mediaId)
+              : undefined
             return (
               <li key={`${index}-${block.type}`} className={styles.blockCard}>
                 <div className={styles.blockHeader}>
@@ -106,7 +136,30 @@ export default function BlockEditor({ blocks, onChange, error }: Props) {
                   </div>
                 </div>
 
-                {!editable ? (
+                {block.type === 'media' ? (
+                  <div className={styles.mediaRow}>
+                    {mediaOption?.kind === 'photo' && mediaOption.previewUrl ? (
+                      // Signed private media is short-lived and must not be statically optimised.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={mediaOption.previewUrl} alt="" className={styles.mediaThumb} />
+                    ) : (
+                      <div className={styles.mediaPlaceholder} aria-hidden="true">
+                        {mediaOption?.kind === 'video' ? 'Video' : 'Media'}
+                      </div>
+                    )}
+                    <div className={styles.mediaBody}>
+                      <strong>{mediaOption?.label || 'Attached media placement'}</strong>
+                      <span className={styles.help}>
+                        {mediaOption?.kind === 'video' && mediaOption.status !== 'ready'
+                          ? `Video status: ${mediaOption.status || 'processing'}`
+                          : 'This appears here in both private preview and the published family chapter.'}
+                      </span>
+                      <button type="button" className={styles.dangerTextAction} onClick={() => remove(index)}>
+                        Remove placement…
+                      </button>
+                    </div>
+                  </div>
+                ) : !editable ? (
                   <div className={styles.warningNotice}>
                     <strong>Protected {blockName(block)} block.</strong>{' '}
                     This valid advanced block is preserved exactly and can be reordered, but the simple editor will not flatten or delete it. Use the advanced JSON escape hatch only if you need to edit it.
@@ -176,18 +229,46 @@ export default function BlockEditor({ blocks, onChange, error }: Props) {
         </ol>
       )}
 
-      <div className={styles.actions} aria-label="Add a copy block">
+      <div className={styles.actions} aria-label="Add a story block">
         <button type="button" className={styles.secondaryAction} onClick={() => add('heading')}>Add heading</button>
         <button type="button" className={styles.secondaryAction} onClick={() => add('paragraph')}>Add paragraph</button>
         <button type="button" className={styles.secondaryAction} onClick={() => add('quote')}>Add quote</button>
       </div>
+
+      {mediaOptions.length > 0 && (
+        <div className={styles.fieldGroup}>
+          <label htmlFor={`${id}-media-placement`} className={styles.fieldLabel}>Place an attached photo or video</label>
+          <div className={styles.actions}>
+            <select
+              id={`${id}-media-placement`}
+              className={styles.select}
+              value={selectedMediaId}
+              onChange={event => setSelectedMediaId(event.target.value)}
+            >
+              <option value="">Choose attached media</option>
+              {mediaOptions.map(item => {
+                const placed = blocks.some(block => block.type === 'media' && block.mediaId === item.id)
+                return (
+                  <option key={item.id} value={item.id} disabled={placed}>
+                    {item.kind === 'photo' ? 'Photo' : 'Video'}: {item.label}{placed ? ' — already placed' : ''}
+                  </option>
+                )
+              })}
+            </select>
+            <button type="button" className={styles.secondaryAction} disabled={!selectedMediaId} onClick={addMedia}>
+              Add to story
+            </button>
+          </div>
+          <p className={styles.help}>Add it, then use Move earlier or Move later to place it between the right passages. Removing a placement never deletes the attached file or its caption.</p>
+        </div>
+      )}
 
       {!advanced ? (
         <button type="button" className={styles.textButton} onClick={openAdvanced}>Advanced: edit validated blocks as JSON</button>
       ) : (
         <div className={styles.advancedEditor}>
           <div className={styles.warningNotice}>
-            Advanced JSON can represent protected media or older valid blocks. Changes are applied only after the complete block list passes the existing schema, so unsupported content is never discarded silently.
+            Advanced JSON can represent media placements or older valid blocks. Changes are applied only after the complete block list passes the existing schema, so unsupported content is never discarded silently.
           </div>
           <label htmlFor={`${id}-advanced`} className={styles.fieldLabel}>Advanced content blocks (JSON)</label>
           <textarea

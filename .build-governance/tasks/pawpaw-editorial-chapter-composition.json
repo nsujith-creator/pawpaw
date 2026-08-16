@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-editorial-chapter-composition",
+  "task_name": "Interleave attached chapter media in the shared editorial renderer",
+  "owner": "Sujit",
+  "approved_at": "2026-08-16T21:43:14+05:30",
+  "status": "in_progress",
+  "baseline_sha": "eacebca5caa78fd7388ba781949aa5108dd3f9fc",
+  "user_visible_outcome": "An editor can place attached photos and video between story passages, and private preview matches the eventual family chapter composition.",
+  "user_journeys": [
+    "An editor places already-attached media between selected story blocks and safely reorders or removes only the placement.",
+    "An editor previews the unpublished chapter with interleaved photographs and video on desktop and mobile.",
+    "A family reader receives the same shared chapter composition after a later explicit publication decision."
+  ],
+  "non_negotiable_quality": [
+    "Preserve existing story copy, captions, alt text, attachment order, cover choice, media assets, and unpublished state.",
+    "Keep photographs contained without cropping and keep video click-to-play with no autoplay.",
+    "Use the same renderer for private preview and the family chapter."
+  ],
+  "realistic_harms_prevented": [
+    "Removing a body placement must never delete or detach its underlying private media asset.",
+    "Invalid or missing media references must not erase surrounding story content or captions.",
+    "This composition task must not publish the private draft."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "The editor can place any attached photo or video as an existing validated media block and remove only the placement without deleting the asset or its caption.",
+      "proof_type": "unit",
+      "proof_command": "npm run test -- tests/unit/editorial-media-placement.test.ts"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "Private preview loads draft video records and uses the same ChapterRenderer used by the family chapter.",
+      "proof_type": "inspection",
+      "proof_command": "Inspect preview and family renderer call sites"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Placed media renders between selected story blocks while only unplaced media appears in the safe fallback gallery.",
+      "proof_type": "browser",
+      "proof_command": "Authenticated production preview inspection"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Photographs remain contained, videos do not autoplay, and desktop and 375px compositions remain usable.",
+      "proof_type": "browser",
+      "proof_command": "Authenticated desktop and 375px production preview inspection"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The production build is ready and authenticated preview evidence shows an interleaved chapter composition.",
+      "proof_type": "build",
+      "proof_command": "Vercel production deployment reaches READY"
+    },
+    {
+      "id": "AC-06",
+      "criterion": "Existing story copy, captions, alt text, attachment order, cover choice, media assets, and publication state remain unchanged except for explicit body-block placement references.",
+      "proof_type": "inspection",
+      "proof_command": "Compare the Admin draft before and after placement-only save"
+    }
+  ],
+  "non_goals": [
+    "Publishing the chapter",
+    "Editing story copy, captions, alt text, attachment order, cover choice, or media files",
+    "Changing database schema or storage services",
+    "Inferring placement from prose or photographs"
+  ],
+  "simplest_acceptable_approach": "Reuse the existing validated media body block and shared ChapterRenderer, add explicit editor placement controls, and load attached draft videos into private preview.",
+  "allowed_paths": [
+    "src/components/content/chapter-renderer.tsx",
+    "src/components/content/chapter-renderer.module.css",
+    "src/components/content/block-editor.tsx",
+    "src/lib/video/published-videos.ts",
+    "src/app/admin/content/[id]/page.tsx",
+    "src/app/admin/content/[id]/preview/page.tsx",
+    "src/app/admin/content/chapter-editor.tsx",
+    "tests/unit/editorial-media-placement.test.ts",
+    ".build-governance/tasks/pawpaw-editorial-chapter-composition.json",
+    ".build-governance/results/pawpaw-editorial-chapter-composition.json",
+    ".build-governance/decision-ledger.jsonl"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": true,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 11,
+    "max_new_files": 3,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 2
+  },
+  "complexity_exception": null,
+  "verification": [
+    "Focused unit test",
+    "Production build",
+    "Authenticated desktop and mobile private preview",
+    "Placement-only data integrity comparison"
+  ],
+  "prompt_word_limit": 700
+}

@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import BlockEditor from '@/components/content/block-editor'
+import BlockEditor, { type MediaPlacementOption } from '@/components/content/block-editor'
 import type { ChapterContent } from '@/lib/content/chapters'
 import type { ContentBlock } from '@/lib/content/schema'
+import type { AdminVideo } from '@/lib/video/published-videos'
 import {
   canPublishContentType,
   CREATABLE_CONTENT_TYPES,
@@ -22,6 +23,7 @@ import styles from '../admin.module.css'
 interface Props {
   existing: ChapterContent | null
   replacementCandidates?: ReplacementCandidate[]
+  attachedVideos?: AdminVideo[]
 }
 
 const TYPE_LABELS: Record<ManagedContentType, string> = {
@@ -38,7 +40,7 @@ const TYPE_GUIDANCE: Record<ManagedContentType, string> = {
   moment: 'Use a Moment for a dated milestone. An event date is required before it can be published.',
 }
 
-export default function ChapterEditor({ existing, replacementCandidates = [] }: Props) {
+export default function ChapterEditor({ existing, replacementCandidates = [], attachedVideos = [] }: Props) {
   const router = useRouter()
   const [type, setType] = useState<ManagedContentType>(existing?.type ?? 'story')
   const [title, setTitle] = useState(existing?.title ?? '')
@@ -77,6 +79,21 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
     sortOrder: item.sortOrder,
     isCover: existing?.coverMediaId === item.id,
   })), [existing])
+  const mediaOptions: MediaPlacementOption[] = useMemo(() => [
+    ...(existing?.media ?? []).map((item, index) => ({
+      id: item.id,
+      kind: 'photo' as const,
+      label: item.captionOverride?.trim() || item.caption?.trim() || `Photograph ${index + 1}`,
+      previewUrl: item.signedUrl,
+      status: 'ready',
+    })),
+    ...attachedVideos.map((item, index) => ({
+      id: item.id,
+      kind: 'video' as const,
+      label: item.caption?.trim() || `Video ${index + 1}`,
+      status: item.status,
+    })),
+  ], [attachedVideos, existing])
 
   function clearMessages() {
     setError('')
@@ -281,7 +298,12 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
       <section id="memory-story" className={styles.fieldGroup} aria-labelledby="write-memory-heading">
         <h2 id="write-memory-heading" className={styles.subsectionTitle}>Write the memory</h2>
         <p className={styles.help}>Add a paragraph for the story, a heading to begin a new part, or a quote for someone’s exact words. You can keep it simple and add more later.</p>
-        <BlockEditor blocks={blocks} onChange={setBlocks} error={fieldErrors.bodyBlocks} />
+        <BlockEditor
+          blocks={blocks}
+          onChange={setBlocks}
+          mediaOptions={mediaOptions}
+          error={fieldErrors.bodyBlocks}
+        />
       </section>
 
       <section id="memory-scene" className={styles.fieldGroup} aria-labelledby="memory-scene-heading">
