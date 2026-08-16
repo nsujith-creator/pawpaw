@@ -192,6 +192,15 @@
   text-align: center;
 }
 
+.empty a {
+  color: var(--color-neutral-on-soft);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--color-neutral-primary);
+  text-decoration-thickness: 0.125em;
+  text-underline-offset: 0.22em;
+}
+
 .state {
   min-height: calc(100dvh - 4.5rem);
   padding: 2rem;
