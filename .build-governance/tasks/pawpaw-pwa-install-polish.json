@@ -4,7 +4,7 @@
   "task_name": "Contextual family-facing PWA install and Chapters route affordance",
   "owner": "Sujith",
   "authorised_at": "2026-08-16T00:00:00+05:30",
-  "status": "authorised",
+  "status": "accepted",
   "user_visible_outcome": "Family visitors see no normal-state Online strip; an install action appears only when the browser offers installation or an Apple home-screen route, while offline and update notices remain truthful. The Chapters empty state makes First Days visibly actionable.",
   "non_negotiable_quality": [
     "Do not weaken service-worker registration, offline truthfulness, update activation, family access, logout, private media, or publishing boundaries.",
@@ -62,5 +62,11 @@
     "Type check and lint in the repository execution environment.",
     "Owner live review: normal browser, installable Chrome, Chapters empty-state link."
   ],
-  "decision": "proceed"
+  "decision": "proceed",
+  "accepted_at": "2026-08-16T00:00:00+05:30",
+  "acceptance_evidence": {
+    "owner_statement": "LIVE CHECK PASSES",
+    "verified_by": "Sujith",
+    "scope": "Fresh production/live review of the contextual install control and Chapters empty-state route affordance."
+  }
 }
