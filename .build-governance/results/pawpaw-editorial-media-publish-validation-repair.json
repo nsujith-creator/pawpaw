@@ -1,0 +1,26 @@
+{
+  "task_id": "pawpaw-editorial-media-publish-validation-repair",
+  "result": "production_repaired_pending_owner_publish",
+  "source_commit": "0226c8b1207b13459a1d6f7bbd9c7d633dfe84bd",
+  "migration": "supabase/migrations/20260817120000_fix_editorial_media_publish_validation.sql",
+  "root_cause": "Editorial body-media validation accepted only attached photographs, rejecting a ready attached video with PR004B_MEDIA_BLOCK_NOT_ATTACHED.",
+  "fix": "Allow an explicit media placement when it references either an attached photograph or an attached ready video; retain the immutable revision-video snapshot trigger.",
+  "verification": {
+    "migration": "Applied successfully to Supabase production project voorknvdvfweahsnjvne.",
+    "function_contract": {
+      "supports_attached_ready_videos": true,
+      "requires_ready_video": true,
+      "invalid_media_guard_retained": true,
+      "service_role_execute": true,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    "deployment": {
+      "provider": "Vercel",
+      "deployment_id": "dpl_EkPS2EUCZzYp5kAFyCnAYnCbuQpE",
+      "state": "READY"
+    }
+  },
+  "data_integrity": "No content, captions, attached media, draft fields, published revision, or publication state was changed by this migration.",
+  "next_action": "Owner refreshes the Admin editor and retries Publish; success creates a new immutable family revision."
+}
