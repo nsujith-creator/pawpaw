@@ -33,13 +33,23 @@
 }
 
 .header {
-  max-width: 54rem;
+  max-width: 66rem;
   margin-bottom: clamp(2.5rem, 6vw, 5rem);
   padding: clamp(1.25rem, 4vw, 3rem);
   border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--chapter-primary) 20%, transparent) 0 4.5rem, transparent 4.6rem),
     var(--chapter-soft);
+}
+
+.headerCopy {
+  min-width: 0;
+}
+
+.scene {
+  width: min(100%, 17rem);
+  align-self: end;
+  justify-self: end;
 }
 
 .eyebrow {
@@ -200,6 +210,15 @@
   }
 }
 
+@media (min-width: 52rem) {
+  .header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 17rem);
+    align-items: end;
+    gap: clamp(1rem, 4vw, 3rem);
+  }
+}
+
 @media (max-width: 35rem) {
   .chapter {
     width: min(100% - 1.5rem, 76rem);
@@ -208,6 +227,11 @@
 
   .header {
     padding: 1.25rem;
+  }
+
+  .scene {
+    width: min(100%, 11rem);
+    margin: 1rem 0 0 auto;
   }
 
   .header h1 {
