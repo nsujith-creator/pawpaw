@@ -1,5 +1,7 @@
 // Extracts width, height, and format from an uploaded image buffer using sharp.
 
+import sharp from 'sharp'
+
 export interface ImageMetadata {
   width: number | null
   height: number | null
@@ -29,8 +31,6 @@ const FORMAT_MIME: Record<string, string> = {
   webp: 'image/webp',
 }
 
-const loadSharp = async () => (await import('sharp')).default
-
 function diagnosticFor(error: unknown): ImageVerifierDiagnostic {
   const candidate = error instanceof Error ? error : new Error(String(error))
   const possibleCode = (candidate as unknown as { code?: unknown }).code
@@ -45,7 +45,6 @@ function diagnosticFor(error: unknown): ImageVerifierDiagnostic {
 
 export async function extractImageMetadata(buffer: Buffer): Promise<ImageMetadata> {
   try {
-    const sharp = await loadSharp()
     const meta = await sharp(buffer).metadata()
     return {
       width: meta.width ?? null,
@@ -68,13 +67,6 @@ export async function verifyImageBytes(
   buffer: Buffer,
   declaredMime: string,
 ): Promise<ImageVerificationResult> {
-  let sharp: Awaited<ReturnType<typeof loadSharp>>
-  try {
-    sharp = await loadSharp()
-  } catch (error) {
-    return { kind: 'unavailable', diagnostic: diagnosticFor(error) }
-  }
-
   try {
     const image = sharp(buffer, { failOn: 'error' })
     const meta = await image.metadata()

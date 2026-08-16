@@ -22,7 +22,7 @@
   "acceptance_criteria": [
     {
       "id": "AC-01",
-      "criterion": "Sharp is explicitly externalized for the Node server bundle used on Vercel.",
+      "criterion": "Sharp is explicitly externalized and statically resolved for the Node server bundle used on Vercel.",
       "proof_type": "build",
       "proof_command": "Vercel production build for the release commit completes successfully."
     },
@@ -40,7 +40,7 @@
     },
     {
       "id": "AC-04",
-      "criterion": "The current production deployment reaches READY and an Admin retests one original JPEG upload.",
+      "criterion": "The current production deployment reaches READY and an Admin retests one original JPEG or PNG upload.",
       "proof_type": "runtime",
       "proof_command": "Vercel deployment status plus owner live Admin upload check."
     }
@@ -50,7 +50,7 @@
     "Add a dependency, paid service, migration, or permanent image-processing queue.",
     "Retry or delete any previously failed upload."
   ],
-  "simplest_acceptable_approach": "Externalize the existing Sharp dependency for the server runtime and return typed verification outcomes so infrastructure failures are logged safely and retained instead of misreported as malformed files.",
+  "simplest_acceptable_approach": "Use the existing Sharp dependency as a statically resolved external server package and return typed verification outcomes so infrastructure failures are logged safely and retained instead of misreported as malformed files.",
   "allowed_paths": [
     "next.config.ts",
     "src/lib/media/image-metadata.ts",
@@ -74,11 +74,11 @@
     "max_migrations": 0,
     "max_new_dependencies": 0,
     "max_new_services": 0,
-    "max_implementation_runs": 2
+    "max_implementation_runs": 3
   },
   "complexity_exception": {
     "approved_by": "Sujith",
-    "reason": "The first bounded repair failed TypeScript compilation in the Vercel build; one compile-only correction is required to complete the already authorized release.",
+    "reason": "The owner retry on the first production repair supplied a safe runtime diagnostic: the dynamic Sharp import resolves to a non-callable module shape (TypeError: c is not a function) despite an intact PNG download. One static-import correction is required to complete the already authorized bounded repair.",
     "criteria": [
       "No new feature, dependency, migration, service, auth, or data change.",
       "The correction remains inside the same approved image-verification paths."
