@@ -25,6 +25,6 @@ export async function requireActiveAdmin(supabase: SupabaseClient): Promise<Admi
 
   return {
     id: userId,
-    email: typeof claims.email === 'string' ? claims.email : '',
+    email: typeof claims?.email === 'string' ? claims.email : '',
   }
 }
