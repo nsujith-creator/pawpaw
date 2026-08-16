@@ -17,6 +17,9 @@ const protectedRoutes = [
 ]
 
 const nextConfig: NextConfig = {
+  // Sharp uses a native binary. Keep it external to Next's server bundle so
+  // Vercel's Node runtime loads the platform-specific package installed for it.
+  serverExternalPackages: ['sharp'],
   // All media served through authenticated signed URLs — no external image domains needed.
   // No Server Action bodySizeLimit override: image bytes upload directly from
   // the browser to Supabase Storage (signed upload tokens), so every Server

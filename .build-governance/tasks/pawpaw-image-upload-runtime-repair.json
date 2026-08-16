@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-image-upload-runtime-repair",
+  "task_name": "Repair production image upload verification",
+  "owner": "Sujith",
+  "approved_at": "2026-08-16T00:00:00+05:30",
+  "status": "in_progress",
+  "baseline_sha": "c8b3cd798ffd68a28620d9308b94cc7b293e58c5",
+  "user_visible_outcome": "Admin can upload a valid JPEG or PNG without a misleading malformed-file rejection or silent loss of the private file.",
+  "user_journeys": [
+    "An authenticated Admin uploads a photograph to an unpublished Chapter with required alt text and an optional caption."
+  ],
+  "non_negotiable_quality": [
+    "Valid private photographs are not deleted when the server-side decoder/runtime fails.",
+    "Invalid type or byte-format mismatches continue to be rejected.",
+    "Operational logs contain no image bytes, captions, alt text, storage path, or family identity."
+  ],
+  "realistic_harms_prevented": [
+    "A valid private family photograph is silently discarded because image-verification infrastructure fails.",
+    "The author receives a false malformed-file diagnosis and cannot distinguish it from a service failure."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "Sharp is explicitly externalized for the Node server bundle used on Vercel.",
+      "proof_type": "build",
+      "proof_command": "Vercel production build for the release commit completes successfully."
+    },
+    {
+      "id": "AC-02",
+      "criterion": "The finalizer distinguishes an invalid image from a decoder/runtime failure and preserves the private object for the latter.",
+      "proof_type": "inspection",
+      "proof_command": "Inspect src/lib/media/image-metadata.ts and src/lib/media/finalize-upload.ts."
+    },
+    {
+      "id": "AC-03",
+      "criterion": "A verifier failure produces a safe operational diagnostic without logging private content and a truthful user message.",
+      "proof_type": "inspection",
+      "proof_command": "Inspect the verifier-failure branch in src/lib/media/finalize-upload.ts."
+    },
+    {
+      "id": "AC-04",
+      "criterion": "The current production deployment reaches READY and an Admin retests one original JPEG upload.",
+      "proof_type": "runtime",
+      "proof_command": "Vercel deployment status plus owner live Admin upload check."
+    }
+  ],
+  "non_goals": [
+    "Change family or Admin authentication, data schema, Storage policy, media visibility, content publishing, video upload, or photo-editing workflow.",
+    "Add a dependency, paid service, migration, or permanent image-processing queue.",
+    "Retry or delete any previously failed upload."
+  ],
+  "simplest_acceptable_approach": "Externalize the existing Sharp dependency for the server runtime and return typed verification outcomes so infrastructure failures are logged safely and retained instead of misreported as malformed files.",
+  "allowed_paths": [
+    "next.config.ts",
+    "src/lib/media/image-metadata.ts",
+    "src/lib/media/finalize-upload.ts",
+    ".build-governance/tasks/pawpaw-image-upload-runtime-repair.json",
+    ".build-governance/results/pawpaw-image-upload-runtime-repair.json",
+    ".build-governance/decision-ledger.jsonl"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": false,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": true,
+    "deletion": true
+  },
+  "complexity_budget": {
+    "max_changed_files": 6,
+    "max_new_files": 2,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "Vercel production build",
+    "source inspection",
+    "Vercel runtime logs after one owner re-test",
+    "git diff inspection"
+  ],
+  "prompt_word_limit": 420
+}

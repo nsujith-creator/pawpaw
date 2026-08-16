@@ -19,9 +19,9 @@ import { verifyImageBytes } from './image-metadata'
 import { extractPalette } from './palette'
 
 export interface FinalizeParams {
-  path:      string
-  altText:   string          // required accessibility text (img alt attribute)
-  caption:   string | null   // optional visible caption shown with the photo
+  path: string
+  altText: string
+  caption: string | null
   contentId: string | null
 }
 
@@ -64,18 +64,35 @@ export async function finalizeUploadCore(
     const { data: blob, error: downloadError } = await db.storage.from('media').download(path)
     if (downloadError || !blob) throw new Error('download failed')
     buffer = Buffer.from(await blob.arrayBuffer())
-  } catch {
-    await db.storage.from('media').remove([path])
-    return { error: 'The uploaded image could not be verified and was discarded.' }
+  } catch (error) {
+    console.error('Pawpaw could not read a private image upload for verification.', {
+      mime,
+      storageBytes: size,
+      error: error instanceof Error ? error.message.slice(0, 240) : String(error).slice(0, 240),
+    })
+    return { error: 'Pawpaw could not read this private upload right now. It was kept; please try again shortly.' }
   }
 
   const verified = await verifyImageBytes(buffer, mime)
-  if (!verified || !verified.width || !verified.height) {
+  if (verified.kind === 'unavailable') {
+    // This intentionally logs only operational facts, never the photograph,
+    // its caption, alt text, storage path, or owner identity.
+    console.error('Pawpaw image verifier failed after a private Storage download.', {
+      mime,
+      storageBytes: size,
+      downloadedBytes: buffer.length,
+      signature: buffer.subarray(0, 12).toString('hex'),
+      decoder: verified.diagnostic,
+    })
+    return { error: 'Pawpaw could not verify this image right now. Your private upload was kept; please try again shortly.' }
+  }
+
+  if (verified.kind === 'invalid') {
     await db.storage.from('media').remove([path])
     return { error: 'The file is malformed or does not match its image type. It was discarded.' }
   }
-  const width = verified.width
-  const height = verified.height
+
+  const { width, height } = verified.metadata
   try {
     palette = await extractPalette(buffer)
   } catch {
@@ -85,16 +102,16 @@ export async function finalizeUploadCore(
   const { data: asset, error: dbError } = await db
     .from('media_assets')
     .insert({
-      storage_path:      path,
-      mime_type:         mime,
-      byte_size:         size,
+      storage_path: path,
+      mime_type: mime,
+      byte_size: size,
       width,
       height,
-      alt_text:          altText,
-      caption:           caption?.trim() || null,
+      alt_text: altText,
+      caption: caption?.trim() || null,
       extracted_palette: palette,
       processing_status: 'ready',
-      created_by:        adminId,
+      created_by: adminId,
     })
     .select('id')
     .single()
