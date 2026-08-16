@@ -1,0 +1,57 @@
+{
+  "task_id": "pawpaw-video-status-duration-repair",
+  "result": "passed",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "pass",
+      "evidence": "The provider-boundary normalization uses Math.ceil for finite non-negative durations. The existing private video status refresh completed in production and persisted a whole-second duration of 10."
+    },
+    {
+      "id": "AC-02",
+      "status": "pass",
+      "evidence": "The status-update failure path now emits only database error code and message to the server log while retaining the existing truthful family-facing message."
+    },
+    {
+      "id": "AC-03",
+      "status": "pass",
+      "evidence": "Production deployment dpl_AHfKZqyy6C4XdYGkhvwZmqhyTVED reached READY; the owner refreshed the already attached video to ready without re-upload, deletion, or publication."
+    },
+    {
+      "id": "AC-04",
+      "status": "pass",
+      "evidence": "Read-only post-fix Supabase snapshot: draft chapter, cover present, five photos, exact unchanged photo fingerprint 97df83246a2ddd45bbff6cef63ec5674, one ready video at 10 seconds."
+    }
+  ],
+  "tests": [
+    {
+      "command": "Vercel production build for dpl_AHfKZqyy6C4XdYGkhvwZmqhyTVED",
+      "exit_code": 0,
+      "summary": "Build, TypeScript check, and production deployment completed successfully."
+    },
+    {
+      "command": "Owner Check status action on the existing private video",
+      "exit_code": 0,
+      "summary": "Video became ready at 10 sec; no re-upload, delete, replace, or publish action occurred."
+    },
+    {
+      "command": "Read-only Supabase photo/video integrity snapshot",
+      "exit_code": 0,
+      "summary": "Five-photo fingerprint, cover flag, draft status, and video attachment count match the protected pre-fix snapshot; video status is ready."
+    },
+    {
+      "command": "npm run test -- tests/unit/video-cloudflare.test.ts",
+      "exit_code": -1,
+      "summary": "Focused test was committed but not executed in Work Mode because no repository checkout/runtime was available; production build and live repair evidence are recorded separately."
+    }
+  ],
+  "deviations": [
+    "The focused unit test was not executed from Work Mode; this result does not claim it passed."
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "new_dependencies": [],
+    "new_services": []
+  },
+  "next_action": "Keep the Chapter as a private draft until Sujith separately approves its full family-facing review and publication."
+}
