@@ -100,6 +100,7 @@ export interface RevisionRow {
   recipient_display_name: string | null
   place_text: string | null
   relationship_context: string | null
+  visual_scene: string | null
   created_at: string
   created_by: string
 }
