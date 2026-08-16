@@ -39,6 +39,14 @@ No scaffolding unless asked. Estimate complexity before large operations.
 After every code block: most likely failure point, exact test command, expected output, error signature.
 Never say should work. Say works if [specific condition] is true.
 
+## G: PRODUCTION DEFECT MEMORY
+
+For every owner-approved Pawpaw production bug:
+
+- Record the root cause, scoped fix, verification evidence, data-integrity check, and known limitation.
+- Commit a task result and append a decision-ledger entry before calling the repair closed.
+- Keep diagnostics and records free of private family content, media URLs, identifiers, and credentials.
+
 ## F: HALLUCINATION AND CREEP PREVENTION
 
 Flag tools over INR 10,000 per month. Mark uncertain facts as UNVERIFIED.
