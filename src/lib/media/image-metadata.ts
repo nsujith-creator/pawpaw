@@ -33,9 +33,8 @@ const loadSharp = async () => (await import('sharp')).default
 
 function diagnosticFor(error: unknown): ImageVerifierDiagnostic {
   const candidate = error instanceof Error ? error : new Error(String(error))
-  const code = typeof (candidate as { code?: unknown }).code === 'string'
-    ? (candidate as { code: string }).code
-    : null
+  const possibleCode = (candidate as unknown as { code?: unknown }).code
+  const code = typeof possibleCode === 'string' ? possibleCode : null
 
   return {
     name: candidate.name || 'Error',

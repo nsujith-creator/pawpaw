@@ -74,9 +74,16 @@
     "max_migrations": 0,
     "max_new_dependencies": 0,
     "max_new_services": 0,
-    "max_implementation_runs": 1
+    "max_implementation_runs": 2
   },
-  "complexity_exception": null,
+  "complexity_exception": {
+    "approved_by": "Sujith",
+    "reason": "The first bounded repair failed TypeScript compilation in the Vercel build; one compile-only correction is required to complete the already authorized release.",
+    "criteria": [
+      "No new feature, dependency, migration, service, auth, or data change.",
+      "The correction remains inside the same approved image-verification paths."
+    ]
+  },
   "verification": [
     "Vercel production build",
     "source inspection",
