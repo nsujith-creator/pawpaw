@@ -4,7 +4,7 @@ import type { RevisionRow } from '@/lib/content/chapters'
 
 const revision: RevisionRow = {
   id: '00000000-0000-4000-8000-000000000001', content_item_id: 'first-days-id', revision_number: 1,
-  type: 'story', slug: 'first-days', title: 'First Days', summary: null, body_blocks: [], cover_media_id: null,
+  type: 'story', slug: 'first-days', title: 'First Days', summary: null, body_blocks: [], cover_media_id: null, visual_scene: null,
   event_date: null, event_date_precision: null, event_date_is_approximate: false,
   authored_date: null, authored_date_precision: null, authored_date_is_approximate: false,
   author_display_name: null, recipient_display_name: null, place_text: null, relationship_context: null,
