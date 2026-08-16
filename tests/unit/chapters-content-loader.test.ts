@@ -7,7 +7,7 @@ import {
 const semantics = {
   event_date: null, event_date_precision: null, event_date_is_approximate: false,
   authored_date: null, authored_date_precision: null, authored_date_is_approximate: false,
-  author_display_name: 'Paru', recipient_display_name: null, place_text: null, relationship_context: null,
+  author_display_name: 'Paru', recipient_display_name: null, place_text: null, relationship_context: null, visual_scene: null,
 }
 const row: ChapterRow = {
   id: '00000000-0000-4000-8000-000000000001', type: 'story', slug: 'a-story',
