@@ -3,7 +3,7 @@
 // Refreshes Supabase sessions only when an admin session cookie is present.
 // Injects X-Robots-Tag: noindex, nofollow, noarchive on every permitted protected response.
 
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyViewerCookie, VIEWER_COOKIE_NAME } from '@/lib/auth/viewer-cookie'
 import { readViewerAuthConfig } from '@/lib/env'
@@ -36,7 +36,7 @@ async function refreshAdminSession(req: NextRequest): Promise<NextResponse> {
         getAll() {
           return req.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
           response = NextResponse.next({ request: req })
           cookiesToSet.forEach(({ name, value, options }) => {

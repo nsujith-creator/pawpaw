@@ -9,7 +9,8 @@ export interface AdminUser {
 // Verifies signed Supabase claims AND the admin_users allowlist.
 // The request proxy refreshes expired auth cookies before this code runs.
 export async function requireActiveAdmin(supabase: SupabaseClient): Promise<AdminUser> {
-  const { data: { claims }, error } = await supabase.auth.getClaims()
+  const { data: claimsData, error } = await supabase.auth.getClaims()
+  const claims = claimsData?.claims
   const userId = typeof claims?.sub === 'string' ? claims.sub : null
   if (error || !userId) throw new Error('Not authenticated')
 
