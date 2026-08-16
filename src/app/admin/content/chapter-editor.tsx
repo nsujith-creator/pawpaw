@@ -278,6 +278,12 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         <p className={styles.help}>These are family facts. Leave them blank when unknown; administrator identity is never used as the family author.</p>
       </section>
 
+      <section id="memory-story" className={styles.fieldGroup} aria-labelledby="write-memory-heading">
+        <h2 id="write-memory-heading" className={styles.subsectionTitle}>Write the memory</h2>
+        <p className={styles.help}>Add a paragraph for the story, a heading to begin a new part, or a quote for someone’s exact words. You can keep it simple and add more later.</p>
+        <BlockEditor blocks={blocks} onChange={setBlocks} error={fieldErrors.bodyBlocks} />
+      </section>
+
       <section id="memory-scene" className={styles.fieldGroup} aria-labelledby="memory-scene-heading">
         <h2 id="memory-scene-heading" className={styles.subsectionTitle}>Choose a decorative scene</h2>
         <label htmlFor="visual-scene" className={styles.fieldLabel}>Illustration for this memory</label>
@@ -287,12 +293,6 @@ export default function ChapterEditor({ existing, replacementCandidates = [] }: 
         </select>
         <p className={styles.help}>Choose only when it fits the memory. The illustration stays separate from family photographs, captions, and controls. It is saved with this private draft and becomes part of the published revision only when you publish.</p>
         {fieldErrors.visualScene && <p role="alert" className={styles.fieldError}>{fieldErrors.visualScene}</p>}
-      </section>
-
-      <section id="memory-story" className={styles.fieldGroup} aria-labelledby="write-memory-heading">
-        <h2 id="write-memory-heading" className={styles.subsectionTitle}>Write the memory</h2>
-        <p className={styles.help}>Add a paragraph for the story, a heading to begin a new part, or a quote for someone’s exact words. You can keep it simple and add more later.</p>
-        <BlockEditor blocks={blocks} onChange={setBlocks} error={fieldErrors.bodyBlocks} />
       </section>
 
       <div id="memory-review" className={styles.editorActionBar}>
