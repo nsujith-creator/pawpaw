@@ -1,6 +1,6 @@
 // Extracts width, height, and format from an uploaded image buffer using sharp.
 
-import sharp from 'sharp'
+const sharp = require('sharp') as typeof import('sharp')
 
 export interface ImageMetadata {
   width: number | null

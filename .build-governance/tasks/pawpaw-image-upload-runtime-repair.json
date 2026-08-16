@@ -50,7 +50,7 @@
     "Add a dependency, paid service, migration, or permanent image-processing queue.",
     "Retry or delete any previously failed upload."
   ],
-  "simplest_acceptable_approach": "Use the existing Sharp dependency as a statically resolved external server package and return typed verification outcomes so infrastructure failures are logged safely and retained instead of misreported as malformed files.",
+  "simplest_acceptable_approach": "Use the existing Sharp dependency as an external server package and invoke its native CommonJS function directly, while returning typed verification outcomes so infrastructure failures are logged safely and retained instead of misreported as malformed files.",
   "allowed_paths": [
     "next.config.ts",
     "src/lib/media/image-metadata.ts",
@@ -74,14 +74,15 @@
     "max_migrations": 0,
     "max_new_dependencies": 0,
     "max_new_services": 0,
-    "max_implementation_runs": 3
+    "max_implementation_runs": 4
   },
   "complexity_exception": {
     "approved_by": "Sujith",
-    "reason": "The owner retry on the first production repair supplied a safe runtime diagnostic: the dynamic Sharp import resolves to a non-callable module shape (TypeError: c is not a function) despite an intact PNG download. One static-import correction is required to complete the already authorized bounded repair.",
+    "reason": "The owner retry supplied a second precise runtime diagnostic after static import: Sharp's CommonJS export is still transformed into a non-callable default binding ((void 0) is not a function), while the private PNG download is intact. One direct CommonJS invocation correction is required to complete the same approved repair.",
     "criteria": [
       "No new feature, dependency, migration, service, auth, or data change.",
-      "The correction remains inside the same approved image-verification paths."
+      "The correction remains inside the same approved image-verification paths.",
+      "A final owner retry remains required before closure."
     ]
   },
   "verification": [
