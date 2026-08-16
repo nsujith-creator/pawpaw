@@ -77,10 +77,12 @@ export default function PwaControls() {
 
   // A quiet family page has no routine connectivity banner. This region appears
   // only when the visitor can act (install/update) or needs a truthful warning.
+  const needsNotice = !online || Boolean(updateWorker)
+
   if (online && !installPrompt && !appleMobile && !updateWorker) return null
 
   return (
-    <aside className="pwaStatus" aria-live="polite">
+    <aside className={`pwaStatus${needsNotice ? ' pwaStatusNotice' : ''}`} aria-live="polite">
       {!online && <span>Offline — saving, publishing, and uploads need a connection.</span>}
       {installPrompt && <button type="button" onClick={() => void install()}>Install Pawpaw</button>}
       {!installPrompt && appleMobile && (
