@@ -16,6 +16,7 @@ export default function PwaControls() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
   const [updateWorker, setUpdateWorker] = useState<ServiceWorker | null>(null)
   const [appleMobile, setAppleMobile] = useState(false)
+  const [showAppleInstall, setShowAppleInstall] = useState(false)
 
   useEffect(() => {
     const updateConnection = () => {
@@ -74,11 +75,26 @@ export default function PwaControls() {
     updateWorker?.postMessage({ type: 'SKIP_WAITING' })
   }
 
+  // A quiet family page has no routine connectivity banner. This region appears
+  // only when the visitor can act (install/update) or needs a truthful warning.
+  if (online && !installPrompt && !appleMobile && !updateWorker) return null
+
   return (
     <aside className="pwaStatus" aria-live="polite">
-      <span>{online ? 'Online' : 'Offline — saving, publishing, and uploads need a connection.'}</span>
+      {!online && <span>Offline — saving, publishing, and uploads need a connection.</span>}
       {installPrompt && <button type="button" onClick={() => void install()}>Install Pawpaw</button>}
-      {!installPrompt && appleMobile && <span>On iPhone or iPad: Share → Add to Home Screen.</span>}
+      {!installPrompt && appleMobile && (
+        <>
+          <button
+            type="button"
+            aria-expanded={showAppleInstall}
+            onClick={() => setShowAppleInstall(value => !value)}
+          >
+            Install Pawpaw
+          </button>
+          {showAppleInstall && <span>On iPhone or iPad: Share → Add to Home Screen.</span>}
+        </>
+      )}
       {updateWorker && <button type="button" onClick={applyUpdate}>A new version is ready</button>}
     </aside>
   )
