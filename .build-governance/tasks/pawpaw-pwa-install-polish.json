@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-pwa-install-polish",
+  "task_name": "Contextual family-facing PWA install and Chapters route affordance",
+  "owner": "Sujith",
+  "authorised_at": "2026-08-16T00:00:00+05:30",
+  "status": "authorised",
+  "user_visible_outcome": "Family visitors see no normal-state Online strip; an install action appears only when the browser offers installation or an Apple home-screen route, while offline and update notices remain truthful. The Chapters empty state makes First Days visibly actionable.",
+  "non_negotiable_quality": [
+    "Do not weaken service-worker registration, offline truthfulness, update activation, family access, logout, private media, or publishing boundaries.",
+    "Keep keyboard focus and screen-reader announcements for actionable and temporary PWA messages.",
+    "Do not show a normal-state Online label or an empty PWA container."
+  ],
+  "realistic_harms_prevented": [
+    "A permanent status strip distracts from the private family archive and implies that Online needs attention.",
+    "A plain-text route instruction can be missed by visitors when Chapters is empty.",
+    "Removing the PWA surface wholesale could hide meaningful offline or update notices."
+  ],
+  "simplest_acceptable_approach": "Conditionally render the existing PWA surface only for a real install option, offline notice, or ready update; add local CSS for the existing First Days link.",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "A normal online non-installable browser renders no PWA strip and no Online label.",
+      "proof_type": "source review and live browser check"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "A browser install opportunity still exposes an Install Pawpaw action; Apple visitors can reveal Add to Home Screen guidance.",
+      "proof_type": "source review and live browser check"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Offline and ready-update notices remain available, with the existing service-worker registration and update activation intact.",
+      "proof_type": "source review and focused test"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Read First Days is visibly an accessible link in the Chapters empty state.",
+      "proof_type": "source review and live browser check"
+    }
+  ],
+  "non_goals": [
+    "Changing PWA manifest, icons, caching strategy, service-worker logic, offline application behaviour, or install eligibility.",
+    "Changing family/Admin authentication, data, publishing, private media, First Days content, Stage 3 art, or page layout.",
+    "Adding dependencies, migrations, services, analytics, tests that write data, or a new admin control."
+  ],
+  "allowed_paths": [
+    "src/components/pwa/pwa-controls.tsx",
+    "src/app/globals.css",
+    "src/app/(archive)/chapters/chapters.module.css",
+    "tests/unit/pwa-controls.test.ts",
+    ".build-governance/tasks/pawpaw-pwa-install-polish.json",
+    ".build-governance/decision-ledger.jsonl"
+  ],
+  "cost": {
+    "new_monthly_inr": 0,
+    "dependencies": [],
+    "services": []
+  },
+  "verification": [
+    "Focused unit test for conditional PWA rendering and retained offline/update/install paths.",
+    "Type check and lint in the repository execution environment.",
+    "Owner live review: normal browser, installable Chrome, Chapters empty-state link."
+  ],
+  "decision": "proceed"
+}
