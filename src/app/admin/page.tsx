@@ -164,7 +164,9 @@ export default async function AdminDashboard({
 
       <div className={styles.dashboardGrid}>
         <section className={styles.panel} aria-labelledby="continue-editing-title">
-          <h2 id="continue-editing-title" className={styles.sectionTitle}>Continue editing</h2>
+          <h2 id="continue-editing-title" className={styles.sectionTitle}>Start or continue a memory</h2>
+          <p className={styles.help}>Create the story first, then choose its scene, arrange media, preview, and publish when it is ready for family.</p>
+          <p><Link href="/admin/content/new" className={styles.action}>Create a memory</Link></p>
           <div className={styles.quickLinks}>
             <a href="/admin/home" className={styles.quickLink}>Home page</a>
             <Link href="/admin/content" className={styles.quickLink}>Content library</Link>
