@@ -7,6 +7,7 @@ import {
   type DatePrecision,
   type ManagedContentType,
   type PublicationState,
+  type VisualScene,
 } from './manage-content'
 
 export interface ChapterMedia {
@@ -33,6 +34,7 @@ export interface ChapterSemantics {
   recipientDisplayName: string | null
   placeText: string | null
   relationshipContext: string | null
+  visualScene: VisualScene | null
 }
 
 export interface ChapterContent extends ChapterSemantics {
@@ -72,6 +74,7 @@ export interface ChapterRow {
   recipient_display_name: string | null
   place_text: string | null
   relationship_context: string | null
+  visual_scene: string | null
   created_at: string
   updated_at: string
   created_by: string
@@ -169,7 +172,8 @@ export function draftMatchesRevision(
     draft.authored_date === revision.authored_date && draft.authored_date_precision === revision.authored_date_precision &&
     draft.authored_date_is_approximate === revision.authored_date_is_approximate &&
     draft.author_display_name === revision.author_display_name && draft.recipient_display_name === revision.recipient_display_name &&
-    draft.place_text === revision.place_text && draft.relationship_context === revision.relationship_context
+    draft.place_text === revision.place_text && draft.relationship_context === revision.relationship_context &&
+    draft.visual_scene === revision.visual_scene
   if (!fieldsMatch) return false
   const comparable = (rows: RevisionMediaRow[]) => [...rows]
     .sort((a, b) => a.sort_order - b.sort_order || a.media_id.localeCompare(b.media_id))
@@ -190,6 +194,7 @@ function semantics(row: ChapterRow | RevisionRow): ChapterSemantics {
     recipientDisplayName: row.recipient_display_name,
     placeText: row.place_text,
     relationshipContext: row.relationship_context,
+    visualScene: row.visual_scene as VisualScene | null,
   }
 }
 
@@ -284,8 +289,8 @@ export async function loadPublishedChapterContent(source: PublishedChapterDataSo
   }
 }
 
-const DRAFT_SELECT = 'id, type, slug, title, summary, body_blocks, cover_media_id, active_published_revision_id, event_date, event_date_precision, event_date_is_approximate, authored_date, authored_date_precision, authored_date_is_approximate, author_display_name, recipient_display_name, place_text, relationship_context, created_at, updated_at, created_by'
-const REVISION_SELECT = 'id, content_item_id, revision_number, type, slug, title, summary, body_blocks, cover_media_id, event_date, event_date_precision, event_date_is_approximate, authored_date, authored_date_precision, authored_date_is_approximate, author_display_name, recipient_display_name, place_text, relationship_context, created_at, created_by'
+const DRAFT_SELECT = 'id, type, slug, title, summary, body_blocks, cover_media_id, active_published_revision_id, event_date, event_date_precision, event_date_is_approximate, authored_date, authored_date_precision, authored_date_is_approximate, author_display_name, recipient_display_name, place_text, relationship_context, visual_scene, created_at, updated_at, created_by'
+const REVISION_SELECT = 'id, content_item_id, revision_number, type, slug, title, summary, body_blocks, cover_media_id, event_date, event_date_precision, event_date_is_approximate, authored_date, authored_date_precision, authored_date_is_approximate, author_display_name, recipient_display_name, place_text, relationship_context, visual_scene, created_at, created_by'
 const REVISION_MEDIA_SELECT = 'revision_id, media_id, sort_order, caption_override, placement, storage_path, alt_text, caption, width, height, mime_type, byte_size'
 
 function draftSource(findChapter: () => Promise<QueryResult<ChapterRow>>): ChapterDataSource {
