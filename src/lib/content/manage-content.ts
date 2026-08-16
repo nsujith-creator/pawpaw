@@ -8,6 +8,8 @@ export const DATE_PRECISIONS = ['day', 'month', 'year'] as const
 export type DatePrecision = typeof DATE_PRECISIONS[number]
 export type PublicationState = 'unpublished' | 'published' | 'published-draft'
 export type ContentIntent = 'save' | 'publish'
+export const VISUAL_SCENES = ['artist', 'base-wave', 'explorer', 'festive-child', 'gardener', 'reader'] as const
+export type VisualScene = typeof VISUAL_SCENES[number]
 
 const RESERVED_SLUGS = new Set([
   'home', 'admin', 'family-login', 'auth', 'logout', 'api',
@@ -31,6 +33,7 @@ export interface ContentInput {
   recipientDisplayName: string | null
   placeText: string | null
   relationshipContext: string | null
+  visualScene: string | null
 }
 
 export interface ValidContentInput {
@@ -49,6 +52,7 @@ export interface ValidContentInput {
   recipientDisplayName: string | null
   placeText: string | null
   relationshipContext: string | null
+  visualScene: VisualScene | null
 }
 
 export interface FieldErrors {
@@ -63,6 +67,7 @@ export interface FieldErrors {
   recipientDisplayName?: string
   placeText?: string
   relationshipContext?: string
+  visualScene?: string
   form?: string
 }
 
@@ -92,6 +97,7 @@ export interface ContentWritePlan {
   recipient_display_name: string | null
   place_text: string | null
   relationship_context: string | null
+  visual_scene: VisualScene | null
 }
 
 export function isValidId(value: string): boolean {
@@ -159,6 +165,8 @@ export function validateContentInput(input: ContentInput, existing: ExistingCont
   const recipientDisplayName = cleanText(input.recipientDisplayName, 200, 'recipientDisplayName', fieldErrors)
   const placeText = cleanText(input.placeText, 300, 'placeText', fieldErrors)
   const relationshipContext = cleanText(input.relationshipContext, 500, 'relationshipContext', fieldErrors)
+  const visualScene = input.visualScene?.trim() || null
+  if (visualScene && !VISUAL_SCENES.includes(visualScene as VisualScene)) fieldErrors.visualScene = 'Choose one of the approved illustration scenes or no illustration.'
 
   const eventDate = input.eventDate?.trim() || null
   const eventDatePrecision = precision(input.eventDatePrecision)
@@ -185,7 +193,7 @@ export function validateContentInput(input: ContentInput, existing: ExistingCont
     type, title, slug, summary, bodyBlocks: parsedBlocks.data,
     eventDate: normalizeDateForPrecision(eventDate, eventDatePrecision), eventDatePrecision, eventDateIsApproximate: eventDate ? input.eventDateIsApproximate : false,
     authoredDate: normalizeDateForPrecision(authoredDate, authoredDatePrecision), authoredDatePrecision, authoredDateIsApproximate: authoredDate ? input.authoredDateIsApproximate : false,
-    authorDisplayName, recipientDisplayName, placeText, relationshipContext,
+    authorDisplayName, recipientDisplayName, placeText, relationshipContext, visualScene: visualScene as VisualScene | null,
   } }
 }
 
@@ -226,7 +234,7 @@ export function planContentWrite({ input, existing, intent, attachmentCount }: {
     authored_date: input.authoredDate, authored_date_precision: input.authoredDatePrecision,
     authored_date_is_approximate: input.authoredDateIsApproximate,
     author_display_name: input.authorDisplayName, recipient_display_name: input.recipientDisplayName,
-    place_text: input.placeText, relationship_context: input.relationshipContext,
+    place_text: input.placeText, relationship_context: input.relationshipContext, visual_scene: input.visualScene,
   } }
 }
 
