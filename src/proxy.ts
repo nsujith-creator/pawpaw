@@ -1,8 +1,9 @@
 // Request gate for archive and admin routes.
 // Validates the signed viewer cookie with Edge-compatible Web Crypto.
-// Does not perform database-heavy authorization — full admin check is in server actions.
+// Refreshes Supabase sessions only when an admin session cookie is present.
 // Injects X-Robots-Tag: noindex, nofollow, noarchive on every permitted protected response.
 
+import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyViewerCookie, VIEWER_COOKIE_NAME } from '@/lib/auth/viewer-cookie'
 import { readViewerAuthConfig } from '@/lib/env'
@@ -20,6 +21,34 @@ function withPrivateHeaders(res: NextResponse): NextResponse {
     res.headers.set('Vary', `${vary}, Cookie`)
   }
   return res
+}
+
+// Server Components cannot write refreshed auth cookies. Keep refresh work here,
+// where the replacement cookies can be sent to both this request and the browser.
+async function refreshAdminSession(req: NextRequest): Promise<NextResponse> {
+  let response = NextResponse.next({ request: req })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
+          response = NextResponse.next({ request: req })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    },
+  )
+
+  await supabase.auth.getClaims()
+  return response
 }
 
 export function isArchiveRoute(pathname: string): boolean {
@@ -61,17 +90,19 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
   if (isArchiveRoute(pathname)) {
     const cookieValue = req.cookies.get(VIEWER_COOKIE_NAME)?.value
     const hasAdminCandidate = hasAdminSessionCandidate(req)
+    const adminResponse = hasAdminCandidate ? await refreshAdminSession(req) : null
+    const continueToArchive = () => withPrivateHeaders(adminResponse ?? NextResponse.next())
 
     if (!cookieValue) {
       return hasAdminCandidate
-        ? withPrivateHeaders(NextResponse.next())
+        ? continueToArchive()
         : familyLoginRedirect(req)
     }
 
     const authConfig = readViewerAuthConfig()
     if (!authConfig.valid) {
       if (hasAdminCandidate) {
-        const response = withPrivateHeaders(NextResponse.next())
+        const response = continueToArchive()
         response.cookies.delete(VIEWER_COOKIE_NAME)
         return response
       }
@@ -86,24 +117,23 @@ export default async function proxy(req: NextRequest): Promise<NextResponse> {
 
     if (!valid) {
       if (hasAdminCandidate) {
-        const response = withPrivateHeaders(NextResponse.next())
+        const response = continueToArchive()
         response.cookies.delete(VIEWER_COOKIE_NAME)
         return response
       }
       return familyLoginRedirect(req, true)
     }
 
-    return withPrivateHeaders(NextResponse.next())
+    return continueToArchive()
   }
 
   if (isProtectedAdminRoute(pathname)) {
-    // Optimistic check: presence of a Supabase auth cookie.
-    // Full admin_users allowlist check happens in server components and actions.
-    const hasSession = hasAdminSessionCandidate(req)
-    if (!hasSession) {
+    // Presence is only a fast route gate. Server code still verifies the signed
+    // claims and the active admin_users allowlist before any private data loads.
+    if (!hasAdminSessionCandidate(req)) {
       return withPrivateHeaders(NextResponse.redirect(new URL('/admin/login', req.url)))
     }
-    return withPrivateHeaders(NextResponse.next())
+    return withPrivateHeaders(await refreshAdminSession(req))
   }
 
   return NextResponse.next()

@@ -105,6 +105,12 @@ describe('admin navigation', () => {
     expect(adminNav).toContain('Home page')
   })
 
+  it('uses client-side Next navigation for Studio destinations', () => {
+    expect(adminNav).toContain("from 'next/link'")
+    expect(adminNav).toContain('<Link')
+    expect(adminNav).not.toContain('<a\n')
+  })
+
   it('uses exact match for Dashboard to avoid false active state on sub-routes', () => {
     expect(adminNav).toContain('exact')
     expect(adminNav).toContain('pathname === href')

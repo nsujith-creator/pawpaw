@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './admin-nav.module.css'
 
@@ -22,7 +23,7 @@ export default function AdminNav() {
         {links.map(({ href, label, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href)
           return (
-            <a
+            <Link
               key={href}
               href={href}
               className={active ? `${styles.link} ${styles.active}` : styles.link}
@@ -30,7 +31,7 @@ export default function AdminNav() {
             >
               <span>{label}</span>
               {active && <span className={styles.currentCue}>Current</span>}
-            </a>
+            </Link>
           )
         })}
       </div>

@@ -6,20 +6,24 @@ export interface AdminUser {
   email: string
 }
 
-// Verifies the Supabase session AND the admin_users allowlist.
-// Throws if not authenticated or not an active admin.
+// Verifies signed Supabase claims AND the admin_users allowlist.
+// The request proxy refreshes expired auth cookies before this code runs.
 export async function requireActiveAdmin(supabase: SupabaseClient): Promise<AdminUser> {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error || !user) throw new Error('Not authenticated')
+  const { data: { claims }, error } = await supabase.auth.getClaims()
+  const userId = typeof claims?.sub === 'string' ? claims.sub : null
+  if (error || !userId) throw new Error('Not authenticated')
 
   const db = createAdminClient()
   const { data: row, error: rowErr } = await db
     .from('admin_users')
     .select('active')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle()
 
   if (rowErr || !row?.active) throw new Error('Not authorized')
 
-  return { id: user.id, email: user.email ?? '' }
+  return {
+    id: userId,
+    email: typeof claims.email === 'string' ? claims.email : '',
+  }
 }

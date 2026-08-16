@@ -34,7 +34,6 @@ describe('Pawpaw icon source and generated assets', () => {
   it('contains valid 16px and 32px favicon entries', () => {
     const icon = read('src/app/favicon.ico')
     const entries = faviconEntries(icon)
-
     expect(entries.map(entry => [entry.width, entry.height])).toContainEqual([16, 16])
     expect(entries.map(entry => [entry.width, entry.height])).toContainEqual([32, 32])
     for (const entry of entries) {
@@ -119,19 +118,21 @@ describe('web-app manifest foundation', () => {
     })
   })
 
-  it('uses a native service worker that caches only the harmless app shell', () => {
+  it('uses a native service worker only on the authenticated family archive', () => {
     const packageJson = JSON.parse(read('package.json').toString('utf8')) as {
       dependencies: Record<string, string>
       devDependencies: Record<string, string>
     }
-    const dependencyNames = Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies })
-    const layout = read('src/app/layout.tsx').toString('utf8')
+    const rootLayout = read('src/app/layout.tsx').toString('utf8')
+    const archiveLayout = read('src/app/(archive)/layout.tsx').toString('utf8')
     const controls = read('src/components/pwa/pwa-controls.tsx').toString('utf8')
     const worker = read('public/service-worker.js').toString('utf8')
     const offline = read('public/offline.html').toString('utf8')
 
+    const dependencyNames = Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies })
     expect(dependencyNames.some(name => /workbox|pwa/i.test(name))).toBe(false)
-    expect(layout).toContain('<PwaControls />')
+    expect(rootLayout).not.toContain('PwaControls')
+    expect(archiveLayout).toContain('<PwaControls />')
     expect(controls).toContain("navigator.serviceWorker.register('/service-worker.js')")
     expect(controls).toContain('beforeinstallprompt')
     expect(controls).toContain('navigator.onLine')

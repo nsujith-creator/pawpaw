@@ -6,6 +6,8 @@ const src = join(__dirname, '../../src')
 const read = (path: string) => readFileSync(join(src, path), 'utf8')
 
 const pwaControls = read('components/pwa/pwa-controls.tsx')
+const rootLayout = read('app/layout.tsx')
+const archiveLayout = read('app/(archive)/layout.tsx')
 const globals = read('app/globals.css')
 const chaptersCss = read('app/(archive)/chapters/chapters.module.css')
 
@@ -24,6 +26,12 @@ describe('contextual Pawpaw PWA controls', () => {
     expect(pwaControls).toContain('A new version is ready')
     expect(pwaControls).toContain("navigator.serviceWorker.register('/service-worker.js')")
     expect(pwaControls).toContain("updateWorker?.postMessage({ type: 'SKIP_WAITING' })")
+  })
+
+  it('runs only on authenticated family archive pages, not in Author’s Studio', () => {
+    expect(rootLayout).not.toContain('PwaControls')
+    expect(archiveLayout).toContain("import PwaControls from '@/components/pwa/pwa-controls'")
+    expect(archiveLayout).toContain('<PwaControls />')
   })
 
   it('makes the First Days route visibly distinct in the Chapters empty state', () => {

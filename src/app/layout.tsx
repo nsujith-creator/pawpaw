@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Fraunces, Manrope, Noto_Sans_Malayalam } from 'next/font/google'
-import PwaControls from '@/components/pwa/pwa-controls'
 import './globals.css'
 
 const fraunces = Fraunces({
@@ -43,10 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${fraunces.variable} ${manrope.variable} ${notoSansMalayalam.variable}`}
     >
-      <body>
-        <PwaControls />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

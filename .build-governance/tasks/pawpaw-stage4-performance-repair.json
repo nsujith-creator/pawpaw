@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-stage4-performance-repair",
+  "task_name": "Stage 4 performance and session reliability repair",
+  "owner": "Sujith",
+  "approved_at": "2026-08-16",
+  "status": "in_progress",
+  "baseline_sha": "0822f657675a294da32b417916539bba8c9cb2c3",
+  "user_visible_outcome": "Family and Author's Studio navigation no longer hits the known server-side cookie failure, and Studio destinations use client navigation.",
+  "user_journeys": [
+    "Family member signs in and opens protected archive pages without a server-side auth refresh failure.",
+    "Active administrator moves between Dashboard, Content, Media, and Home without a full document reload.",
+    "PWA install and offline controls remain available in the private family archive but not Author's Studio."
+  ],
+  "non_negotiable_quality": [
+    "Keep the active admin_users allowlist and signed Supabase claims verification.",
+    "Keep private no-store response headers and family viewer protection.",
+    "Do not cache private photographs, content, sessions, or pages."
+  ],
+  "realistic_harms_prevented": [
+    "Repeated cookie-write errors and failed token refreshes that make protected navigation slow or unreliable.",
+    "Unnecessary Studio page reloads that repeat private data and media requests.",
+    "Unneeded PWA controller work in the Author's Studio."
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "Supabase session refresh runs in the request proxy and Server Components no longer write response cookies.",
+      "proof_type": "build",
+      "proof_command": "Vercel production build for the commit"
+    },
+    {
+      "id": "AC-02",
+      "criterion": "Protected server authorization verifies claims and the existing active-admin allowlist remains required.",
+      "proof_type": "inspection",
+      "proof_command": "Review src/lib/auth/admin.ts and src/proxy.ts"
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Author's Studio navigation uses Next Link client transitions and preserves active and accessibility cues.",
+      "proof_type": "unit",
+      "proof_command": "npm run test -- tests/unit/admin-dashboard.test.ts"
+    },
+    {
+      "id": "AC-04",
+      "criterion": "PWA controls run only on authenticated family archive routes; install, offline, and update paths remain unchanged there.",
+      "proof_type": "unit",
+      "proof_command": "npm run test -- tests/unit/pwa-controls.test.ts tests/unit/pwa-foundation.test.ts"
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The release preserves private route response headers and loads the public family and admin login boundaries.",
+      "proof_type": "manual",
+      "proof_command": "Open https://www.heyvarada.in/ and https://www.heyvarada.in/admin after Vercel is READY"
+    }
+  ],
+  "non_goals": [
+    "No database migration, schema change, dependency, paid service, cache policy expansion, or feature stage.",
+    "No change to family passphrase, admin allowlist policy, media delivery, content, publication, or illustration system.",
+    "No promise of instant dynamic data loading or a measured latency target without browser timing evidence."
+  ],
+  "simplest_acceptable_approach": "Refresh Supabase credentials only in the existing request proxy, make Server Component cookie writes safe to ignore, switch four Admin destinations to Next Link, and limit the existing PWA controller to family archive pages.",
+  "allowed_paths": [
+    "src/proxy.ts",
+    "src/lib/supabase/server.ts",
+    "src/lib/auth/admin.ts",
+    "src/components/admin/admin-nav.tsx",
+    "src/app/layout.tsx",
+    "src/app/(archive)/layout.tsx",
+    "tests/unit/admin-dashboard.test.ts",
+    "tests/unit/pwa-controls.test.ts",
+    "tests/unit/pwa-foundation.test.ts",
+    ".build-governance/tasks/pawpaw-stage4-performance-repair.json",
+    ".build-governance/results/pawpaw-stage4-performance-repair.json",
+    ".build-governance/decision-ledger.jsonl"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": true,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": true,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 11,
+    "max_new_files": 2,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 1
+  },
+  "complexity_exception": null,
+  "verification": [
+    "Vercel build must report READY for the source commit.",
+    "Inspect production runtime errors after release for the cookie mutation error trend.",
+    "Owner checks login, one family page, and one Admin sidebar transition."
+  ],
+  "prompt_word_limit": 600
+}
