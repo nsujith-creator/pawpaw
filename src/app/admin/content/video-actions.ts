@@ -52,7 +52,10 @@ export async function refreshVideoStatus(formData: FormData) {
   try {
     const state = await getVideoState(video.cloudflare_uid)
     const { error } = await db.from('video_assets').update({ status: state.status, duration_seconds: state.durationSeconds, updated_at: new Date().toISOString() }).eq('id', videoId)
-    if (error) return { error: 'The video status could not be saved.' }
+    if (error) {
+      console.error('video-status-update-failed', { code: error.code, message: error.message })
+      return { error: 'The video status could not be saved.' }
+    }
     revalidatePath(`/admin/content/${contentId}`)
     return { ok: true as const, status: state.status }
   } catch {

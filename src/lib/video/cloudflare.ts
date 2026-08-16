@@ -1,4 +1,9 @@
 type CloudflareResult<T> = { success: boolean; result?: T }
+
+export function normalizeVideoDurationSeconds(duration: number | undefined) {
+  if (duration === undefined || !Number.isFinite(duration) || duration < 0) return null
+  return Math.ceil(duration)
+}
 const MAX_DURATION_SECONDS = 600
 // Account IDs identify a Cloudflare account but are not credentials. Keeping it
 // here avoids placing a second configuration value in the deployment platform.
@@ -19,7 +24,7 @@ export async function getVideoState(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${normalizeCloudflareUid(cloudflareUid)}`, { headers: authHeaders(apiToken), cache: 'no-store' })
   const body = await response.json() as CloudflareResult<{ readyToStream?: boolean; duration?: number; status?: { state?: string } }>
   if (!response.ok || !body.success || !body.result) throw new Error('Cloudflare Stream could not read the video')
-  return { status: body.result.readyToStream ? 'ready' : body.result.status?.state === 'error' ? 'errored' : 'processing', durationSeconds: body.result.duration ?? null }
+  return { status: body.result.readyToStream ? 'ready' : body.result.status?.state === 'error' ? 'errored' : 'processing', durationSeconds: normalizeVideoDurationSeconds(body.result.duration) }
 }
 export async function deletePrivateVideo(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${normalizeCloudflareUid(cloudflareUid)}`, { method: 'DELETE', headers: authHeaders(apiToken), cache: 'no-store' })

@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "task_id": "pawpaw-video-status-duration-repair",
+  "task_name": "Repair private video status persistence",
+  "owner": "Sujith",
+  "approved_at": "2026-08-16T00:00:00+05:30",
+  "status": "in_progress",
+  "baseline_sha": "0113b3244d1cc5f2a1c498ac004fdcbbc735b0da",
+  "user_visible_outcome": "The existing private video can advance from Uploading to its real Cloudflare processing or ready state without another upload.",
+  "user_journeys": ["An authenticated Admin checks the status of the already attached private birth video."],
+  "non_negotiable_quality": [
+    "Do not delete, replace, duplicate, publish, or re-upload the private video.",
+    "Do not modify any photograph record, caption, alt text, order, placement, or cover selection.",
+    "Keep operational diagnostics free of family content and provider identifiers."
+  ],
+  "realistic_harms_prevented": [
+    "A valid Cloudflare duration is rejected by the integer database column and leaves the video permanently labelled Uploading.",
+    "Repair work accidentally alters approved family photographs or captions."
+  ],
+  "acceptance_criteria": [
+    {"id":"AC-01","criterion":"Finite non-negative Cloudflare durations are normalized to whole seconds before persistence; unavailable or invalid durations remain null.","proof_type":"test","proof_command":"npm run test -- tests/unit/video-cloudflare.test.ts"},
+    {"id":"AC-02","criterion":"A failed status update produces a safe server diagnostic and the existing truthful user message.","proof_type":"inspection","proof_command":"Inspect src/app/admin/content/video-actions.ts."},
+    {"id":"AC-03","criterion":"The production build reaches READY and the existing video status can be refreshed without re-upload or deletion.","proof_type":"runtime","proof_command":"Vercel deployment status plus one owner Check status action."},
+    {"id":"AC-04","criterion":"The five-photo database fingerprint, cover selection, draft status, and attachment count remain unchanged.","proof_type":"database","proof_command":"Compare read-only Supabase fingerprints before and after the live status refresh."}
+  ],
+  "non_goals": [
+    "Change player UI, upload UX, video provider, authentication, image handling, Chapter prose, or publication state.",
+    "Add a migration, dependency, service, queue, retry loop, or automatic status polling."
+  ],
+  "simplest_acceptable_approach": "Normalize Cloudflare's numeric duration at the provider boundary with Math.ceil, retain the existing integer schema, and add one safe diagnostic at the database update boundary.",
+  "allowed_paths": [
+    "src/lib/video/cloudflare.ts",
+    "src/app/admin/content/video-actions.ts",
+    "tests/unit/video-cloudflare.test.ts",
+    ".build-governance/tasks/pawpaw-video-status-duration-repair.json",
+    ".build-governance/results/pawpaw-video-status-duration-repair.json",
+    ".build-governance/decision-ledger.jsonl"
+  ],
+  "capabilities": {"dependencies":false,"migrations":false,"auth":false,"infrastructure":true,"new_services":true,"remote_writes":true,"deletion":false},
+  "complexity_budget": {"max_changed_files":6,"max_new_files":3,"max_migrations":0,"max_new_dependencies":0,"max_new_services":0,"max_implementation_runs":2},
+  "complexity_exception": {
+    "approved_by": "Sujith",
+    "reason": "The scope gate classifies any path containing cloudflare as infrastructure and a new-service change. This repair touches the existing provider adapter only; it creates no service, account, token, configuration, or infrastructure resource.",
+    "criteria": [
+      "No provider configuration, credential, service, migration, or dependency change.",
+      "Only duration normalization at the existing Cloudflare response boundary is allowed."
+    ]
+  },
+  "verification": ["Focused Vitest","Vercel production build","Owner live Check status","Read-only Supabase before/after fingerprint"],
+  "prompt_word_limit": 420
+}
