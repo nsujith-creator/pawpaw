@@ -134,6 +134,7 @@ describe.skipIf(!hasRealCredentials)('PR-004B chapter management (live)', () => 
         recipientDisplayName: null,
         placeText: null,
         relationshipContext: null,
+        visualScene: null,
       })
       expect(validated).toHaveProperty('ok', true)
       if (!('ok' in validated)) continue
