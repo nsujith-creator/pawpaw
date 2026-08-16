@@ -50,7 +50,7 @@
     "Add a dependency, paid service, migration, or permanent image-processing queue.",
     "Retry or delete any previously failed upload."
   ],
-  "simplest_acceptable_approach": "Use the existing Sharp dependency as an external server package and invoke its native CommonJS function directly, while returning typed verification outcomes so infrastructure failures are logged safely and retained instead of misreported as malformed files.",
+  "simplest_acceptable_approach": "Use the existing Sharp dependency as an external native server package and build Pawpaw with Webpack, the compatible Next.js production bundler for this dependency, while retaining typed verification outcomes so infrastructure failures are logged safely and never misreported as malformed files.",
   "allowed_paths": [
     "next.config.ts",
     "src/lib/media/image-metadata.ts",
@@ -74,14 +74,14 @@
     "max_migrations": 0,
     "max_new_dependencies": 0,
     "max_new_services": 0,
-    "max_implementation_runs": 4
+    "max_implementation_runs": 5
   },
   "complexity_exception": {
     "approved_by": "Sujith",
-    "reason": "The owner retry supplied a second precise runtime diagnostic after static import: Sharp's CommonJS export is still transformed into a non-callable default binding ((void 0) is not a function), while the private PNG download is intact. One direct CommonJS invocation correction is required to complete the same approved repair.",
+    "reason": "The production build log and runtime evidence identify a concrete platform cause: Next 16.3.0 is building with Turbopack, whose Sharp path transforms the native module into a non-callable binding despite intact PNG bytes. One build-command switch to Webpack is required for the existing Sharp dependency.",
     "criteria": [
       "No new feature, dependency, migration, service, auth, or data change.",
-      "The correction remains inside the same approved image-verification paths.",
+      "The only product configuration change is the established Next.js Webpack compatibility flag.",
       "A final owner retry remains required before closure."
     ]
   },
