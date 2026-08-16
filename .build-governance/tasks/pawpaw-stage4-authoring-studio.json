@@ -1,0 +1,64 @@
+{
+  "task_id": "pawpaw-stage4-authoring-studio",
+  "title": "Stage 4 Authoring Studio",
+  "owner_authorization": "2026-08-16: Stage 4 approved end to end; do not stop until live.",
+  "desired_outcome": "An active administrator can create, arrange, preview, and publish a private family memory in a calm mobile-capable studio journey instead of navigating repetitive long-form pages.",
+  "risks": [
+    "Accidental publication, data loss, or removal of an immutable published revision",
+    "Private photographs, captions, signed URLs, or video leaking outside active family/admin access",
+    "Breaking existing shared-admin, draft, publication, private-video, logout, or PWA behaviour",
+    "Making the editor less usable on a 375px viewport"
+  ],
+  "non_negotiable_quality": [
+    "Active-admin authorization, origin checks, RLS, private/no-store media handling, signed delivery, and immutable published revisions remain intact",
+    "Family-facing photographs remain contained with meaningful alt text and captions",
+    "Every illustration scene is selected explicitly by the editor; no random selection or inference from prose or photos",
+    "Save draft, preview, publish, unpublish, media order, cover, captions, and private video retain truthful states and confirmations",
+    "Desktop and 375px authoring paths are keyboard-accessible and reduced-motion safe"
+  ],
+  "smallest_viable_approach": [
+    "Restructure existing Admin content editing as a step-based studio flow while reusing current server actions, revision model, media actions, and preview route",
+    "Add one bounded visual_scene field to draft and immutable revision records so the editor can choose from the approved scene manifest",
+    "Render that selected scene on published Chapter surfaces, separate from documentary photography",
+    "Avoid new services, dependencies, public routes, AI inference, or changes to family authentication"
+  ],
+  "non_goals": [
+    "No new CMS or authoring provider",
+    "No random scene rotation, content inference, or access to private photo prose for scene selection",
+    "No change to Family passphrase, active-admin policy, media bucket privacy, PWA service-worker policy, or video provider",
+    "No new paid cost"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "Admin can create or edit a Story, Gallery, Letter, or Moment through a clear sequence: identity and context, story, media, scene, preview, then publication."
+    },
+    {
+      "id": "AC-02",
+      "criterion": "Admin explicitly chooses an approved visual scene for a memory; it persists in the private draft and immutable published revision, and an unmapped/unselected memory has no decorative scene."
+    },
+    {
+      "id": "AC-03",
+      "criterion": "Admin can attach/reorder media, set a cover, edit required alt text and optional captions, and use the existing private video path without leaking signed URLs."
+    },
+    {
+      "id": "AC-04",
+      "criterion": "Preview is a no-store private representation and publish/unpublish preserves existing immutable-revision and family visibility boundaries."
+    },
+    {
+      "id": "AC-05",
+      "criterion": "The live Authoring Studio works at desktop and 375px; verified family surfaces retain login, Leave/logout protection, contained photos, captions, and selected scenes."
+    },
+    {
+      "id": "AC-06",
+      "criterion": "No new dependencies, services, or monthly cost; database change is a forward-only migration with no broadened public grants or RLS policy."
+    }
+  ],
+  "verification_plan": [
+    "Schema inspection and minimal forward-only migration application to the Pawpaw Supabase project",
+    "Focused source verification for editor input, scene persistence, revision snapshot, and family renderer",
+    "Type-check, lint, focused tests, production build, and migration advisors where available",
+    "Authenticated admin desktop and 375px create/edit/preview/publish proof plus family desktop and 375px live check"
+  ],
+  "live_boundary": "Stage 4 is not declared complete until the deployed authoring journey and the resulting family surface are visually and functionally checked."
+}
