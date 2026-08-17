@@ -170,9 +170,8 @@
 }
 
 .photoFrame {
+  width: 100%;
   overflow: hidden;
-  display: table;
-  max-width: 100%;
   margin-inline: auto;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -180,12 +179,22 @@
   box-shadow: 0 1rem 3rem color-mix(in srgb, var(--color-ink) 10%, transparent);
 }
 
+.portraitFrame {
+  width: fit-content;
+  max-width: 100%;
+}
+
 .photo {
-  width: auto;
+  width: 100%;
   height: auto;
   max-width: 100%;
   max-height: min(82dvh, 58rem);
   display: block;
+}
+
+.portraitFrame .photo {
+  width: auto;
+  max-width: min(100%, 34rem);
 }
 
 .figure figcaption,
@@ -270,6 +279,16 @@
     transform: none;
   }
 
+  .photoFrame,
+  .portraitFrame {
+    width: 100%;
+  }
+
+  .portraitFrame .photo {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .photo {
     max-height: 76dvh;
   }
@@ -286,7 +305,8 @@
 }
 
 .video {
-  width: min(100%, 32rem);
+  width: 100%;
+  max-width: 32rem;
   aspect-ratio: 9 / 16;
   margin-inline: auto;
   display: block;
