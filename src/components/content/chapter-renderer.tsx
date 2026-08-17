@@ -16,9 +16,13 @@ function Photo({ item, inline = false }: { item: ChapterMedia; inline?: boolean 
   const className = [styles.figure, inline ? styles.inlineMedia : '', portrait ? styles.portraitFigure : '']
     .filter(Boolean)
     .join(' ')
+  const frameClassName = [styles.photoFrame, portrait ? styles.portraitFrame : '']
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <figure className={className}>
-      <div className={styles.photoFrame}>
+      <div className={frameClassName}>
         {item.signedUrl ? (
           // Signed private media is short-lived and must not be statically optimised.
           // eslint-disable-next-line @next/next/no-img-element
