@@ -483,10 +483,11 @@ describe('responsive editorial chapter media', () => {
     expect(mobileRules).toContain('transform: none')
   })
 
-  it('shrink-wraps portrait photographs and frames the current portrait video vertically', () => {
-    expect(chapterRendererCss).toContain('display: table')
-    expect(chapterRendererCss).toContain('width: auto')
-    expect(chapterRendererCss).toContain('height: auto')
+  it('uses media-sized portrait frames without forced wide panels and keeps video vertical', () => {
+    expect(chapterRenderer).toContain("portrait ? styles.portraitFrame : ''")
+    expect(chapterRendererCss).toContain('width: fit-content')
+    expect(chapterRendererCss).toContain('.portraitFrame .photo')
+    expect(chapterRendererCss).not.toContain('display: table')
     expect(chapterRendererCss).toContain('aspect-ratio: 9 / 16')
     expect(chapterRendererCss).not.toContain('aspect-ratio: 16 / 9')
   })
