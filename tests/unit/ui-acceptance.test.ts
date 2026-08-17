@@ -34,6 +34,7 @@ const chapterRenderer = read('components/content/chapter-renderer.tsx')
 const chapterEditor = read('app/admin/content/chapter-editor.tsx')
 const varadaScenes = read('lib/varada-scenes.ts')
 const varadaScene = read('components/archive/varada-scene.tsx')
+const chapterRendererCss = read('components/content/chapter-renderer.module.css')
 
 describe('Release 2 visual foundation', () => {
   it('loads the three approved font families through the installed Next font support', () => {
@@ -467,5 +468,26 @@ describe('PR-004B family and preview truthfulness', () => {
 
   it('does not emit raw media identifiers from the generic family renderer', () => {
     expect(chapterRenderer).not.toContain('data-media-id')
+  })
+})
+
+
+describe('responsive editorial chapter media', () => {
+  it('uses valid viewport calculations and keeps inline media inside the mobile reading column', () => {
+    expect(chapterRendererCss).toContain('width: min(calc(100% - 2rem), 76rem)')
+    expect(chapterRendererCss).toContain('width: min(calc(100% - 1.5rem), 76rem)')
+    expect(chapterRendererCss).toContain('width: min(calc(100% - 1rem), 44rem)')
+
+    const mobileRules = chapterRendererCss.slice(chapterRendererCss.indexOf('@media (max-width: 35rem)'))
+    expect(mobileRules).toContain('margin-left: auto')
+    expect(mobileRules).toContain('transform: none')
+  })
+
+  it('shrink-wraps portrait photographs and frames the current portrait video vertically', () => {
+    expect(chapterRendererCss).toContain('display: table')
+    expect(chapterRendererCss).toContain('width: auto')
+    expect(chapterRendererCss).toContain('height: auto')
+    expect(chapterRendererCss).toContain('aspect-ratio: 9 / 16')
+    expect(chapterRendererCss).not.toContain('aspect-ratio: 16 / 9')
   })
 })
