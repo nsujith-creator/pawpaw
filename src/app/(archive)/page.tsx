@@ -53,10 +53,7 @@ export default async function HomePage() {
         <section className={styles.prose}>
           <p className={styles.chapterLabel}>Home</p>
           <h1 className={styles.title}>{content.title}</h1>
-          <ContentDateline
-            date={content.publishedAt}
-            context="V was 7 weeks and 2 days old"
-          />
+          <ContentDateline date={content.publishedAt} />
           <div className={styles.bodyCopy}>
             {content.bodyBlocks.map((block, i) => {
               if (block.type === 'heading') {
@@ -84,6 +81,7 @@ export default async function HomePage() {
               sizes="(max-width: 767px) 10rem, 15rem"
               className={styles.character}
             />
+            <p className={styles.characterNote}>She&apos;s keeping an eye on the next chapter.</p>
           </div>
         </section>
       </div>

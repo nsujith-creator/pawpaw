@@ -12,8 +12,10 @@ import styles from '../../admin.module.css'
 
 export default async function EditChapterPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ step?: string }>
 }) {
   const supabase = await createClient()
   try {
@@ -22,6 +24,10 @@ export default async function EditChapterPage({
     redirect('/admin/login')
   }
   const { id } = await params
+  const requestedStep = (await searchParams).step
+  const initialStep = requestedStep === 'story' || requestedStep === 'scene' || requestedStep === 'media' || requestedStep === 'review'
+    ? requestedStep
+    : 'details'
   const result = await getAdminChapter(id)
   if (result.state === 'empty') notFound()
   if (result.state === 'error') {
@@ -60,9 +66,9 @@ export default async function EditChapterPage({
     <div className={styles.pageNarrow}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>{result.content.type} editor</p>
-          <h1 className={styles.pageTitle}>Edit chapter</h1>
-          <p className={styles.lede}>Words, publication, and photographs are saved through the private Author&apos;s Studio.</p>
+          <p className={styles.eyebrow}>Your {result.content.type}</p>
+          <h1 className={styles.pageTitle}>Shape this memory</h1>
+          <p className={styles.lede}>One useful decision at a time. Save whenever you like; family sees nothing new until you share it.</p>
         </div>
         <Link href="/admin/content" className={styles.secondaryAction}>Back to content</Link>
       </header>
@@ -74,6 +80,7 @@ export default async function EditChapterPage({
           existing={result.content}
           replacementCandidates={replacementCandidates}
           attachedVideos={videoResult.videos}
+          initialStep={initialStep}
         />
       </section>
     </div>

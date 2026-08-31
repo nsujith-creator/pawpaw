@@ -18,23 +18,21 @@ export interface MediaLibraryItem {
   attachmentCount: number
   usageTitles: string[]
 }
+
 export interface MediaTarget {
   id: string
   label: string
   type: string
 }
 
-interface Props {
-  items: MediaLibraryItem[]
-  targets: MediaTarget[]
-}
-
-export default function MediaLibraryClient({ items, targets }: Props) {
+export default function MediaLibraryClient({ items, targets }: { items: MediaLibraryItem[]; targets: MediaTarget[] }) {
   const router = useRouter()
+  const [selectedId, setSelectedId] = useState(items[0]?.mediaId ?? '')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [busy, setBusy] = useState(false)
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const selected = items.find(item => item.mediaId === selectedId) ?? items[0]
   const [altDrafts, setAltDrafts] = useState<Record<string, string>>({})
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({})
   const [targetDrafts, setTargetDrafts] = useState<Record<string, string>>({})
@@ -45,142 +43,115 @@ export default function MediaLibraryClient({ items, targets }: Props) {
     setBusy(true)
     try {
       const result = await op()
-      if (result.error) {
-        setError(result.error)
-      } else {
-        router.refresh()
+      if (result.error) setError(result.error)
+      else {
         setSuccess(message)
+        router.refresh()
       }
     } catch {
-      setError('Something went wrong. Please try again.')
+      setError('That did not work this time. Nothing else was changed—please try once more.')
     } finally {
       setBusy(false)
-      setConfirmDeleteId(null)
+      setConfirmDelete(false)
     }
   }
 
-  function saveDetails(item: MediaLibraryItem) {
+  if (!selected) return null
+
+  function saveDetails() {
     const data = new FormData()
-    data.set('media_id', item.mediaId)
-    data.set('alt_text', altDrafts[item.mediaId] ?? item.altText)
-    data.set('caption', captionDrafts[item.mediaId] ?? item.caption ?? '')
-    void run(() => updateMediaDetails(data), 'Photograph details updated.')
+    data.set('media_id', selected.mediaId)
+    data.set('alt_text', altDrafts[selected.mediaId] ?? selected.altText)
+    data.set('caption', captionDrafts[selected.mediaId] ?? selected.caption ?? '')
+    void run(() => updateMediaDetails(data), 'Description and caption saved.')
   }
 
-  function attach(mediaId: string) {
-    const contentId = targetDrafts[mediaId] ?? targets[0]?.id ?? ''
+  function attach() {
+    const contentId = targetDrafts[selected.mediaId] ?? targets[0]?.id ?? ''
     if (!contentId) {
-      setError('Save an eligible content item before attaching this photograph.')
+      setError('Begin and save a memory before adding this photograph to it.')
       return
     }
     const data = new FormData()
-    data.set('media_id', mediaId)
+    data.set('media_id', selected.mediaId)
     data.set('content_id', contentId)
     const target = targets.find(item => item.id === contentId)
-    void run(() => attachMediaToContent(data), `Photograph attached to ${target?.label ?? 'the selected content'}.`)
+    void run(() => attachMediaToContent(data), `Added to ${target?.label ?? 'the selected memory'}.`)
   }
 
-  function deleteForever(mediaId: string) {
+  function removeForever() {
     const data = new FormData()
-    data.set('media_id', mediaId)
+    data.set('media_id', selected.mediaId)
     void run(() => deleteMediaForever(data), 'Photograph permanently deleted.')
   }
 
-  const attached = items.filter(item => item.attachmentCount > 0)
-  const unattached = items.filter(item => item.attachmentCount === 0)
-
-  const renderItem = (item: MediaLibraryItem) => (
-    <article key={item.mediaId} className={styles.mediaRow}>
-      {item.signedUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.signedUrl} alt={item.altText} width={112} height={112} className={styles.mediaThumb} />
-      ) : (
-        <div className={styles.mediaPlaceholder}>preview unavailable</div>
-      )}
-
-      <div className={styles.mediaBody}>
-        <p className={styles.meta}>
-          {item.mimeType ?? 'Unknown type'}{item.sizeLabel ? ` · ${item.sizeLabel}` : ''}{' · '}
-          <span className={item.attachmentCount > 0 ? styles.attachedState : styles.unattachedState}>
-            {item.attachmentCount > 0 ? `Attached to ${item.attachmentCount} page${item.attachmentCount > 1 ? 's' : ''}` : 'Not attached'}
-          </span>
-        </p>
-        <p className={styles.filename}>Added {formatAdminDateTime(item.createdAt)} · File: {item.fileName}</p>
-        <p className={styles.usageText}>{item.usageTitles.length > 0 ? `Used on: ${item.usageTitles.join(', ')}` : 'Usage: not attached to any content'}</p>
-
-        <div className={styles.fieldGroup}>
-          <label htmlFor={`library-alt-${item.mediaId}`} className={styles.fieldLabel}>Alt text for screen readers</label>
-          <input id={`library-alt-${item.mediaId}`} value={altDrafts[item.mediaId] ?? item.altText} onChange={event => setAltDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <label htmlFor={`library-caption-${item.mediaId}`} className={styles.fieldLabel}>Caption (optional)</label>
-          <div className={styles.fieldActionRow}>
-            <input id={`library-caption-${item.mediaId}`} value={captionDrafts[item.mediaId] ?? item.caption ?? ''} onChange={event => setCaptionDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
-            <button type="button" disabled={busy} onClick={() => saveDetails(item)} className={styles.secondaryAction}>Save details</button>
-          </div>
-        </div>
-
-        <div className={styles.mediaTargetControl}>
-          <label htmlFor={`target-${item.mediaId}`} className={styles.fieldLabel}>Attach to content</label>
-          <div className={styles.fieldActionRow}>
-            <select
-              id={`target-${item.mediaId}`}
-              className={styles.select}
-              value={targetDrafts[item.mediaId] ?? targets[0]?.id ?? ''}
-              onChange={event => setTargetDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))}
-              disabled={busy || targets.length === 0}
-            >
-              {targets.length === 0 ? (
-                <option value="">No eligible content</option>
-              ) : targets.map(target => (
-                <option key={target.id} value={target.id}>{target.label} · {target.type}</option>
-              ))}
-            </select>
-            <button type="button" disabled={busy || targets.length === 0} onClick={() => attach(item.mediaId)} className={styles.secondaryAction}>Attach photograph</button>
-          </div>
-        </div>
-
-        <div className={styles.actions}>
-          {confirmDeleteId === item.mediaId ? (
-            <div className={styles.confirmation} role="group" aria-label="Permanent delete confirmation">
-              <span className={styles.confirmationText}>Delete this photograph forever from every use? This cannot be undone.</span>
-              <div className={styles.confirmationActions}>
-                <button type="button" disabled={busy} onClick={() => deleteForever(item.mediaId)} className={styles.dangerAction}>Yes, delete forever</button>
-                <button type="button" disabled={busy} onClick={() => setConfirmDeleteId(null)} className={styles.secondaryAction}>Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <button type="button" disabled={busy} onClick={() => { setError(''); setSuccess(''); setConfirmDeleteId(item.mediaId) }} className={styles.dangerAction}>Delete permanently…</button>
-          )}
-        </div>
-      </div>
-    </article>
-  )
-
   return (
-    <div className={styles.mediaList}>
-      {attached.length > 0 && (
-        <section aria-labelledby="attached-media-title">
-          <div className={styles.sectionHeader}>
-            <h2 id="attached-media-title" className={styles.sectionTitle}>Attached to a page ({attached.length})</h2>
-          </div>
-          <div className={styles.mediaList}>{attached.map(renderItem)}</div>
-        </section>
-      )}
+    <div className={styles.photoShelf}>
+      <div className={styles.photoGrid} role="listbox" aria-label="Photographs">
+        {items.map(item => (
+          <button
+            key={item.mediaId}
+            type="button"
+            role="option"
+            className={styles.photoTile}
+            aria-selected={item.mediaId === selected.mediaId}
+            onClick={() => { setSelectedId(item.mediaId); setError(''); setSuccess(''); setConfirmDelete(false) }}
+          >
+            {item.signedUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={item.signedUrl} alt="" loading="lazy" decoding="async" />
+            ) : <span className={styles.mediaPlaceholder}>Preview resting</span>}
+            <span>{item.caption?.trim() || item.altText?.trim() || 'Untitled photograph'}</span>
+            <small>{item.attachmentCount > 0 ? `In ${item.attachmentCount} memory${item.attachmentCount === 1 ? '' : 's'}` : 'Not used yet'}</small>
+          </button>
+        ))}
+      </div>
 
-      {unattached.length > 0 && (
-        <section aria-labelledby="unattached-media-title">
-          <div className={styles.sectionHeader}>
-            <h2 id="unattached-media-title" className={styles.sectionTitle}>Unattached ({unattached.length})</h2>
-          </div>
-          <p className={styles.informationNotice}>These photographs are saved in the private library but not shown on any page. Choose an owned Home or chapter target to attach one.</p>
-          <div className={styles.mediaList}>{unattached.map(renderItem)}</div>
-        </section>
-      )}
+      <aside className={styles.photoInspector} aria-label="Selected photograph">
+        <div className={styles.photoInspectorImage}>
+          {selected.signedUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={selected.signedUrl} alt={selected.altText} />
+          ) : <div className={styles.mediaPlaceholder}>Preview unavailable</div>}
+        </div>
+        <p className={styles.meta}>Added {formatAdminDateTime(selected.createdAt)} · {selected.sizeLabel || selected.mimeType || 'photograph'}</p>
+        {selected.usageTitles.length > 0 && <p className={styles.usageText}>Appears in {selected.usageTitles.join(', ')}</p>}
 
-      {error && <p role="alert" className={styles.errorNotice}>{error}</p>}
-      {success && <p role="status" className={styles.successNotice}>{success}</p>}
+        <div className={styles.fieldGroup}>
+          <label htmlFor="selected-photo-alt" className={styles.fieldLabel}>What is happening in this photograph?</label>
+          <textarea id="selected-photo-alt" rows={3} value={altDrafts[selected.mediaId] ?? selected.altText} onChange={event => setAltDrafts(drafts => ({ ...drafts, [selected.mediaId]: event.target.value }))} className={styles.textareaCompact} />
+          <p className={styles.help}>A short, natural description helps anyone who cannot see the image clearly.</p>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label htmlFor="selected-photo-caption" className={styles.fieldLabel}>Caption <span className={styles.optional}>(optional)</span></label>
+          <input id="selected-photo-caption" value={captionDrafts[selected.mediaId] ?? selected.caption ?? ''} onChange={event => setCaptionDrafts(drafts => ({ ...drafts, [selected.mediaId]: event.target.value }))} className={styles.field} />
+        </div>
+        <button type="button" disabled={busy} onClick={saveDetails} className={styles.secondaryAction}>Save words</button>
+
+        <div className={styles.attachComposer}>
+          <label htmlFor="selected-photo-target" className={styles.fieldLabel}>Add this photograph to</label>
+          <select id="selected-photo-target" className={styles.select} value={targetDrafts[selected.mediaId] ?? targets[0]?.id ?? ''} onChange={event => setTargetDrafts(drafts => ({ ...drafts, [selected.mediaId]: event.target.value }))} disabled={busy || targets.length === 0}>
+            {targets.length === 0 ? <option value="">No saved memories yet</option> : targets.map(target => <option key={target.id} value={target.id}>{target.label}</option>)}
+          </select>
+          <button type="button" disabled={busy || targets.length === 0} onClick={attach} className={styles.action}>Add to memory</button>
+        </div>
+
+        <div className={styles.photoFeedback} aria-live="polite">
+          {busy && <p role="status" className={styles.informationNotice}>Taking care of that…</p>}
+          {error && <p role="alert" className={styles.errorNotice}>{error}</p>}
+          {success && <p role="status" className={styles.successNotice}>{success}</p>}
+        </div>
+
+        <details className={styles.dangerDetails} open={confirmDelete}>
+          <summary onClick={event => { event.preventDefault(); setConfirmDelete(value => !value) }}>Remove this photograph forever</summary>
+          <p>This removes the original from every memory. It cannot be undone.</p>
+          <div className={styles.confirmationActions}>
+            <button type="button" disabled={busy} onClick={removeForever} className={styles.dangerAction}>Yes, delete forever</button>
+            <button type="button" disabled={busy} onClick={() => setConfirmDelete(false)} className={styles.secondaryAction}>Keep it</button>
+          </div>
+        </details>
+      </aside>
     </div>
   )
 }

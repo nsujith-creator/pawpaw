@@ -2,6 +2,7 @@
   min-height: 100dvh;
   overflow-x: clip;
   background:
+    linear-gradient(90deg, transparent 0 6.5%, rgba(232, 82, 106, 0.045) 6.55% 6.65%, transparent 6.7%),
     radial-gradient(circle at 95% 6%, color-mix(in srgb, var(--color-home-soft) 72%, transparent) 0 9rem, transparent 9.1rem),
     var(--color-canvas);
 }
@@ -156,6 +157,7 @@
 }
 
 .characterStage {
+  position: relative;
   margin-top: 1rem;
   display: flex;
   align-items: end;
@@ -165,6 +167,22 @@
 
 .character {
   width: min(15rem, 72%);
+}
+
+.characterNote {
+  position: absolute;
+  right: 8rem;
+  bottom: 0.5rem;
+  max-width: 12rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--color-home-primary) 18%, var(--color-border));
+  border-radius: 1rem 1rem 0.15rem 1rem;
+  background: var(--color-paper);
+  color: var(--color-home-on-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+  transform: rotate(-2deg);
 }
 
 @media (max-width: 899px) {
@@ -186,6 +204,8 @@
   .character {
     width: min(12rem, 52%);
   }
+
+  .characterNote { right: 6rem; }
 }
 
 @media (max-width: 479px) {
@@ -213,4 +233,6 @@
   .character {
     width: min(10rem, 52%);
   }
+
+  .characterNote { right: 5.5rem; bottom: 0; max-width: 9rem; font-size: 0.66rem; }
 }

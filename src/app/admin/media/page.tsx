@@ -60,7 +60,7 @@ export default async function MediaLibraryPage({
     return (
       <div className={styles.page}>
         <p className={styles.eyebrow}>Photograph desk</p>
-        <h1 className={styles.pageTitle}>Media library</h1>
+        <h1 className={styles.pageTitle}>Photo shelf</h1>
         <p role="alert" className={styles.errorNotice}>The media list could not be loaded right now. Refresh the page to try again.</p>
       </div>
     )
@@ -122,9 +122,9 @@ export default async function MediaLibraryPage({
     <div className={styles.page}>
       <header className={styles.splitHeader}>
         <div>
-          <p className={styles.eyebrow}>Photograph desk</p>
-          <h1 className={styles.pageTitle}>Media library</h1>
-          <p className={styles.lede}>Review the private photographs already saved in Pawpaw and where each one is used.</p>
+          <p className={styles.eyebrow}>Your visual memory box</p>
+          <h1 className={styles.pageTitle}>Photo shelf</h1>
+          <p className={styles.lede}>Choose a photograph, give it useful words, and add it to a memory. One photograph at a time.</p>
         </div>
         <span className={styles.countNote}>{items.length} of {baseItems.length} file{baseItems.length !== 1 ? 's' : ''}</span>
       </header>

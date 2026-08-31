@@ -6,6 +6,7 @@
   margin: 0 auto;
   padding: clamp(2rem, 6vw, 6rem) 0 clamp(4rem, 9vw, 8rem);
   color: var(--color-ink);
+  background: linear-gradient(90deg, transparent 0 3%, color-mix(in srgb, var(--chapter-primary) 5%, transparent) 3.05% 3.14%, transparent 3.2%);
 }
 
 .story {
@@ -189,6 +190,7 @@
   height: auto;
   max-width: 100%;
   max-height: min(82dvh, 58rem);
+  object-fit: contain;
   display: block;
 }
 
@@ -316,3 +318,22 @@
   box-shadow: 0 1rem 3rem color-mix(in srgb, var(--color-ink) 10%, transparent);
 }
 
+.ending {
+  width: min(100%, 45rem);
+  margin: clamp(5rem, 11vw, 9rem) auto 0;
+  padding: clamp(2rem, 6vw, 4rem);
+  border: 1px solid color-mix(in srgb, var(--chapter-primary) 25%, var(--color-border));
+  border-radius: var(--radius-xl);
+  background: radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--chapter-primary) 14%, transparent) 0 5rem, transparent 5.1rem), var(--color-paper);
+  text-align: center;
+  box-shadow: var(--shadow-float);
+}
+.endingMark { color: var(--chapter-primary); font-size: 1.5rem; }
+.endingTitle { margin-top: 0.5rem; font-family: var(--font-display), Georgia, serif; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.05; letter-spacing: -0.035em; }
+.endingCopy { max-width: 34rem; margin: 1rem auto 0; color: var(--color-ink-secondary); line-height: 1.7; }
+.endingLinks { margin-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; }
+.endingLinks a { min-height: 2.9rem; display: inline-flex; align-items: center; padding: 0.65rem 0.9rem; border: 1px solid color-mix(in srgb, var(--chapter-primary) 35%, var(--color-border)); border-radius: 0.8rem; color: var(--chapter-on-soft); font-size: 0.85rem; font-weight: 700; transition: transform var(--motion-fast) var(--motion-ease-out), box-shadow var(--motion-fast) var(--motion-ease-out); }
+.endingLinks a:first-child { background: var(--chapter-on-soft); color: var(--color-paper); }
+.endingLinks a:hover { transform: translateY(-2px); box-shadow: var(--shadow-float); }
+
+@media (prefers-reduced-motion: reduce) { .endingLinks a:hover { transform: none; } }

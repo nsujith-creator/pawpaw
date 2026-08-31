@@ -1,59 +1,23 @@
-'use client'
-
-import { useActionState } from 'react'
-import { loginAdmin } from './actions'
+import VaradaScene from '@/components/archive/varada-scene'
+import AdminLoginForm from './admin-login-form'
 import styles from '../admin.module.css'
 
-export default function AdminLoginPage() {
-  const [state, formAction, pending] = useActionState(loginAdmin, { error: '' })
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const callbackFailed = (await searchParams).error === 'auth_callback_failed'
 
   return (
     <div className={styles.loginPage}>
-      <section className={styles.loginCard} aria-labelledby="admin-sign-in-title">
-        <p className={styles.eyebrow}>Private workspace</p>
-        <h1 id="admin-sign-in-title" className={styles.loginTitle}>Admin sign in</h1>
-        <p className={styles.loginIntro}>Enter the studio to write, organise photographs, and publish Pawpaw.</p>
-        <form action={formAction} className={styles.formStack}>
-          <div className={styles.fieldGroup}>
-          <label htmlFor="email" className={styles.fieldLabel}>
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className={styles.field}
-          />
-          </div>
-          <div className={styles.fieldGroup}>
-          <label htmlFor="password" className={styles.fieldLabel}>
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            className={styles.field}
-          />
-          </div>
-          {state.error && (
-            <p role="alert" className={styles.errorNotice}>
-              {state.error}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={pending}
-            className={`${styles.action} ${styles.loginSubmit}`}
-          >
-            {pending ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+      <section className={styles.loginWelcome}>
+        <p className={styles.eyebrow}>Pawpaw author’s studio</p>
+        <h1 className={styles.loginWelcomeTitle}>Make the next page worth finding.</h1>
+        <p>Write the memory. Choose the moments. See it exactly as family will. The machinery can stay backstage.</p>
+        <VaradaScene sceneId="artist" sizes="(max-width: 720px) 11rem, 20rem" className={styles.loginCharacter} />
       </section>
+      <AdminLoginForm callbackFailed={callbackFailed} />
     </div>
   )
 }

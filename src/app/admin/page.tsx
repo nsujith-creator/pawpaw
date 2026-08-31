@@ -69,7 +69,7 @@ export default async function AdminDashboard({
     return (
       <div className={styles.page}>
         <p className={styles.eyebrow}>Author&apos;s studio</p>
-        <h1 className={styles.pageTitle}>Dashboard</h1>
+        <h1 className={styles.pageTitle}>Today in Pawpaw</h1>
         <p role="alert" className={styles.errorNotice}>
           Dashboard data could not be loaded right now. Refresh the page to try again.
         </p>
@@ -142,8 +142,8 @@ export default async function AdminDashboard({
       <header className={styles.pageHeader}>
         <div>
           <p className={styles.eyebrow}>Author&apos;s studio</p>
-          <h1 className={styles.pageTitle}>Dashboard</h1>
-          <p className={styles.lede}>The book is safe. Here is what is ready, what is live, and what needs attention.</p>
+          <h1 className={styles.pageTitle}>Today in Pawpaw</h1>
+          <p className={styles.lede}>Pick up a memory, begin a new one, or simply see what the family can already enjoy.</p>
         </div>
       </header>
 
@@ -164,13 +164,13 @@ export default async function AdminDashboard({
 
       <div className={styles.dashboardGrid}>
         <section className={styles.panel} aria-labelledby="continue-editing-title">
-          <h2 id="continue-editing-title" className={styles.sectionTitle}>Start or continue a memory</h2>
-          <p className={styles.help}>Create the story first, then choose its scene, arrange media, preview, and publish when it is ready for family.</p>
-          <p><Link href="/admin/content/new" className={styles.action}>Create a memory</Link></p>
+          <h2 id="continue-editing-title" className={styles.sectionTitle}>What would you like to remember?</h2>
+          <p className={styles.help}>A few honest lines are enough. Photographs, mood, and sharing come when you are ready.</p>
+          <p><Link href="/admin/content/new" className={styles.action}>Begin a memory</Link></p>
           <div className={styles.quickLinks}>
-            <a href="/admin/home" className={styles.quickLink}>Home page</a>
-            <Link href="/admin/content" className={styles.quickLink}>Content library</Link>
-            <a href="/admin/media" className={styles.quickLink}>Media library</a>
+            <a href="/admin/home" className={styles.quickLink}>Shape the welcome page</a>
+            <Link href="/admin/content" className={styles.quickLink}>Return to a memory</Link>
+            <a href="/admin/media" className={styles.quickLink}>Find a photograph</a>
           </div>
         </section>
 

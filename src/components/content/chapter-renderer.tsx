@@ -1,5 +1,6 @@
 import type { ChapterContent, ChapterMedia } from '@/lib/content/chapters'
 import type { PublishedVideo } from '@/lib/video/published-videos'
+import Link from 'next/link'
 import VaradaScene from '@/components/archive/varada-scene'
 import styles from './chapter-renderer.module.css'
 
@@ -32,6 +33,8 @@ function Photo({ item, inline = false }: { item: ChapterMedia; inline?: boolean 
             width={item.width ?? undefined}
             height={item.height ?? undefined}
             className={styles.photo}
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className={styles.unavailable} role="img" aria-label={item.altText}>
@@ -142,6 +145,17 @@ export default function ChapterRenderer({ content, mediaState, preview = false, 
         <section className={styles.videoGallery} aria-label="Chapter videos">
           {videos.filter(video => !placedVideos.has(video.id)).map(video => <Video key={video.id} item={video} />)}
         </section>
+      )}
+      {!preview && (
+        <footer className={styles.ending}>
+          <p className={styles.endingMark} aria-hidden="true">✦</p>
+          <p className={styles.endingTitle}>Keep wandering.</p>
+          <p className={styles.endingCopy}>One memory ends. Another is already peeking around the corner.</p>
+          <div className={styles.endingLinks}>
+            <Link href="/chapters">Choose another chapter</Link>
+            <Link href="/">Return Home</Link>
+          </div>
+        </footer>
       )}
     </article>
   )

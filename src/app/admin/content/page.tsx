@@ -122,14 +122,14 @@ export default async function ContentLibraryPage({
     <div className={styles.page}>
       <header className={styles.splitHeader}>
         <div>
-          <p className={styles.eyebrow}>Studio records</p>
-          <h1 className={styles.pageTitle}>Content library</h1>
-          <p className={styles.lede}>Find every saved page and see what is still a draft or already published.</p>
+          <p className={styles.eyebrow}>Every page you’ve begun</p>
+          <h1 className={styles.pageTitle}>Memories</h1>
+          <p className={styles.lede}>Find an old thread, continue a draft, or begin something new for Varada.</p>
         </div>
         <Link href="/admin/content/new" className={styles.action}>Create a memory</Link>
       </header>
       <p className={styles.informationNotice}>
-        Start with a Story for writing, a Gallery for a photo-led memory, or a Moment for a dated milestone. Save a private draft first; then add photographs, preview, and publish when it is ready. Letters are not ready to publish yet.
+        Choose Story for words, Gallery when photographs lead, Letter for something she may read one day, or Moment for a dated milestone. Write, add moments, preview, then share when it feels right.
       </p>
 
       <form method="GET" className={`${styles.filterBar} ${styles.filterBarCompact}`}>

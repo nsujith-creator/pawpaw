@@ -17,19 +17,23 @@ export async function loginAdmin(
   const headersList = await headers()
   checkOrigin(headersList)
 
-  const email    = (formData.get('email')    as string | null) ?? ''
+  const email    = ((formData.get('email')    as string | null) ?? '').trim()
   const password = (formData.get('password') as string | null) ?? ''
+
+  if (!email || !password) {
+    return { error: 'Add your email and password to open the studio.' }
+  }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) return { error: 'Invalid credentials.' }
+  if (error) return { error: 'Those details did not open the studio. Check them and try again.' }
 
   try {
     await requireActiveAdmin(supabase)
   } catch {
     await supabase.auth.signOut()
-    return { error: 'Access denied. This account is not an administrator.' }
+    return { error: 'This account does not have a writing desk in Pawpaw.' }
   }
 
   redirect('/admin')

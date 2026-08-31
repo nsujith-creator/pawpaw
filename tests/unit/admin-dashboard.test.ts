@@ -94,15 +94,15 @@ describe('admin dashboard', () => {
 })
 
 describe('admin navigation', () => {
-  it('renders Dashboard, Content, Media, and Home page links', () => {
+  it('uses human, task-shaped names for the four Studio destinations', () => {
     expect(adminNav).toContain("'/admin'")
     expect(adminNav).toContain("'/admin/content'")
     expect(adminNav).toContain("'/admin/media'")
     expect(adminNav).toContain("'/admin/home'")
-    expect(adminNav).toContain('Dashboard')
-    expect(adminNav).toContain('Content')
-    expect(adminNav).toContain('Media')
-    expect(adminNav).toContain('Home page')
+    expect(adminNav).toContain('Today')
+    expect(adminNav).toContain('Memories')
+    expect(adminNav).toContain('Photo shelf')
+    expect(adminNav).toContain('Welcome page')
   })
 
   it('uses client-side Next navigation for Studio destinations', () => {
