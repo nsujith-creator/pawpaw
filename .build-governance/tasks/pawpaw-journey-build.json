@@ -105,6 +105,7 @@
     ".build-governance/**",
     "src/app/**",
     "src/components/**",
+    "src/lib/auth/origin.ts",
     "src/lib/varada-scenes.ts",
     "public/offline.html",
     "tests/unit/**",
