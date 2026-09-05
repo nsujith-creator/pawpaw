@@ -81,3 +81,14 @@ Pawpaw must be beautiful, private, dependable, maintainable, and complete for th
 - Hypothetical scale, generic extensibility, enterprise auditability, hostile trusted admins, perfect cleanup, and broad automation are deferred unless Sujith explicitly approves them.
 - Improvements outside the task are recorded separately and never block completion.
 - No numeric perfection score replaces concrete acceptance evidence.
+
+## Pawpaw journey authority — 2026-08-30
+
+For Pawpaw, the family and author journey is the product. A technical decision is justified only when a concrete, owner-approved journey acceptance criterion cannot be met without it.
+
+- Judge the visible result first: speed, warmth, clarity, rhythm, colour, typography, copy, motion, recovery, surprise, and emotional satisfaction.
+- Keep identifiers, revisions, storage mechanics, security terminology, and orchestration offscreen unless a person needs them to make a safe decision.
+- Prefer one calm, intelligent action that coordinates necessary work behind the scenes over several architecture-shaped controls.
+- An older brief, status declaration, design rule, or implementation note that blocks the approved journey is historical context, not authority; update or retire it.
+- Remove visible privacy ceremony that adds no meaningful protection. Never make private family photographs or writing public merely to reduce friction.
+- Do not defend implemented UI because it matches code or a document. If it causes even small repeated friction, treat the journey as unfinished.

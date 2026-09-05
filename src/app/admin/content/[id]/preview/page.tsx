@@ -42,9 +42,10 @@ export default async function ChapterPreviewPage({
   return (
     <div className={styles.previewSurface}>
       <div className={styles.previewBanner} role="status">
-        <strong>Private preview — not visible to family</strong>
-        <span>Current private draft only. Previewing does not publish it; family continues to receive only the selected immutable revision.</span>
-        <a href={`/admin/content/${result.content.id}`} className={styles.secondaryAction}>Edit chapter</a>
+        <strong>This is the family view.</strong>
+        <span>Only you can see this preview. When it feels right, return to the final step to share it.</span>
+        <a href={`/admin/content/${result.content.id}?step=review`} className={styles.action}>Looks good — back to share</a>
+        <a href={`/admin/content/${result.content.id}?step=story`} className={styles.secondaryAction}>Keep editing</a>
       </div>
       <ChapterRenderer
         content={result.content}

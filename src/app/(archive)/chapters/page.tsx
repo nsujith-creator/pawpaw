@@ -62,7 +62,7 @@ export default async function ChaptersPage() {
                     {item.cover ? (
                       // Signed private media is short-lived and must not be statically optimised.
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.cover.signedUrl} alt={item.cover.altText} />
+                      <img src={item.cover.signedUrl} alt={item.cover.altText} loading="lazy" decoding="async" />
                     ) : (
                       <div className={styles.placeholder} aria-hidden="true">
                         <span>{TYPE_LABELS[item.type] ?? item.type}</span>
@@ -76,7 +76,7 @@ export default async function ChaptersPage() {
                     {item.eventDate && item.eventDatePrecision && <p className={styles.date}>{formatEventDate(item.eventDate, item.eventDatePrecision, item.eventDateIsApproximate)}</p>}
                     {item.authorDisplayName && <p className={styles.date}>By {item.authorDisplayName}</p>}
                     {item.recipientDisplayName && <p className={styles.date}>For {item.recipientDisplayName}</p>}
-                    <span className={styles.read}>Read chapter →</span>
+                    <span className={styles.read}>Open this memory <span aria-hidden="true">→</span></span>
                   </div>
                 </Link>
               </article>

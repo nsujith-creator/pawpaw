@@ -189,8 +189,8 @@ describe('attached-photo management', () => {
   })
 
   it('edits alt text and caption as separate labelled fields', () => {
-    expect(attachments).toContain('Alt text for screen readers (required, not shown on the page)')
-    expect(attachments).toContain('Caption shown with the photo (optional)')
+    expect(attachments).toContain('Describe the photograph for anyone who cannot see it clearly')
+    expect(attachments).toContain('Words beneath this photograph')
     expect(attachments).toContain('Caption for photo')
   })
 
@@ -215,19 +215,19 @@ describe('attached-photo management', () => {
   })
 
   it('offers edit, reorder, detach, and permanent-delete controls', () => {
-    expect(attachments).toContain('Save details')
+    expect(attachments).toContain('Save words')
     expect(attachments).toContain('Move earlier')
     expect(attachments).toContain('Move later')
-    expect(attachments).toContain('>Detach<')
+    expect(attachments).toContain('Remove from this memory')
     expect(attachments).toContain('Replace photograph')
     expect(attachments).toContain('Set as cover')
-    expect(attachments).toContain('Delete permanently')
+    expect(attachments).toContain('Delete from Pawpaw forever')
   })
 
   it('permanent delete requires an explicit confirmation step', () => {
     expect(attachments).toContain('confirmDeleteId')
     expect(attachments).toContain('Yes, delete forever')
-    expect(attachments).toContain('Cancel')
+    expect(attachments).toContain('Keep it')
     // The destructive action fires only from the confirmation branch.
     const confirmBranch = attachments.indexOf('confirmDeleteId === item.mediaId')
     const deleteCall    = attachments.indexOf('deleteForever(item.mediaId)')
@@ -354,7 +354,7 @@ describe('bounded carousel ambient surface', () => {
 describe('Release 2 bounded Home treatment', () => {
   it('renders one semantic Home dateline from publishedAt without rewriting database prose', () => {
     expect(viewerPage).toContain('date={content.publishedAt}')
-    expect(viewerPage).toContain('context="V was 7 weeks and 2 days old"')
+    expect(viewerPage).not.toContain('V was 7 weeks and 2 days old')
     expect(contentDateline.match(/<time\b/g)).toHaveLength(1)
     expect(contentDateline).toContain('dateTime={date}')
     expect(viewerPage).not.toContain('7 weeks and 2 days to the day today.')
@@ -412,13 +412,13 @@ describe('viewer logout control', () => {
 })
 
 describe('Stage 4 authoring-studio journey', () => {
-  it('keeps a clear details, story, scene, media, and review flow in the chapter editor', () => {
+  it('keeps a clear shape, writing, mood, moments, and sharing flow in the chapter editor', () => {
     expect(chapterEditor).toContain('aria-label="Memory authoring steps"')
-    expect(chapterEditor).toContain('id="memory-details"')
-    expect(chapterEditor).toContain('id="memory-story"')
-    expect(chapterEditor).toContain('id="memory-scene"')
-    expect(chapterEditor).toContain('id="memory-media"')
-    expect(chapterEditor).toContain('id="memory-review"')
+    expect(chapterEditor).toContain("{ id: 'details', label: 'Shape it'")
+    expect(chapterEditor).toContain("{ id: 'story', label: 'Write it'")
+    expect(chapterEditor).toContain("{ id: 'scene', label: 'Give it mood'")
+    expect(chapterEditor).toContain("{ id: 'media', label: 'Add moments'")
+    expect(chapterEditor).toContain("{ id: 'review', label: 'See & share'")
   })
 
   it('requires an explicit approved scene choice and keeps illustrations decorative', () => {
@@ -441,9 +441,10 @@ describe('PR-004B family and preview truthfulness', () => {
 
   it('explains each memory format and the simple writing-to-photographs sequence', () => {
     expect(chapterEditor).toContain('TYPE_GUIDANCE')
-    expect(chapterEditor).toContain('Write the memory')
-    expect(chapterEditor).toContain('Add a paragraph for the story')
-    expect(chapterEditor).toContain('Save this first private draft to unlock photograph upload')
+    expect(chapterEditor).toContain('Write it')
+    expect(chapterEditor).toContain('Add moments')
+    expect(chapterEditor).toContain('Making room for your photographs')
+    expect(chapterEditor).toContain("await submit('save', nextStep)")
   })
 
   it('keeps a truthful Chapters empty state in the real index branch', () => {
@@ -462,7 +463,7 @@ describe('PR-004B family and preview truthfulness', () => {
     expect(chapterPreview).toContain("export const dynamic = 'force-dynamic'")
     expect(chapterPreview).toContain('noStore()')
     expect(chapterPreview).toContain('robots: { index: false, follow: false }')
-    expect(chapterPreview).toContain('Private preview — not visible to family')
+    expect(chapterPreview).toContain('This is the family view')
     expect(chapterPreview).toContain('<ChapterRenderer')
   })
 

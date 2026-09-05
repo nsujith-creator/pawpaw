@@ -6,7 +6,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
 import {
   filterAndSortContent,
-  derivePublicationState,
   formatAdminDateTime,
   parseContentFilters,
   publishedTimestamp,
@@ -14,6 +13,12 @@ import {
   type AttachmentCandidate,
   type ContentViewItem,
 } from '@/lib/admin/library-view'
+import {
+  draftMatchesRevision,
+  type ChapterRow,
+  type RevisionMediaRow,
+  type RevisionRow,
+} from '@/lib/content/chapters'
 import styles from './admin.module.css'
 
 interface DashboardAttachmentRow {
@@ -51,10 +56,15 @@ export default async function AdminDashboard({
     db
       .from('content_items')
       .select(`
-        id, type, title, status, updated_at, published_at, active_published_revision_id,
+        id, type, slug, title, summary, body_blocks, status, cover_media_id,
+        published_at, active_published_revision_id,
+        event_date, event_date_precision, event_date_is_approximate,
+        authored_date, authored_date_precision, authored_date_is_approximate,
+        author_display_name, recipient_display_name, place_text, relationship_context,
+        visual_scene, created_at, updated_at, created_by,
         content_media (
-          sort_order,
-          media_assets (id, storage_path, alt_text)
+          sort_order, caption_override, placement,
+          media_assets (id, storage_path, alt_text, caption, width, height, mime_type, byte_size)
         )
       `)
       .order('updated_at', { ascending: false })
@@ -69,7 +79,7 @@ export default async function AdminDashboard({
     return (
       <div className={styles.page}>
         <p className={styles.eyebrow}>Author&apos;s studio</p>
-        <h1 className={styles.pageTitle}>Dashboard</h1>
+        <h1 className={styles.pageTitle}>Today in Pawpaw</h1>
         <p role="alert" className={styles.errorNotice}>
           Dashboard data could not be loaded right now. Refresh the page to try again.
         </p>
@@ -78,14 +88,21 @@ export default async function AdminDashboard({
   }
 
   const revisionIds = (contentResult.data ?? []).map(row => row.active_published_revision_id).filter((id): id is string => Boolean(id))
-  const revisionDates = new Map<string, string>()
+  const revisionMap = new Map<string, RevisionRow & { content_revision_media: RevisionMediaRow[] }>()
   if (revisionIds.length > 0) {
-    const revisions = await db.from('content_revisions').select('id, created_at').in('id', revisionIds)
+    const revisions = await db.from('content_revisions').select(`
+      id, content_item_id, revision_number, type, slug, title, summary, body_blocks,
+      cover_media_id, event_date, event_date_precision, event_date_is_approximate,
+      authored_date, authored_date_precision, authored_date_is_approximate,
+      author_display_name, recipient_display_name, place_text, relationship_context,
+      visual_scene, created_at, created_by,
+      content_revision_media!content_revision_media_revision_id_fkey (revision_id, media_id, sort_order, caption_override, placement, storage_path, alt_text, caption, width, height, mime_type, byte_size)
+    `).in('id', revisionIds)
     if (revisions.error) {
       console.error('AdminDashboard revision query failed:', revisions.error)
       return <div className={styles.page}><p role="alert" className={styles.errorNotice}>Publication state could not be loaded safely.</p></div>
     }
-    for (const revision of revisions.data ?? []) revisionDates.set(revision.id, revision.created_at)
+    for (const revision of revisions.data ?? []) revisionMap.set(revision.id, revision as unknown as RevisionRow & { content_revision_media: RevisionMediaRow[] })
   }
 
   const allItems: DashboardItem[] = (contentResult.data ?? []).map(row => {
@@ -98,16 +115,38 @@ export default async function AdminDashboard({
         altText: attachment.media_assets.alt_text,
       } : null,
     })))
+    const active = row.active_published_revision_id ? revisionMap.get(row.active_published_revision_id) ?? null : null
+    const draftMedia: RevisionMediaRow[] = ((row.content_media ?? []) as unknown as Array<{
+      sort_order: number
+      caption_override: string | null
+      placement: string | null
+      media_assets: Omit<RevisionMediaRow, 'media_id' | 'sort_order' | 'caption_override'> & { id: string } | null
+    }>).flatMap(attachment => attachment.media_assets ? [{
+      revision_id: undefined,
+      media_id: attachment.media_assets.id,
+      sort_order: attachment.sort_order,
+      caption_override: attachment.caption_override,
+      placement: attachment.placement,
+      storage_path: attachment.media_assets.storage_path,
+      alt_text: attachment.media_assets.alt_text,
+      caption: attachment.media_assets.caption,
+      width: attachment.media_assets.width,
+      height: attachment.media_assets.height,
+      mime_type: attachment.media_assets.mime_type,
+      byte_size: attachment.media_assets.byte_size,
+    }] : [])
+    const status: ContentViewItem['status'] = row.type === 'home'
+      ? row.status === 'published' ? 'published' : 'unpublished'
+      : !active ? 'unpublished'
+        : draftMatchesRevision(row as unknown as ChapterRow, draftMedia, active, active.content_revision_media ?? []) ? 'published' : 'published-draft'
 
     return {
       id: row.id,
       title: row.title,
       type: row.type,
-      status: row.type === 'home'
-        ? row.status === 'published' ? 'published' : 'unpublished'
-        : derivePublicationState(row.active_published_revision_id, row.updated_at, row.active_published_revision_id ? revisionDates.get(row.active_published_revision_id) ?? null : null),
+      status,
       updatedAt: row.updated_at,
-      publishedAt: row.type === 'home' ? row.published_at : row.active_published_revision_id ? revisionDates.get(row.active_published_revision_id) ?? null : null,
+      publishedAt: row.type === 'home' ? row.published_at : active?.created_at ?? null,
       attachedMediaCount: summary.count,
       firstMedia: summary.first,
     }
@@ -142,8 +181,8 @@ export default async function AdminDashboard({
       <header className={styles.pageHeader}>
         <div>
           <p className={styles.eyebrow}>Author&apos;s studio</p>
-          <h1 className={styles.pageTitle}>Dashboard</h1>
-          <p className={styles.lede}>The book is safe. Here is what is ready, what is live, and what needs attention.</p>
+          <h1 className={styles.pageTitle}>Today in Pawpaw</h1>
+          <p className={styles.lede}>Pick up a memory, begin a new one, or simply see what the family can already enjoy.</p>
         </div>
       </header>
 
@@ -164,13 +203,13 @@ export default async function AdminDashboard({
 
       <div className={styles.dashboardGrid}>
         <section className={styles.panel} aria-labelledby="continue-editing-title">
-          <h2 id="continue-editing-title" className={styles.sectionTitle}>Start or continue a memory</h2>
-          <p className={styles.help}>Create the story first, then choose its scene, arrange media, preview, and publish when it is ready for family.</p>
-          <p><Link href="/admin/content/new" className={styles.action}>Create a memory</Link></p>
+          <h2 id="continue-editing-title" className={styles.sectionTitle}>What would you like to remember?</h2>
+          <p className={styles.help}>A few honest lines are enough. Photographs, mood, and sharing come when you are ready.</p>
+          <p><Link href="/admin/content/new" className={styles.action}>Begin a memory</Link></p>
           <div className={styles.quickLinks}>
-            <a href="/admin/home" className={styles.quickLink}>Home page</a>
-            <Link href="/admin/content" className={styles.quickLink}>Content library</Link>
-            <a href="/admin/media" className={styles.quickLink}>Media library</a>
+            <a href="/admin/home" className={styles.quickLink}>Shape the welcome page</a>
+            <Link href="/admin/content" className={styles.quickLink}>Return to a memory</Link>
+            <a href="/admin/media" className={styles.quickLink}>Find a photograph</a>
           </div>
         </section>
 

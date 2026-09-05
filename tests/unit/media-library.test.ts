@@ -51,10 +51,9 @@ describe('media library server page', () => {
     expect(mediaLibraryPage).toContain('No media matches these filters')
   })
 
-  it('passes only a safe filename and signed URL to the client', () => {
+  it('passes only a safe filename and signed URL to the client without exposing storage paths', () => {
     expect(mediaLibraryPage).toContain('safeStorageBasename')
     expect(mediaLibraryPage).toContain('generateSignedUrl')
-    expect(mediaLibraryClient).toContain('item.fileName')
     expect(mediaLibraryClient).not.toContain('storagePath')
   })
 })
@@ -62,12 +61,16 @@ describe('media library server page', () => {
 describe('media library client component', () => {
   it('offers a real target selector for Home and owned chapters', () => {
     expect(mediaLibraryClient).toContain('attachMediaToContent')
-    expect(mediaLibraryClient).toContain('Attach to content')
+    expect(mediaLibraryClient).toContain('Add this photograph to')
+    expect(mediaLibraryClient).toContain('Add to memory')
     expect(mediaLibraryClient).toContain('targets.map')
+    expect(mediaLibraryClient).toContain('Choose a memory…')
+    expect(mediaLibraryClient).not.toContain("targets[0]?.id")
   })
 
   it('offers a permanent delete with a confirmation step', () => {
-    expect(mediaLibraryClient).toContain('confirmDeleteId')
+    expect(mediaLibraryClient).toContain('confirmDelete')
+    expect(mediaLibraryClient).toContain('Remove this photograph forever')
     expect(mediaLibraryClient).toContain('Yes, delete forever')
     expect(mediaLibraryClient).toContain('deleteMediaForever')
   })
@@ -88,13 +91,13 @@ describe('media library client component', () => {
 
   it('shows how many pages each photo is attached to', () => {
     expect(mediaLibraryClient).toContain('attachmentCount')
-    expect(mediaLibraryClient).toContain('Not attached')
+    expect(mediaLibraryClient).toContain('Not used yet')
   })
 
   it('renders creation date and exact usage titles', () => {
-    expect(mediaLibraryClient).toContain('formatAdminDateTime(item.createdAt)')
-    expect(mediaLibraryClient).toContain('item.usageTitles.join')
-    expect(mediaLibraryClient).toContain('Usage: not attached to any content')
+    expect(mediaLibraryClient).toContain('formatAdminDateTime(selected.createdAt)')
+    expect(mediaLibraryClient).toContain('selected.usageTitles.join')
+    expect(mediaLibraryClient).toContain('Appears in')
   })
 })
 
@@ -138,18 +141,18 @@ describe('attachMediaToHome server action', () => {
   })
 })
 
-describe('media library client — Attached and Unattached sections', () => {
-  it('renders an "Attached to a page" section heading for photos on at least one page', () => {
-    expect(mediaLibraryClient).toContain('Attached to a page')
+describe('media library client — calm photo shelf', () => {
+  it('shows a selectable thumbnail shelf with one focused inspector', () => {
+    expect(mediaLibraryClient).toContain('role="listbox"')
+    expect(mediaLibraryClient).toContain('role="option"')
+    expect(mediaLibraryClient).toContain('selectedId')
+    expect(mediaLibraryClient).toContain('aria-label="Selected photograph"')
   })
 
-  it('renders an "Unattached" section for photos saved in the library but on no page', () => {
-    expect(mediaLibraryClient).toContain('Unattached')
-  })
-
-  it('separates items into attached and unattached arrays based on attachmentCount', () => {
-    expect(mediaLibraryClient).toContain('attachmentCount > 0')
-    expect(mediaLibraryClient).toContain('attachmentCount === 0')
+  it('keeps detail editing and destructive work on the selected photograph only', () => {
+    expect(mediaLibraryClient).toContain('selected.mediaId')
+    expect(mediaLibraryClient).toContain('<details')
+    expect(mediaLibraryClient).toContain('Save words')
   })
 })
 

@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "variant": "build",
+  "task_id": "pawpaw-journey-build",
+  "task_name": "Pawpaw Journey Build",
+  "owner": "Sujith",
+  "approved_at": "2026-08-30",
+  "status": "in_progress",
+  "baseline_sha": "2ed88e2a2eefc505d882c873604f95f4ad65b730",
+  "user_visible_outcome": "Pawpaw feels like entering, browsing, and authoring a joyful living family story: immediate, warm, surprising, calm, legible, and effortless on phone and desktop.",
+  "ui_surface": true,
+  "journey": {
+    "actor": "Family visitor and family author",
+    "goal": "Enter Varada's world, enjoy memories without friction, and create or publish a memory through one calm guided flow",
+    "entry_point": "Family passphrase screen or Admin sign-in",
+    "success_end_state": "The visitor leaves with affection and the author sees the exact beautiful memory the family will receive",
+    "steps": [
+      {"id": "J-01", "interaction": "Open the family entrance and sign in", "expected_behavior": "The threshold feels personal and welcoming, validates locally, responds immediately, and carries the visitor into the archive without a dead pause"},
+      {"id": "J-02", "interaction": "Move through Home, First Days, Chapters, and a memory", "expected_behavior": "Navigation, loading, image changes, scrolling, empty moments, and endings preserve orientation, momentum, warmth, and a sense of discovery"},
+      {"id": "J-03", "interaction": "Encounter a slow image, stale link, offline state, or application failure", "expected_behavior": "The interface keeps its world intact, explains the moment plainly, offers a useful next action, and never exposes a framework-default screen"},
+      {"id": "J-04", "interaction": "Create or edit a memory in the author's studio", "expected_behavior": "The author sees one meaningful decision at a time—write, add moments, choose mood, preview, share—while identifiers and revision machinery remain offscreen"},
+      {"id": "J-05", "interaction": "Save, preview, publish, recover, or return later", "expected_behavior": "The current state is unmistakable, feedback appears where the action happened, work is preserved, and returning resumes the meaningful task"}
+    ],
+    "field_dependencies": [
+      {"id": "FD-01", "parent": "memory type", "child": "date, author, recipient, and media prompts", "rule": "Show only prompts that matter to the selected kind of memory", "on_parent_change": "Preserve entered values but replace irrelevant required language with the correct guidance"},
+      {"id": "FD-02", "parent": "memory title", "child": "chapter address", "rule": "Generate the address automatically for a new memory", "on_parent_change": "Keep following the title until the author explicitly edits advanced address settings"},
+      {"id": "FD-03", "parent": "saved draft", "child": "photos, preview, and publication", "rule": "Unlock later actions as soon as the first save creates the draft", "on_parent_change": "Move directly into the next useful step and explain what became available"}
+    ],
+    "states": [
+      {"id": "S-01", "name": "ready", "expected_behavior": "The primary next action is obvious and supporting controls stay quiet"},
+      {"id": "S-02", "name": "loading", "expected_behavior": "Existing content remains stable where possible and a branded lightweight cue communicates progress"},
+      {"id": "S-03", "name": "success", "expected_behavior": "A nearby concise confirmation says what happened and what is now possible"},
+      {"id": "S-04", "name": "failure", "expected_behavior": "Plain language preserves dignity, protects entered work, and provides retry or a safe route back"},
+      {"id": "S-05", "name": "empty", "expected_behavior": "The empty surface feels intentional and gives one welcoming next step"},
+      {"id": "S-06", "name": "offline", "expected_behavior": "The archive remains visually Pawpaw, truthfully explains connectivity, and makes retry effortless"}
+    ],
+    "failure_recovery": [
+      "Never replace a visible photograph with an unready blank frame; decode the next image before revealing it",
+      "Keep typed authoring content in component state after save or publish errors and focus the relevant message",
+      "Give not-found, application-error, and offline surfaces an immediate route back into the family journey",
+      "Treat authentication failure as recoverable human input, not as a security lecture or generic technical fault"
+    ],
+    "return_behavior": "Back, refresh, and re-entry preserve understandable location; the author returns to the active studio step and the family returns to a recognizable story surface.",
+    "domain_expectations": [
+      "Real photographs and real family language carry the emotional weight",
+      "Decorative characters support photographs without impersonating or obscuring Varada",
+      "Warm paper, editorial typography, bounded colour worlds, gentle motion, and small wit form one coherent archive",
+      "Private implementation remains invisible unless a visitor needs to understand a recovery action"
+    ]
+  },
+  "non_negotiable_quality": [
+    "The journey—not architecture, governance, or generic component consistency—is the final decision rule",
+    "Family and Admin surfaces are visually composed at 360, 390, 768, 1024, 1366, and 1440 pixel widths",
+    "No image navigation produces a blank selected frame and below-the-fold story images load progressively",
+    "No route exposes raw Next.js loading, error, or not-found output",
+    "The authoring studio removes technical vocabulary and avoids a single giant control wall",
+    "Reduced motion, keyboard use, readable contrast, explicit labels, and comfortable touch targets remain first-class"
+  ],
+  "realistic_harms_prevented": [
+    "Family members abandoning a slow or emotionally sterile archive",
+    "Blank imagery, disorienting waits, dead-end errors, and accidental loss of typed work",
+    "Authors avoiding memories because the studio exposes database-shaped complexity",
+    "Accidental publishing or deletion caused by ambiguous actions",
+    "Private family photographs or writing becoming public while removing unnecessary visible privacy friction"
+  ],
+  "acceptance_criteria": [
+    {"id": "AC-01", "criterion": "Family login is personal, fast-feeling, responsive, locally validates empty input, and offers clear pending and recoverable failure feedback.", "derived_from": ["J-01", "S-02", "S-04"], "proof_type": "browser", "proof_command": "playwright journey login checks at 390px and 1366px"},
+    {"id": "AC-02", "criterion": "Home carousel retains the current photograph until the requested photograph decodes, preloads adjacent photographs, and remains keyboard, swipe, and reduced-motion usable.", "derived_from": ["J-02", "S-02"], "proof_type": "unit", "proof_command": "npm test -- tests/unit/journey-build.test.ts"},
+    {"id": "AC-03", "criterion": "Home, First Days, Chapters, and memory detail form a coherent editorial world with deliberate background, colour, typography, copy, scrolling rhythm, and a satisfying continuation or ending; optional installation never leads the visit.", "derived_from": ["J-02"], "proof_type": "visual", "proof_command": "desktop and mobile screenshot review of all family routes"},
+    {"id": "AC-04", "criterion": "Loading, empty, offline, not-found, and application-error states are designed Pawpaw surfaces with truthful copy and an immediate useful action.", "derived_from": ["J-03", "S-02", "S-04", "S-05", "S-06"], "proof_type": "browser", "proof_command": "playwright boundary and offline journey checks"},
+    {"id": "AC-05", "criterion": "Admin login and the author's studio present one meaningful task at a time, keep technical identifiers and optional chronology collapsed or automatic, and make the next action obvious on desktop and mobile.", "derived_from": ["J-04", "FD-01", "FD-02", "FD-03"], "proof_type": "visual", "proof_command": "authenticated Admin screenshot and interaction review at 390px and 1366px"},
+    {"id": "AC-06", "criterion": "Continue quietly saves before advancing; photos need no separate unlock action; preview, publish, unpublish, upload, and failure feedback stays near the initiating action and preserves entered work.", "derived_from": ["J-05", "S-03", "S-04"], "proof_type": "integration", "proof_command": "focused Admin interaction tests plus authenticated preview review"},
+    {"id": "AC-07", "criterion": "Letters are truthfully presented as publishable and Home no longer shows a hardcoded baby-age fact.", "derived_from": ["J-02", "J-04"], "proof_type": "unit", "proof_command": "npm test -- tests/unit/journey-build.test.ts"},
+    {"id": "AC-08", "criterion": "Type-check, lint, focused tests, full deterministic tests, production build, and scope gate complete without new dependencies, migrations, services, or paid cost.", "derived_from": ["J-05"], "proof_type": "build", "proof_command": "npm run type-check && npm run lint && npm test && npm run build"}
+  ],
+  "architecture_allowances": [
+    {"type": "state_layer", "item": "small client-side image readiness state", "justification": "The current photograph must remain visible until the requested signed image has decoded", "maps_to": ["AC-02"]},
+    {"type": "pattern", "item": "route-level loading, error, and not-found boundaries", "justification": "Visitors otherwise encounter dead waits and raw framework failure surfaces", "maps_to": ["AC-04"]},
+    {"type": "state_layer", "item": "single active Admin studio step", "justification": "The existing fourteen-thousand-pixel editor creates severe cognitive and interaction friction", "maps_to": ["AC-05", "AC-06"]}
+  ],
+  "protective_controls": [
+    {"type": "data_loss_protection", "risk": "Typed family writing is lost after a recoverable save or publish failure"},
+    {"type": "transaction_boundary", "risk": "Existing immutable publication and explicit destructive confirmations must remain authoritative"}
+  ],
+  "visual_contract": {
+    "viewports": [360, 390, 768, 1024, 1366, 1440],
+    "coherence_axes": {
+      "radius": "Soft but editorial: small controls 10–14px, composed story surfaces 20–32px; no indiscriminate pill cards",
+      "shadow": "Warm, low-opacity depth used for photographs and focused surfaces only",
+      "accent": "Home coral, story violet, letter blue, gallery terracotta, moment green, with photo-derived ambient colour kept bounded",
+      "spacing": "Generous story rhythm and tight control grouping; density follows the emotional task",
+      "typography": "Fraunces for memory and wonder, Manrope for calm clarity, Malayalam script font when needed; readable measures and confident hierarchy",
+      "control_states": "Every actionable control has visible hover, focus, active, pending, success, error, and disabled treatment without layout jump"
+    }
+  },
+  "non_goals": [
+    "No architecture modernization, database redesign, Docker repair, new CMS, design-system rewrite, or speculative scalability work",
+    "No new dependency, migration, service, analytics product, autoplay, AI-generated family copy, or production content mutation",
+    "No weakening of the private-media or active-family access boundary; only visible and workflow friction may be removed",
+    "No production merge or production deployment before owner review of the preview journey"
+  ],
+  "simplest_acceptable_approach": "Reshape the existing React and CSS surfaces, reuse the current actions and data model, add only the tiny UI state and route boundaries directly required by the experience, and verify the real journey before release.",
+  "allowed_paths": [
+    "AGENTS.md",
+    ".build-governance/**",
+    "src/app/**",
+    "src/components/**",
+    "src/lib/auth/origin.ts",
+    "src/lib/varada-scenes.ts",
+    "public/icons/**",
+    "public/offline.html",
+    "tests/unit/**",
+    "tests/e2e/**"
+  ],
+  "capabilities": {
+    "dependencies": false,
+    "migrations": false,
+    "auth": true,
+    "infrastructure": false,
+    "new_services": false,
+    "remote_writes": true,
+    "deletion": false
+  },
+  "complexity_budget": {
+    "max_changed_files": 52,
+    "max_new_files": 17,
+    "max_migrations": 0,
+    "max_new_dependencies": 0,
+    "max_new_services": 0,
+    "max_implementation_runs": 2
+  },
+  "complexity_exception": null,
+  "verification": {
+    "behavioral": [
+      "Exercise family entrance, nav, carousel, chapter scroll, stale route, retry, and Leave behavior",
+      "Exercise Admin sign-in failure/callback, create, edit, save, media, preview, publish, unpublish, and return behavior without mutating production content",
+      "Confirm keyboard, touch, reduced-motion, and local feedback behavior"
+    ],
+    "perceptual": [
+      "Compare mobile and desktop screenshots for entrance, Home, First Days, Chapters, memory detail, Admin dashboard, editor, media, loading, and failure surfaces",
+      "Inspect colour balance, type hierarchy, readable measure, scroll rhythm, character restraint, empty space, action priority, and emotional coherence"
+    ],
+    "technical": [
+      "npm run type-check",
+      "npm run lint",
+      "npm test",
+      "npm run build",
+      "git diff --check",
+      "scope gate check and close"
+    ]
+  },
+  "prompt_word_limit": 1200
+}

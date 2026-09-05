@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { getFirstDaysContent } from '@/lib/content/first-days'
 import styles from './first-days.module.css'
 
@@ -112,6 +113,9 @@ export default async function FirstDaysPage() {
                     width={item.width ?? undefined}
                     height={item.height ?? undefined}
                     className={styles.photo}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                    decoding="async"
                   />
                 ) : (
                   <div className={styles.unavailable} role="img" aria-label={item.altText}>
@@ -124,6 +128,15 @@ export default async function FirstDaysPage() {
           )
         })}
       </div>
+      <footer className={styles.ending}>
+        <p className={styles.endingMark} aria-hidden="true">✦</p>
+        <p className={styles.endingTitle}>And that was only the beginning.</p>
+        <p className={styles.endingCopy}>There are more small days, big feelings, and family stories waiting nearby.</p>
+        <div className={styles.endingLinks}>
+          <Link href="/chapters">Find another chapter</Link>
+          <Link href="/">Back to Home</Link>
+        </div>
+      </footer>
     </main>
   )
 }

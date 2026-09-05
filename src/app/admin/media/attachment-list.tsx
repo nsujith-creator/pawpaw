@@ -135,51 +135,61 @@ export default function AttachmentList({
             </p>
 
             <div className={styles.fieldGroup}>
-              <label htmlFor={`alt-${item.mediaId}`} className={styles.fieldLabel}>Alt text for screen readers (required, not shown on the page)</label>
-              <input id={`alt-${item.mediaId}`} aria-label={`Alt text for photo ${index + 1}`} value={altDrafts[item.mediaId] ?? item.altText} onChange={event => setAltDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label htmlFor={`caption-${item.mediaId}`} className={styles.fieldLabel}>Caption shown with the photo (optional)</label>
+              <label htmlFor={`caption-${item.mediaId}`} className={styles.fieldLabel}>Words beneath this photograph <span className={styles.optional}>(optional)</span></label>
               <div className={styles.fieldActionRow}>
                 <input id={`caption-${item.mediaId}`} aria-label={`Caption for photo ${index + 1}`} value={captionDrafts[item.mediaId] ?? item.caption ?? ''} onChange={event => setCaptionDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
-                <button type="button" disabled={busy} onClick={() => saveDetails(item)} className={styles.secondaryAction}>Save details</button>
+                <button type="button" disabled={busy} onClick={() => saveDetails(item)} className={styles.secondaryAction}>Save words</button>
               </div>
             </div>
 
-            <div className={styles.actions}>
+            <div className={styles.photoOrderActions} aria-label={`Arrange photo ${index + 1}`}>
               <button type="button" disabled={busy || index === 0} onClick={() => move(item.mediaId, 'earlier')} className={styles.secondaryAction}>↑ Move earlier</button>
               <button type="button" disabled={busy || index === items.length - 1} onClick={() => move(item.mediaId, 'later')} className={styles.secondaryAction}>↓ Move later</button>
               {allowCover && !item.isCover && <button type="button" disabled={busy} onClick={() => setCover(item.mediaId)} className={styles.secondaryAction}>Set as cover</button>}
-              <button type="button" disabled={busy} onClick={() => detach(item.mediaId)} className={styles.secondaryAction}>Detach</button>
-              <button type="button" disabled={busy} onClick={() => { setReplaceId(item.mediaId); setError(''); setSuccess('') }} className={styles.secondaryAction}>Replace photograph…</button>
-              {confirmDeleteId === item.mediaId ? (
-                <div className={styles.confirmation} role="group" aria-label={`Permanent delete confirmation for photo ${index + 1}`}>
-                  <span className={styles.confirmationText}>Delete this photograph forever from every use? This cannot be undone.</span>
-                  <div className={styles.confirmationActions}>
-                    <button type="button" disabled={busy} onClick={() => deleteForever(item.mediaId)} className={styles.dangerAction}>Yes, delete forever</button>
-                    <button type="button" disabled={busy} onClick={() => setConfirmDeleteId(null)} className={styles.secondaryAction}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <button type="button" disabled={busy} onClick={() => { setError(''); setSuccess(''); setConfirmDeleteId(item.mediaId) }} className={styles.dangerAction}>Delete permanently…</button>
-              )}
             </div>
 
-            {replaceId === item.mediaId && (
-              <ReplacementPanel
-                contentId={contentId}
-                contentLabel={contentLabel}
-                oldPhoto={item}
-                candidates={replacementCandidates.filter(candidate => !attachedIds.has(candidate.mediaId))}
-                onClose={() => setReplaceId(null)}
-                onReplaced={message => {
-                  setSuccess(message)
-                  setReplaceId(null)
-                  router.refresh()
-                }}
-              />
-            )}
+            <details className={styles.photoOptions}>
+              <summary>More photo options</summary>
+              <div className={styles.photoOptionsBody}>
+                <div className={styles.fieldGroup}>
+                  <label htmlFor={`alt-${item.mediaId}`} className={styles.fieldLabel}>Describe the photograph for anyone who cannot see it clearly</label>
+                  <input id={`alt-${item.mediaId}`} aria-label={`Alt text for photo ${index + 1}`} value={altDrafts[item.mediaId] ?? item.altText} onChange={event => setAltDrafts(drafts => ({ ...drafts, [item.mediaId]: event.target.value }))} className={styles.field} />
+                  <button type="button" disabled={busy} onClick={() => saveDetails(item)} className={styles.secondaryAction}>Save description</button>
+                </div>
+
+                <div className={styles.actions}>
+                  <button type="button" disabled={busy} onClick={() => detach(item.mediaId)} className={styles.secondaryAction}>Remove from this memory</button>
+                  <button type="button" disabled={busy} onClick={() => { setReplaceId(item.mediaId); setError(''); setSuccess('') }} className={styles.secondaryAction}>Replace photograph…</button>
+                </div>
+
+                {replaceId === item.mediaId && (
+                  <ReplacementPanel
+                    contentId={contentId}
+                    contentLabel={contentLabel}
+                    oldPhoto={item}
+                    candidates={replacementCandidates.filter(candidate => !attachedIds.has(candidate.mediaId))}
+                    onClose={() => setReplaceId(null)}
+                    onReplaced={message => {
+                      setSuccess(message)
+                      setReplaceId(null)
+                      router.refresh()
+                    }}
+                  />
+                )}
+
+                {confirmDeleteId === item.mediaId ? (
+                  <div className={styles.confirmation} role="group" aria-label={`Permanent delete confirmation for photo ${index + 1}`}>
+                    <span className={styles.confirmationText}>Delete this photograph forever from every use? This cannot be undone.</span>
+                    <div className={styles.confirmationActions}>
+                      <button type="button" disabled={busy} onClick={() => deleteForever(item.mediaId)} className={styles.dangerAction}>Yes, delete forever</button>
+                      <button type="button" disabled={busy} onClick={() => setConfirmDeleteId(null)} className={styles.secondaryAction}>Keep it</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" disabled={busy} onClick={() => { setError(''); setSuccess(''); setConfirmDeleteId(item.mediaId) }} className={styles.dangerAction}>Delete from Pawpaw forever…</button>
+                )}
+              </div>
+            </details>
           </div>
         </article>
       ))}

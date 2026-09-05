@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "task_id": "pawpaw-journey-build",
+  "captured_at": "2026-08-31T03:20:40+00:00",
+  "head": "2ed88e2a2eefc505d882c873604f95f4ad65b730",
+  "contract_sha256": "5f594c73dd2dc3c0e004df0075f6fcae173f2cae61132e50a58f3c239d075ba5",
+  "staged_paths": [],
+  "dirty_paths": {
+    ".build-governance/tasks/pawpaw-journey-build.json": {
+      "status": "??",
+      "sha256": "5f594c73dd2dc3c0e004df0075f6fcae173f2cae61132e50a58f3c239d075ba5"
+    }
+  }
+}

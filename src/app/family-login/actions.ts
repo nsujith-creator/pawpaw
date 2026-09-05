@@ -24,6 +24,11 @@ export async function loginViewer(
   _prevState: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
+  const submitted = ((formData.get('passphrase') as string | null) ?? '').trim()
+  if (!submitted) {
+    return { error: 'Pop in the family passphrase first.' }
+  }
+
   const headersList = await headers()
   const clientId    = getClientId(headersList)
 
@@ -32,7 +37,6 @@ export async function loginViewer(
     return { error: 'Too many failed attempts. Please try again later.' }
   }
 
-  const submitted = (formData.get('passphrase') as string | null) ?? ''
   const valid     = await verifyPassphrase(submitted)
 
   if (!valid) {
@@ -41,7 +45,7 @@ export async function loginViewer(
     } catch {
       return { error: 'Login is temporarily unavailable. Please try again later.' }
     }
-    return { error: 'Incorrect passphrase.' }
+    return { error: 'That passphrase did not open the door. Have another go.' }
   }
 
   try {

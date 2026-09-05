@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { CarouselItem } from '@/lib/content/home'
 import { createAmbientTheme } from '@/lib/media/ambient-color'
 import AmbientFrame from './ambient-frame'
@@ -18,9 +18,43 @@ type MediaStyle = React.CSSProperties & {
 
 export default function HomeCarousel({ items, title }: Props) {
   const [index, setIndex] = useState(0)
+  const [requestedIndex, setRequestedIndex] = useState<number | null>(null)
+  const requestToken = useRef(0)
 
-  const prev = useCallback(() => setIndex(i => (i - 1 + items.length) % items.length), [items.length])
-  const next = useCallback(() => setIndex(i => (i + 1) % items.length), [items.length])
+  const show = useCallback((target: number) => {
+    if (target === index || !items[target]) return
+    const token = ++requestToken.current
+    setRequestedIndex(target)
+    const image = new window.Image()
+    const reveal = () => {
+      if (requestToken.current !== token) return
+      setIndex(target)
+      setRequestedIndex(null)
+    }
+    image.onload = () => {
+      if (typeof image.decode === 'function') image.decode().then(reveal).catch(reveal)
+      else reveal()
+    }
+    image.onerror = () => {
+      if (requestToken.current === token) setRequestedIndex(null)
+    }
+    image.src = items[target].signedUrl
+  }, [index, items])
+
+  const prev = useCallback(() => show((index - 1 + items.length) % items.length), [index, items.length, show])
+  const next = useCallback(() => show((index + 1) % items.length), [index, items.length, show])
+
+  useEffect(() => {
+    if (items.length < 2) return
+    const neighbours = [
+      items[(index + 1) % items.length],
+      items[(index - 1 + items.length) % items.length],
+    ]
+    neighbours.forEach(neighbour => {
+      const image = new window.Image()
+      image.src = neighbour.signedUrl
+    })
+  }, [index, items])
 
   // Touch swipe: horizontal drag beyond the threshold moves the carousel.
   const touchStartX = useRef<number | null>(null)
@@ -78,6 +112,11 @@ export default function HomeCarousel({ items, title }: Props) {
             data-media-id={item.id}
             className={styles.image}
           />
+          {requestedIndex !== null && (
+            <p className={styles.imagePending} role="status">
+              Bringing the next memory into view…
+            </p>
+          )}
         </div>
 
         <CarouselControls
@@ -85,7 +124,7 @@ export default function HomeCarousel({ items, title }: Props) {
           current={index}
           onPrev={prev}
           onNext={next}
-          onGoto={setIndex}
+          onGoto={show}
         />
 
         {item.caption && (
