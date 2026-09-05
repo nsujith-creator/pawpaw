@@ -67,7 +67,7 @@ export default function MediaLibraryClient({ items, targets }: { items: MediaLib
   }
 
   function attach() {
-    const contentId = targetDrafts[selected.mediaId] ?? targets[0]?.id ?? ''
+    const contentId = targetDrafts[selected.mediaId] ?? ''
     if (!contentId) {
       setError('Begin and save a memory before adding this photograph to it.')
       return
@@ -131,10 +131,11 @@ export default function MediaLibraryClient({ items, targets }: { items: MediaLib
 
         <div className={styles.attachComposer}>
           <label htmlFor="selected-photo-target" className={styles.fieldLabel}>Add this photograph to</label>
-          <select id="selected-photo-target" className={styles.select} value={targetDrafts[selected.mediaId] ?? targets[0]?.id ?? ''} onChange={event => setTargetDrafts(drafts => ({ ...drafts, [selected.mediaId]: event.target.value }))} disabled={busy || targets.length === 0}>
-            {targets.length === 0 ? <option value="">No saved memories yet</option> : targets.map(target => <option key={target.id} value={target.id}>{target.label}</option>)}
+          <select id="selected-photo-target" className={styles.select} value={targetDrafts[selected.mediaId] ?? ''} onChange={event => setTargetDrafts(drafts => ({ ...drafts, [selected.mediaId]: event.target.value }))} disabled={busy || targets.length === 0}>
+            <option value="">{targets.length === 0 ? 'No saved memories yet' : 'Choose a memory…'}</option>
+            {targets.map(target => <option key={target.id} value={target.id}>{target.label}</option>)}
           </select>
-          <button type="button" disabled={busy || targets.length === 0} onClick={attach} className={styles.action}>Add to memory</button>
+          <button type="button" disabled={busy || targets.length === 0 || !targetDrafts[selected.mediaId]} onClick={attach} className={styles.action}>Add to memory</button>
         </div>
 
         <div className={styles.photoFeedback} aria-live="polite">

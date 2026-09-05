@@ -64,6 +64,8 @@ describe('media library client component', () => {
     expect(mediaLibraryClient).toContain('Add this photograph to')
     expect(mediaLibraryClient).toContain('Add to memory')
     expect(mediaLibraryClient).toContain('targets.map')
+    expect(mediaLibraryClient).toContain('Choose a memory…')
+    expect(mediaLibraryClient).not.toContain("targets[0]?.id")
   })
 
   it('offers a permanent delete with a confirmation step', () => {

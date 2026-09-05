@@ -160,6 +160,11 @@
 .mediaThumb,
 .mediaPlaceholder { width: 7rem; height: 7rem; }
 .mediaBody { min-width: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.photoOrderActions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.photoOptions { border-top: 1px solid var(--color-border); }
+.photoOptions summary { min-height: 2.75rem; display: flex; align-items: center; width: fit-content; color: var(--color-ink-secondary); font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.photoOptionsBody { display: flex; flex-direction: column; gap: 0.9rem; padding-top: 0.4rem; }
+.photoOptionsBody .fieldGroup > .secondaryAction { margin-top: 0.65rem; }
 .filename,
 .usageText { overflow-wrap: anywhere; }
 .attachedState { color: var(--color-success-on-soft); font-weight: 700; }
@@ -467,6 +472,7 @@
   .inlineActions > *,
   .confirmationActions > *,
   .fieldActionRow > button { flex: 1 1 100%; }
+  .photoOrderActions > * { flex: 1 1 auto; }
   .confirmation { align-items: stretch; }
   .loginPage { min-height: auto; }
   .slugField { grid-template-columns: 1fr; }
@@ -551,6 +557,10 @@
 .advancedDetails summary { min-height: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.85rem; color: var(--color-ink-secondary); font-size: 0.82rem; font-weight: 700; cursor: pointer; }
 .advancedDetails summary span { color: var(--color-ink-muted); font-size: 0.68rem; font-weight: 600; }
 .advancedDetails[open] > .fieldGroup { padding: 0 0.85rem 0.85rem; }
+.contextFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 1rem; }
+.contextFields > .help,
+.contextFields > [role="alert"] { grid-column: 1 / -1; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .sceneChoices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
 .sceneChoice { min-width: 0; min-height: 13rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.35rem; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-paper); color: var(--color-ink-secondary); text-align: center; transition: transform var(--motion-fast) var(--motion-ease-out), border-color var(--motion-fast) var(--motion-ease-out), box-shadow var(--motion-fast) var(--motion-ease-out); }
@@ -587,6 +597,7 @@
   .studioSteps button { scroll-snap-align: start; }
   .sceneChoices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .reviewSummary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .contextFields { grid-template-columns: 1fr; }
   .studioFooter { bottom: 0.4rem; display: grid; grid-template-columns: 1fr 1fr; }
   .studioFooter .quietAction { margin: 0; }
   .studioFooter .action { grid-column: 1 / -1; }

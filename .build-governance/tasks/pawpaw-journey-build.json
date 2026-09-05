@@ -66,10 +66,10 @@
   "acceptance_criteria": [
     {"id": "AC-01", "criterion": "Family login is personal, fast-feeling, responsive, locally validates empty input, and offers clear pending and recoverable failure feedback.", "derived_from": ["J-01", "S-02", "S-04"], "proof_type": "browser", "proof_command": "playwright journey login checks at 390px and 1366px"},
     {"id": "AC-02", "criterion": "Home carousel retains the current photograph until the requested photograph decodes, preloads adjacent photographs, and remains keyboard, swipe, and reduced-motion usable.", "derived_from": ["J-02", "S-02"], "proof_type": "unit", "proof_command": "npm test -- tests/unit/journey-build.test.ts"},
-    {"id": "AC-03", "criterion": "Home, First Days, Chapters, and memory detail form a coherent editorial world with deliberate background, colour, typography, copy, scrolling rhythm, and a satisfying continuation or ending.", "derived_from": ["J-02"], "proof_type": "visual", "proof_command": "desktop and mobile screenshot review of all family routes"},
+    {"id": "AC-03", "criterion": "Home, First Days, Chapters, and memory detail form a coherent editorial world with deliberate background, colour, typography, copy, scrolling rhythm, and a satisfying continuation or ending; optional installation never leads the visit.", "derived_from": ["J-02"], "proof_type": "visual", "proof_command": "desktop and mobile screenshot review of all family routes"},
     {"id": "AC-04", "criterion": "Loading, empty, offline, not-found, and application-error states are designed Pawpaw surfaces with truthful copy and an immediate useful action.", "derived_from": ["J-03", "S-02", "S-04", "S-05", "S-06"], "proof_type": "browser", "proof_command": "playwright boundary and offline journey checks"},
-    {"id": "AC-05", "criterion": "Admin login and the author's studio present one meaningful task at a time, keep technical identifiers advanced or automatic, and make the next action obvious on desktop and mobile.", "derived_from": ["J-04", "FD-01", "FD-02", "FD-03"], "proof_type": "visual", "proof_command": "authenticated Admin screenshot and interaction review at 390px and 1366px"},
-    {"id": "AC-06", "criterion": "Save, preview, publish, unpublish, upload, and failure feedback appears near the initiating action, preserves entered work, and uses plain family-facing language.", "derived_from": ["J-05", "S-03", "S-04"], "proof_type": "integration", "proof_command": "focused Admin interaction tests plus authenticated preview review"},
+    {"id": "AC-05", "criterion": "Admin login and the author's studio present one meaningful task at a time, keep technical identifiers and optional chronology collapsed or automatic, and make the next action obvious on desktop and mobile.", "derived_from": ["J-04", "FD-01", "FD-02", "FD-03"], "proof_type": "visual", "proof_command": "authenticated Admin screenshot and interaction review at 390px and 1366px"},
+    {"id": "AC-06", "criterion": "Continue quietly saves before advancing; photos need no separate unlock action; preview, publish, unpublish, upload, and failure feedback stays near the initiating action and preserves entered work.", "derived_from": ["J-05", "S-03", "S-04"], "proof_type": "integration", "proof_command": "focused Admin interaction tests plus authenticated preview review"},
     {"id": "AC-07", "criterion": "Letters are truthfully presented as publishable and Home no longer shows a hardcoded baby-age fact.", "derived_from": ["J-02", "J-04"], "proof_type": "unit", "proof_command": "npm test -- tests/unit/journey-build.test.ts"},
     {"id": "AC-08", "criterion": "Type-check, lint, focused tests, full deterministic tests, production build, and scope gate complete without new dependencies, migrations, services, or paid cost.", "derived_from": ["J-05"], "proof_type": "build", "proof_command": "npm run type-check && npm run lint && npm test && npm run build"}
   ],
@@ -107,6 +107,7 @@
     "src/components/**",
     "src/lib/auth/origin.ts",
     "src/lib/varada-scenes.ts",
+    "public/icons/**",
     "public/offline.html",
     "tests/unit/**",
     "tests/e2e/**"
@@ -121,8 +122,8 @@
     "deletion": false
   },
   "complexity_budget": {
-    "max_changed_files": 45,
-    "max_new_files": 14,
+    "max_changed_files": 52,
+    "max_new_files": 17,
     "max_migrations": 0,
     "max_new_dependencies": 0,
     "max_new_services": 0,

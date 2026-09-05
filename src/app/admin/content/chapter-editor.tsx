@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BlockEditor, { type MediaPlacementOption } from '@/components/content/block-editor'
 import VaradaScene from '@/components/archive/varada-scene'
@@ -36,8 +36,8 @@ const TYPE_LABELS: Record<ManagedContentType, string> = {
 }
 
 const TYPE_GUIDANCE: Record<ManagedContentType, string> = {
-  story: 'Use a Story for a written memory. Add photographs after you save the first draft.',
-  gallery: 'Use a Gallery for a photo-led memory. Add a short introduction now, then add photographs after you save the first draft.',
+  story: 'Use a Story for a written memory. Words or photographs can lead.',
+  gallery: 'Use a Gallery when photographs lead and a few words hold them together.',
   letter: 'Use a Letter for words to a specific person. An author, recipient, and authored date are required before publication.',
   moment: 'Use a Moment for a dated milestone. An event date is required before it can be published.',
 }
@@ -78,6 +78,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteTitle, setDeleteTitle] = useState('')
   const [activeStep, setActiveStep] = useState<StudioStep>(initialStep)
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   const firstDays = existing?.slug === 'first-days'
   const slugLocked = existing?.revisionNumber !== null && existing?.revisionNumber !== undefined || firstDays
@@ -125,8 +126,15 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
     return true
   }
 
-  async function submit(intent: 'save' | 'publish') {
+  async function submit(intent: 'save' | 'publish', afterSaveStep?: StudioStep): Promise<boolean> {
     clearMessages()
+    if (!title.trim()) {
+      setActiveStep('details')
+      setFieldErrors({ title: 'Give this memory a title so Pawpaw can keep it safe.' })
+      setError('Start with a title. Everything else can wait.')
+      window.requestAnimationFrame(() => titleInputRef.current?.focus())
+      return false
+    }
     setBusy(true)
     try {
       const data = new FormData()
@@ -149,17 +157,30 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
       data.set('relationship_context', relationshipContext)
       data.set('visual_scene', visualScene)
       const result = await saveChapter(data)
-      if (!applyResult(result)) return
+      if (!applyResult(result)) return false
       if (!existing && result.id) {
-        router.push(`/admin/content/${result.id}?step=media`)
-        return
+        router.push(`/admin/content/${result.id}?step=${afterSaveStep ?? activeStep}`)
+        return true
       }
+      if (afterSaveStep) setActiveStep(afterSaveStep)
       router.refresh()
+      return true
     } catch {
       setError('Something went wrong while saving. Please try again.')
+      return false
     } finally {
       setBusy(false)
     }
+  }
+
+  async function goToStep(nextStep: StudioStep) {
+    if (nextStep === activeStep || busy) return
+    const nextIndex = STUDIO_STEPS.findIndex(step => step.id === nextStep)
+    if (nextIndex < activeStepIndex) {
+      setActiveStep(nextStep)
+      return
+    }
+    await submit('save', nextStep)
   }
 
   async function unpublish() {
@@ -199,7 +220,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
     <div className={styles.editorStack} data-active-step={activeStep}>
       <nav className={styles.studioSteps} aria-label="Memory authoring steps">
         {STUDIO_STEPS.map((step, index) => (
-          <button key={step.id} type="button" onClick={() => setActiveStep(step.id)} aria-current={activeStep === step.id ? 'step' : undefined}>
+          <button key={step.id} type="button" disabled={busy} onClick={() => void goToStep(step.id)} aria-current={activeStep === step.id ? 'step' : undefined}>
             <span>{index + 1}</span>
             <strong>{step.label}</strong>
             <small>{step.note}</small>
@@ -240,6 +261,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
         <label htmlFor="chapter-title" className={styles.fieldLabel}>Title</label>
         <input
           id="chapter-title"
+          ref={titleInputRef}
           value={title}
           onChange={event => {
             const nextTitle = event.target.value
@@ -285,8 +307,13 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
         {fieldErrors.summary && <p role="alert" className={styles.fieldError}>{fieldErrors.summary}</p>}
       </div>
 
-      <section className={styles.fieldGroup} aria-labelledby="chapter-context-heading">
-        <h2 id="chapter-context-heading" className={styles.fieldLabel}>Family chronology and context</h2>
+      <details key={type} className={styles.advancedDetails} open={type === 'letter' || type === 'moment'}>
+        <summary>
+          {type === 'letter' ? 'Letter details' : type === 'moment' ? 'Moment date and details' : 'Add date, people or place'}
+          <span>{type === 'letter' || type === 'moment' ? 'needed before sharing' : 'optional'}</span>
+        </summary>
+      <section className={`${styles.fieldGroup} ${styles.contextFields}`} aria-labelledby="chapter-context-heading">
+        <h2 id="chapter-context-heading" className={styles.srOnly}>Family chronology and context</h2>
         <label htmlFor="chapter-event-date" className={styles.fieldLabel}>Event date {type === 'moment' ? '(required to publish a Moment)' : '(optional)'}</label>
         <input id="chapter-event-date" type="date" value={eventDate} onChange={event => setEventDate(event.target.value)} className={styles.field} aria-invalid={Boolean(fieldErrors.eventDate)} />
         {eventDate && <>
@@ -319,6 +346,7 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
         <input id="chapter-relationship" value={relationshipContext} onChange={event => setRelationshipContext(event.target.value)} className={styles.field} aria-invalid={Boolean(fieldErrors.relationshipContext)} />
         <p className={styles.help}>These are family facts. Leave them blank when unknown; administrator identity is never used as the family author.</p>
       </section>
+      </details>
       </section>
 
       <section id="memory-story" className={styles.studioPanel} hidden={activeStep !== 'story'} aria-labelledby="write-memory-heading">
@@ -387,10 +415,9 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
           </section>
           </>
         ) : (
-          <div className={styles.unlockPanel}>
-            <p className={styles.unlockTitle}>Save once to add photographs.</p>
-            <p>Your words stay right here. The first save simply gives this memory a place for its media.</p>
-            <button type="button" disabled={busy} onClick={() => submit('save')} className={styles.action}>Save and unlock moments</button>
+          <div className={styles.unlockPanel} aria-live="polite">
+            <p className={styles.unlockTitle}>Making room for your photographs…</p>
+            <p>Pawpaw is keeping the draft and opening its photo shelf.</p>
           </div>
         )}
       </section>
@@ -452,11 +479,13 @@ export default function ChapterEditor({ existing, replacementCandidates = [], at
         {activeStepIndex > 0 && (
           <button type="button" disabled={busy} onClick={() => setActiveStep(STUDIO_STEPS[activeStepIndex - 1].id)} className={styles.quietAction}>Back</button>
         )}
-        <button type="button" disabled={busy} onClick={() => submit('save')} className={styles.secondaryAction}>
-          {busy ? 'Saving…' : 'Save progress'}
+        <button type="button" disabled={busy} onClick={() => void submit('save', activeStep)} className={styles.secondaryAction}>
+          {busy ? 'Saving…' : 'Save here'}
         </button>
         {activeStepIndex < STUDIO_STEPS.length - 1 && (
-          <button type="button" disabled={busy} onClick={() => setActiveStep(STUDIO_STEPS[activeStepIndex + 1].id)} className={styles.action}>Continue</button>
+          <button type="button" disabled={busy} onClick={() => void goToStep(STUDIO_STEPS[activeStepIndex + 1].id)} className={styles.action}>
+            {busy ? 'Keeping it safe…' : 'Continue'}
+          </button>
         )}
       </div>
       <div className={styles.studioFeedback} aria-live="polite">

@@ -189,8 +189,8 @@ describe('attached-photo management', () => {
   })
 
   it('edits alt text and caption as separate labelled fields', () => {
-    expect(attachments).toContain('Alt text for screen readers (required, not shown on the page)')
-    expect(attachments).toContain('Caption shown with the photo (optional)')
+    expect(attachments).toContain('Describe the photograph for anyone who cannot see it clearly')
+    expect(attachments).toContain('Words beneath this photograph')
     expect(attachments).toContain('Caption for photo')
   })
 
@@ -215,19 +215,19 @@ describe('attached-photo management', () => {
   })
 
   it('offers edit, reorder, detach, and permanent-delete controls', () => {
-    expect(attachments).toContain('Save details')
+    expect(attachments).toContain('Save words')
     expect(attachments).toContain('Move earlier')
     expect(attachments).toContain('Move later')
-    expect(attachments).toContain('>Detach<')
+    expect(attachments).toContain('Remove from this memory')
     expect(attachments).toContain('Replace photograph')
     expect(attachments).toContain('Set as cover')
-    expect(attachments).toContain('Delete permanently')
+    expect(attachments).toContain('Delete from Pawpaw forever')
   })
 
   it('permanent delete requires an explicit confirmation step', () => {
     expect(attachments).toContain('confirmDeleteId')
     expect(attachments).toContain('Yes, delete forever')
-    expect(attachments).toContain('Cancel')
+    expect(attachments).toContain('Keep it')
     // The destructive action fires only from the confirmation branch.
     const confirmBranch = attachments.indexOf('confirmDeleteId === item.mediaId')
     const deleteCall    = attachments.indexOf('deleteForever(item.mediaId)')
@@ -443,7 +443,8 @@ describe('PR-004B family and preview truthfulness', () => {
     expect(chapterEditor).toContain('TYPE_GUIDANCE')
     expect(chapterEditor).toContain('Write it')
     expect(chapterEditor).toContain('Add moments')
-    expect(chapterEditor).toContain('Save and unlock moments')
+    expect(chapterEditor).toContain('Making room for your photographs')
+    expect(chapterEditor).toContain("await submit('save', nextStep)")
   })
 
   it('keeps a truthful Chapters empty state in the real index branch', () => {

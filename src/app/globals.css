@@ -86,12 +86,17 @@ body {
 }
 
 .pwaStatus {
+  position: fixed;
+  z-index: 50;
+  right: 1rem;
+  bottom: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.5rem 0.85rem;
-  padding: 0.35rem 1rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+  padding: 0;
   color: var(--color-ink-secondary);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -100,8 +105,11 @@ body {
 
 .pwaStatusNotice {
   min-height: 2.25rem;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   background: var(--color-surface-deep);
+  box-shadow: var(--shadow-float);
 }
 
 .pwaStatus button {
@@ -112,9 +120,16 @@ body {
   background: var(--color-paper);
   color: var(--color-neutral-on-soft);
   font-weight: 700;
+  box-shadow: 0 0.3rem 1rem rgba(42, 31, 20, 0.08);
+  opacity: 0.76;
 }
 
-.pwaStatus button:hover { background: var(--color-neutral-soft); }
+.pwaStatus button:hover,
+.pwaStatus button:focus-visible { background: var(--color-neutral-soft); opacity: 1; }
+
+@media (max-width: 479px) {
+  .pwaStatus { right: 0.75rem; bottom: 0.75rem; }
+}
 
 [lang="ml"] {
   font-family: var(--font-malayalam), var(--font-body), sans-serif;

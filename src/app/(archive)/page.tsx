@@ -2,6 +2,7 @@ import { getPublishedHomeContent } from '@/lib/content/home'
 import ContentDateline from '@/components/archive/content-dateline'
 import VaradaScene from '@/components/archive/varada-scene'
 import HomeCarousel from '@/components/home/home-carousel'
+import Link from 'next/link'
 import styles from './home.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -54,6 +55,18 @@ export default async function HomePage() {
           <p className={styles.chapterLabel}>Home</p>
           <h1 className={styles.title}>{content.title}</h1>
           <ContentDateline date={content.publishedAt} />
+          <div className={styles.characterStage}>
+            <VaradaScene
+              pageKey="family-home"
+              sizes="(max-width: 767px) 10rem, 15rem"
+              className={styles.character}
+            />
+            <p className={styles.characterNote}>She&apos;s keeping an eye on the next chapter.</p>
+          </div>
+        </section>
+
+        <article className={styles.story}>
+          <p className={styles.storyLabel}>A little about this little person</p>
           <div className={styles.bodyCopy}>
             {content.bodyBlocks.map((block, i) => {
               if (block.type === 'heading') {
@@ -74,16 +87,11 @@ export default async function HomePage() {
               return null
             })}
           </div>
-
-          <div className={styles.characterStage}>
-            <VaradaScene
-              pageKey="family-home"
-              sizes="(max-width: 767px) 10rem, 15rem"
-              className={styles.character}
-            />
-            <p className={styles.characterNote}>She&apos;s keeping an eye on the next chapter.</p>
+          <div className={styles.storyInvitation}>
+            <p>The next small adventure is already waiting.</p>
+            <Link href="/chapters">Open her stories <span aria-hidden="true">→</span></Link>
           </div>
-        </section>
+        </article>
       </div>
     </main>
   )

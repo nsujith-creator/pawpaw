@@ -27,13 +27,80 @@
   margin: 0 auto;
   padding: clamp(1rem, 3vw, 2.5rem) 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(18rem, 0.72fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(21rem, 0.75fr);
   align-items: start;
   gap: clamp(1.25rem, 3vw, 2.5rem);
 }
 
 .mediaColumn {
   min-width: 0;
+}
+
+.loadingHome {
+  min-height: calc(100dvh - 4.5rem);
+}
+
+.loadingMedia {
+  position: relative;
+  min-height: clamp(24rem, 58vw, 38rem);
+  overflow: hidden;
+  display: grid;
+  place-items: end center;
+  border: 1px solid color-mix(in srgb, var(--color-home-primary) 28%, var(--color-border));
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(135deg, rgba(255, 254, 248, 0.88), rgba(250, 239, 229, 0.82)),
+    var(--color-surface);
+}
+
+.loadingGlow {
+  position: absolute;
+  inset: 8% 10% auto auto;
+  width: min(18rem, 46%);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-home-soft) 82%, transparent);
+  animation: loadingBreathe 1.8s ease-in-out infinite;
+}
+
+.loadingCharacter {
+  position: relative;
+  width: min(15rem, 46%);
+  margin-bottom: -0.5rem;
+  filter: drop-shadow(0 0.9rem 1rem rgba(65, 42, 25, 0.1));
+}
+
+.loadingProse {
+  min-height: 24rem;
+}
+
+.loadingMessage {
+  max-width: 30rem;
+  color: var(--color-ink-secondary);
+  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  line-height: 1.7;
+}
+
+.loadingLines {
+  margin-top: 2rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.loadingLines span {
+  height: 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-home-primary) 14%, var(--color-border));
+  animation: loadingBreathe 1.8s ease-in-out infinite;
+}
+
+.loadingLines span:nth-child(1) { width: 92%; }
+.loadingLines span:nth-child(2) { width: 76%; animation-delay: 120ms; }
+.loadingLines span:nth-child(3) { width: 58%; animation-delay: 240ms; }
+
+@keyframes loadingBreathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 
 .empty {
@@ -117,8 +184,45 @@
 .bodyCopy {
   position: relative;
   z-index: 1;
+  width: min(100%, 68ch);
   max-width: 66ch;
+  margin: 0 auto;
 }
+
+.story {
+  grid-column: 1 / -1;
+  width: min(100%, 76rem);
+  margin: clamp(1rem, 3vw, 2rem) auto 0;
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 6vw, 6rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-home-primary) 32%, var(--color-border));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-home-primary) 18%, var(--color-border));
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-paper) 74%, transparent) 14% 86%, transparent);
+}
+
+.storyLabel {
+  width: min(100%, 68ch);
+  margin: 0 auto 1.35rem;
+  color: var(--color-home-on-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.storyInvitation {
+  width: min(100%, 68ch);
+  margin: 2.5rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-ink-secondary);
+}
+
+.storyInvitation p { font-family: var(--font-display), Georgia, serif; font-size: 1.25rem; }
+.storyInvitation a { min-height: 2.75rem; display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-home-on-soft); font-weight: 700; text-decoration: underline; }
 
 .heading {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
@@ -206,6 +310,16 @@
   }
 
   .characterNote { right: 6rem; }
+
+  .story { padding-inline: clamp(0.25rem, 4vw, 2rem); }
+
+  .loadingMedia {
+    min-height: clamp(20rem, 72vw, 32rem);
+  }
+
+  .loadingProse {
+    min-height: 0;
+  }
 }
 
 @media (max-width: 479px) {
@@ -235,4 +349,23 @@
   }
 
   .characterNote { right: 5.5rem; bottom: 0; max-width: 9rem; font-size: 0.66rem; }
+
+  .story { margin-top: 0; padding: 1.75rem 0 2rem; background: transparent; }
+  .storyInvitation { align-items: flex-start; flex-direction: column; }
+
+  .loadingMedia {
+    min-height: 18rem;
+  }
+
+  .loadingCharacter {
+    width: min(10rem, 48%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingGlow,
+  .loadingLines span {
+    animation: none;
+    opacity: 0.8;
+  }
 }
