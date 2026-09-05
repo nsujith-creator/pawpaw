@@ -1,0 +1,59 @@
+{
+  "task_id": "pawpaw-journey-build",
+  "variant": "build",
+  "result": "partial",
+  "criteria": [
+    {"id": "AC-01", "status": "pass", "evidence": "Family and Admin entrances were observed on the review preview; empty authoring input focuses Title with nearby recoverable guidance; focused acceptance tests pass."},
+    {"id": "AC-02", "status": "pass", "evidence": "Carousel readiness, adjacent preload, keyboard, swipe, and reduced-motion behavior are covered by the passing unit suite and were previously observed on the same review branch."},
+    {"id": "AC-03", "status": "unverified", "evidence": "Desktop Home, First Days, Chapters, and memory surfaces were visually reviewed; required 360, 390, and 768 pixel perceptual inspection is unavailable in the current cloud browser."},
+    {"id": "AC-04", "status": "unverified", "evidence": "Designed loading, not-found, application-error, and offline surfaces exist and focused tests pass; an actual disconnect/reconnect cycle was not exercised in this final pass."},
+    {"id": "AC-05", "status": "unverified", "evidence": "Desktop authoring was observed with one active step, automatic address, and collapsed optional chronology; required mobile perceptual review remains unavailable."},
+    {"id": "AC-06", "status": "unverified", "evidence": "Continue validation, intentional media destination, and compact photo actions were observed without mutation; create, upload, publish, and unpublish were not exercised against shared family data."},
+    {"id": "AC-07", "status": "pass", "evidence": "Letters are described as publishable and the Home baby-age context is no longer hardcoded; acceptance tests pass."},
+    {"id": "AC-08", "status": "fail", "evidence": "Type-check, production build, 378 unit tests, diff check, and scope check pass. Full lint retains one pre-existing require-import violation; one live integration test received Supabase Bad Gateway before creating its temporary user."}
+  ],
+  "journey_verification": {
+    "behavioral": [
+      {"check": "Family browsing", "status": "pass", "evidence": "Authenticated Home, First Days, Chapters, memory detail, and designed stale-route recovery were observed on the review branch."},
+      {"check": "Empty Continue", "status": "pass", "evidence": "Continue with an empty title stays on Shape it, focuses Title, and explains that everything else can wait."},
+      {"check": "Photo shelf destination", "status": "pass", "evidence": "Global shelf opens on Choose a memory and Add to memory is disabled until an intentional choice."},
+      {"check": "Publication mutation", "status": "unverified", "evidence": "Shared family content was deliberately left unchanged during review."},
+      {"check": "Admin status consistency", "status": "pass", "evidence": "First Days now reads published unchanged in both Today and Memories on deployment f0486bf."}
+    ],
+    "perceptual": [
+      {"viewport": 1363, "check": "Family and Admin composition", "status": "pass", "evidence": "Home photograph/title composition, readable story measure, quiet install affordance, step-focused editor, and compact photo controls were visually inspected."},
+      {"viewport": 360, "check": "Responsive journey", "status": "unverified", "evidence": "Viewport resizing is unavailable in the current cloud browser."},
+      {"viewport": 390, "check": "Responsive journey", "status": "unverified", "evidence": "Viewport resizing is unavailable in the current cloud browser."},
+      {"viewport": 768, "check": "Responsive journey", "status": "unverified", "evidence": "Viewport resizing is unavailable in the current cloud browser."}
+    ],
+    "technical": [
+      {"check": "TypeScript", "status": "pass", "evidence": "./node_modules/.bin/tsc --noEmit exited 0."},
+      {"check": "Unit suite", "status": "pass", "evidence": "33 files and 378 tests passed."},
+      {"check": "Production build", "status": "pass", "evidence": "Next.js 16.3 webpack build compiled and generated all routes."},
+      {"check": "Lint", "status": "fail", "evidence": "One pre-existing @typescript-eslint/no-require-imports error remains in src/lib/media/image-metadata.ts."},
+      {"check": "Live integration", "status": "unverified", "evidence": "Supabase returned Bad Gateway before the temporary admin user was created."}
+    ]
+  },
+  "findings": [
+    {"severity": "high", "journey_refs": ["J-04", "J-05"], "observed": "The authoring wall, separate media unlock, and exposed rare photo controls interrupted writing.", "expected": "One meaningful decision at a time with quiet saving and rare controls tucked away.", "evidence": "Preview desktop review plus focused tests.", "status": "fixed"},
+    {"severity": "medium", "journey_refs": ["J-02"], "observed": "Home prose was squeezed beside the photograph and installation led the visit.", "expected": "Photograph and title lead; prose reads at a comfortable measure; installation stays optional.", "evidence": "Preview desktop screenshot on deployment 2104dc0.", "status": "fixed"},
+    {"severity": "medium", "journey_refs": ["J-04"], "observed": "First Days had contradictory publication labels between Today and Memories.", "expected": "Both Admin views give the author the same answer about family-visible state.", "evidence": "Both views show published unchanged on deployment f0486bf.", "status": "fixed"},
+    {"severity": "medium", "journey_refs": ["J-02", "J-04"], "observed": "Required mobile visual inspection could not be performed with the current browser viewport.", "expected": "Inspect the complete family and Admin journeys at 360, 390, and 768 pixels before merge.", "evidence": "Cloud browser remained fixed at 1363 by 936.", "status": "open"},
+    {"severity": "low", "journey_refs": ["J-05"], "observed": "The repository lint gate retains one historical require-import violation outside this journey change.", "expected": "Resolve or explicitly accept the existing lint debt before treating the entire repository lint gate as green.", "evidence": "src/lib/media/image-metadata.ts:3:15.", "status": "accepted"}
+  ],
+  "tests": [
+    {"command": "./node_modules/.bin/tsc --noEmit", "exit_code": 0, "summary": "TypeScript passed."},
+    {"command": "./node_modules/.bin/vitest run tests/unit", "exit_code": 0, "summary": "33 unit files; 378 tests passed."},
+    {"command": "./node_modules/.bin/next build --webpack", "exit_code": 0, "summary": "Production build passed after isolating a corrupted generated cache."},
+    {"command": "./node_modules/.bin/eslint .", "exit_code": 1, "summary": "One pre-existing no-require-imports violation in image-metadata.ts."},
+    {"command": "./node_modules/.bin/vitest run", "exit_code": 1, "summary": "All deterministic tests passed; one live Supabase integration received Bad Gateway before creating a temporary user."},
+    {"command": "git diff --check", "exit_code": 0, "summary": "No whitespace errors."}
+  ],
+  "deviations": [
+    "Mobile perceptual review remains unverified because the authenticated cloud browser cannot change viewport size.",
+    "Create, upload, publish, and unpublish were not exercised against the shared family database.",
+    "No new dependency, service, migration, Docker work, production merge, or production deployment was introduced."
+  ],
+  "cost": {"new_monthly_inr": 0, "new_dependencies": [], "new_services": []},
+  "next_action": "Owner reviews the Vercel preview on phone and desktop; after approval, merge PR 9 and deploy production."
+}
