@@ -195,8 +195,9 @@
 }
 
 @media (min-width: 900px) {
-  .bar { padding: 10px 40px; }
-  .opener { grid-template-columns: 1.05fr 1fr; max-width: 1200px; margin: 24px auto 0; }
+  /* The editor bar lines up with the story's colour page below it. */
+  .bar { padding: 10px max(40px, calc((100% - 1200px) / 2)); }
+  .opener { grid-template-columns: 1.05fr 1fr; width: min(1200px, 100% - 80px); margin: 24px auto 0; }
   .opener[data-solo] { grid-template-columns: 1fr; }
   .openerPage { padding: 48px 48px 52px; min-height: 60vh; }
   .opener[data-solo] .openerPage { padding-right: 40%; min-height: 48vh; }
