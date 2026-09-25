@@ -56,7 +56,12 @@ Each story has one of the five page colours (duck, teal, rose, sky, night). It a
 
 ## Motion
 
-Only the "also pawpaw, pupu…" line under her name moves. Under reduced motion it is a still list.
+Two things move on Home, both slowly and one item at a time:
+
+- the "also pawpaw, pupu…" line under her name cycles through her other names;
+- her people show one person at a time, starting from a random person each visit so nobody always comes last. Pause stops it; tapping the person shows the next.
+
+Both keep cycling under reduced motion; that setting only drops the fade. The full lists are always there for screen readers.
 
 ## Words on screen
 
