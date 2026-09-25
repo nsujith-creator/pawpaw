@@ -196,7 +196,9 @@
 }
 
 @media (min-width: 900px) {
-  .top { padding: 0.8rem 40px; }
+  /* The top bar and footer share the page column, so every left edge lines up. */
+  .top { padding: 0.8rem max(40px, calc((100% - 1200px) / 2)); }
+  .footer { padding-left: max(40px, calc((100% - 1200px) / 2)); padding-right: max(40px, calc((100% - 1200px) / 2)); }
   .spread { grid-template-columns: 1.05fr 1fr; width: min(1200px, 100% - 80px); margin: 0 auto; }
   .namePage { padding: 56px 56px 220px; }
   .photoPage { padding: 3rem; }
