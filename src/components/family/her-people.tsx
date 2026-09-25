@@ -22,6 +22,16 @@ export default function HerPeople({ people }: { people: HerPerson[] }) {
     fade.current = window.setTimeout(() => { setIndex(current => (current + 1) % Math.max(people.length, 1)); setVisible(true) }, 450)
   }, [people.length])
 
+  // Pausing holds whoever is on screen, even if a change had already started.
+  function togglePause() {
+    if (!paused && fade.current) {
+      window.clearTimeout(fade.current)
+      fade.current = null
+      setVisible(true)
+    }
+    setPaused(value => !value)
+  }
+
   // Shuffle once in the browser (never on the server, so every visit starts with someone new).
   useEffect(() => {
     const shuffled = [...people]
@@ -53,7 +63,7 @@ export default function HerPeople({ people }: { people: HerPerson[] }) {
         <span className={styles.personSaid}>{person.said}</span>
       </button>
       {people.length > 1 && (
-        <button type="button" className={styles.personPause} aria-pressed={paused} onClick={() => setPaused(value => !value)}>
+        <button type="button" className={styles.personPause} aria-pressed={paused} onClick={togglePause}>
           {paused ? 'Play' : 'Pause'}
         </button>
       )}
