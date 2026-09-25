@@ -5,13 +5,13 @@ import { requireAdminPage } from '@/lib/admin/require-admin-page'
 import { ageAt } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
 import { chartOrder } from '@/lib/family/chart-order'
+import { contentFingerprint, FINGERPRINT_SELECT, type FingerprintFields } from '@/lib/content/fingerprint'
 import AdminState from './admin-state'
 import styles from './admin.module.css'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Stories' }
 
-interface Row {
+interface Row extends FingerprintFields {
   id: string
   type: string
   slug: string
@@ -24,7 +24,19 @@ interface Row {
   visual_scene: string | null
   cover_media_id: string | null
   active_published_revision_id: string | null
-  content_media: { sort_order: number; media_assets: { id: string; storage_path: string } | null }[]
+  content_media: { sort_order: number; caption_override: string | null; media_assets: { id: string; storage_path: string } | null }[]
+}
+
+interface LiveRow extends FingerprintFields {
+  id: string
+  created_at: string
+  cover_media_id: string | null
+  content_revision_media: { media_id: string; sort_order: number; caption_override: string | null }[]
+}
+
+// What the family sees versus the draft: words and details, cover, and photos in order.
+function photoList(rows: { id: string; sort_order: number; caption_override: string | null }[]) {
+  return JSON.stringify([...rows].sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id)).map(row => [row.id, row.caption_override ?? null]))
 }
 
 const KIND: Record<string, string> = { story: 'story', letter: 'letter', gallery: 'photos', moment: 'moment' }
@@ -33,22 +45,27 @@ export default async function StoriesPage() {
   await requireAdminPage()
   const db = createAdminClient()
   const { data, error } = await db.from('content_items')
-    .select('id, type, slug, title, updated_at, created_at, event_date, event_date_precision, author_display_name, visual_scene, cover_media_id, active_published_revision_id, content_media(sort_order, media_assets(id, storage_path))')
+    .select(`id, type, slug, updated_at, created_at, cover_media_id, active_published_revision_id, ${FINGERPRINT_SELECT}, content_media(sort_order, caption_override, media_assets(id, storage_path))`)
     .neq('type', 'home')
   if (error) return <AdminState title="Her stories didn't load." body="Nothing was changed. Reload in a minute." />
   const rows = (data ?? []) as unknown as Row[]
 
   const revisionIds = rows.flatMap(row => row.active_published_revision_id ? [row.active_published_revision_id] : [])
   const revisions = revisionIds.length
-    ? await db.from('content_revisions').select('id, created_at').in('id', revisionIds)
-    : { data: [] as { id: string; created_at: string }[], error: null }
-  const publishedAt = new Map((revisions.data ?? []).map(revision => [revision.id, revision.created_at]))
+    ? await db.from('content_revisions').select(`id, created_at, cover_media_id, ${FINGERPRINT_SELECT}, content_revision_media!content_revision_media_revision_id_fkey(media_id, sort_order, caption_override)`).in('id', revisionIds)
+    : { data: [], error: null }
+  if (revisions.error) return <AdminState title="Her stories didn't load." body="Nothing was changed. Reload in a minute." />
+  const live = new Map(((revisions.data ?? []) as unknown as LiveRow[]).map(revision => [revision.id, revision]))
 
   const stories = await Promise.all(rows.map(async row => {
     const media = [...row.content_media].sort((a, b) => a.sort_order - b.sort_order).flatMap(item => item.media_assets ? [item.media_assets] : [])
     const cover = media.find(item => item.id === row.cover_media_id) ?? media[0] ?? null
-    const liveAt = row.active_published_revision_id ? publishedAt.get(row.active_published_revision_id) ?? null : null
-    const state = !liveAt ? 'draft' : new Date(row.updated_at) > new Date(liveAt) ? 'changed' : 'live'
+    const onPage = row.active_published_revision_id ? live.get(row.active_published_revision_id) ?? null : null
+    const liveAt = onPage?.created_at ?? null
+    const same = onPage && contentFingerprint(row) === contentFingerprint(onPage) && row.cover_media_id === onPage.cover_media_id &&
+      photoList(row.content_media.flatMap(item => item.media_assets ? [{ id: item.media_assets.id, sort_order: item.sort_order, caption_override: item.caption_override }] : [])) ===
+      photoList(onPage.content_revision_media.map(item => ({ id: item.media_id, sort_order: item.sort_order, caption_override: item.caption_override })))
+    const state = !onPage ? 'draft' : same ? 'live' : 'changed'
     return {
       ...row,
       eventDate: row.event_date,

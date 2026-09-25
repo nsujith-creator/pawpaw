@@ -59,6 +59,7 @@
 .startTitle { display: grid; gap: 8px; }
 .startTitle span, .kinds legend, .field span { font: 700 0.8rem/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
 .startTitle input {
+  width: 100%; min-width: 0;
   border: 0; border-bottom: 3px solid var(--ink); padding: 6px 0; background: transparent;
   font: 800 clamp(2rem, 9vw, 3rem)/1.1 var(--display); letter-spacing: -0.04em;
 }
@@ -105,9 +106,9 @@
 .loginForm .primary { justify-self: start; min-height: 50px; padding: 0 1.6rem; }
 
 @media (max-width: 599px) {
-  .top { padding: 6px 12px; }
-  .topEnd { width: 100%; justify-content: flex-end; margin-top: -6px; }
-  .nav { order: 3; }
+  .top { padding: 4px 12px 6px; column-gap: 4px; }
+  .nav { order: 3; width: 100%; margin-left: -0.85rem; }
+  .herPage, .signOut { padding: 0 0.5rem; }
 }
 
 @media (min-width: 700px) {

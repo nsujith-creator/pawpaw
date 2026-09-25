@@ -55,7 +55,7 @@
 /* A quiet strip of the other Home photographs */
 .strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
 .strip figure { margin: 0; }
-.strip img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; box-shadow: var(--shadow-card); }
+.strip img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; box-shadow: var(--shadow-card); }
 .strip figcaption { margin-top: 6px; font: 500 0.88rem/1.35 var(--display); color: var(--ink-2); }
 
 /* ---------- Height chart (C): graphite line, crayon ticks, age labels ---------- */
@@ -79,18 +79,19 @@
 .namesPage { background: var(--teal); color: #fff; }
 .copybook { list-style: none; }
 .copybook li {
-  position: relative; padding: 18px 0 12px;
-  display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 14px;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)) 0 18px / 100% 1px no-repeat,
-    linear-gradient(rgba(255, 201, 60, 0.9), rgba(255, 201, 60, 0.9)) 0 calc(100% - 24px) / 100% 1.5px no-repeat,
-    linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)) 0 calc(100% - 8px) / 100% 1px no-repeat;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px;
+  padding: 16px 0 14px; border-top: 1px solid rgba(255, 255, 255, 0.35);
 }
+.copybook li:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.35); }
+/* Each name carries its own yellow writing line, so no rule can ever cross a note when a row wraps. */
+.nameMl, .nameLat, .nameSmall { display: inline-block; padding-bottom: 3px; box-shadow: inset 0 -2px 0 var(--duck); }
 .nameMl { font: 800 clamp(2.6rem, 13vw, 4.2rem)/1.15 var(--ml); }
 .nameLat { font: 800 clamp(2.4rem, 12vw, 3.9rem)/1.1 var(--display); letter-spacing: -0.04em; }
 .nameSmall { font: 800 1.9rem/1.2 var(--display); letter-spacing: -0.03em; }
 .nameNote { font: 600 1rem/1.3 var(--display); }
-.nameLink { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 0.2em; text-decoration-color: var(--duck); }
+.nameLink { display: inline-flex; align-items: baseline; gap: 8px; }
+.nameLink::after { content: "→"; font: 800 1.5rem/1 var(--display); color: var(--duck); }
+.nameLink:hover .nameMl, .nameLink:hover .nameLat, .nameLink:focus-visible .nameMl, .nameLink:focus-visible .nameLat { box-shadow: inset 0 -4px 0 var(--duck); }
 
 /* ---------- Her people: a sky page ---------- */
 .peoplePage { background: var(--sky); color: #fff; }
@@ -184,14 +185,20 @@
 .pill { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.2rem; border-radius: 999px; background: var(--ink); color: var(--paper); font: 700 1rem/1 var(--display); }
 .pillGhost { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.2rem; border-radius: 999px; border: 2px solid currentColor; font: 700 1rem/1 var(--display); }
 
+@media (max-width: 379px) {
+  .top { gap: 0.5rem; padding: 0.7rem 12px; }
+  .nav a { padding: 0 0.6rem; }
+  .leave { padding: 0 0.75rem; }
+}
+
 @media (min-width: 900px) {
   .top { padding: 0.8rem 40px; }
-  .spread { grid-template-columns: 1.05fr 1fr; margin: 0 2rem; }
+  .spread { grid-template-columns: 1.05fr 1fr; width: min(1200px, 100% - 80px); margin: 0 auto; }
   .namePage { padding: 56px 56px 220px; }
   .photoPage { padding: 3rem; }
   .photoPage img { max-height: 76vh; width: auto; }
   .section { padding: 80px 40px; }
-  .pair { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 64px; max-width: 1200px; margin: 0 auto; align-items: start; padding: 0 40px; }
+  .pair { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 64px; width: min(1200px, 100% - 80px); margin: 0 auto; align-items: start; }
   .pair > .section { padding-left: 0; padding-right: 0; }
   .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .chart { padding-left: 120px; }
@@ -206,7 +213,7 @@
   .nameMl { font-size: 3.1rem; }
   .nameLat { font-size: 2.9rem; }
   .people { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; }
-  .opener { grid-template-columns: 1.05fr 1fr; margin: 0 2rem; }
+  .opener { grid-template-columns: 1.05fr 1fr; width: min(1200px, 100% - 80px); margin: 0 auto; }
   .openerPage { padding: 56px 56px 60px; min-height: 70vh; }
   .openerPage[data-solo] { min-height: 64vh; padding-right: 45%; }
   .opener[data-solo] { grid-template-columns: 1fr; }
