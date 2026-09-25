@@ -4,7 +4,7 @@ import AdminNav from '@/components/admin/admin-nav'
 import PrivateHistoryGuard from '@/components/auth/private-history-guard'
 import styles from './admin.module.css'
 
-export const metadata = { title: { default: 'Desk', template: '%s · pawpaw desk' } }
+export const metadata = { title: { default: 'Stories · pawpaw desk', template: '%s · pawpaw desk' } }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

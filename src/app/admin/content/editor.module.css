@@ -195,7 +195,7 @@
 
 @media (min-width: 900px) {
   .bar { padding: 10px 40px; }
-  .opener { grid-template-columns: 1.05fr 1fr; margin: 24px 2rem 0; }
+  .opener { grid-template-columns: 1.05fr 1fr; max-width: 1200px; margin: 24px auto 0; }
   .opener[data-solo] { grid-template-columns: 1fr; }
   .openerPage { padding: 48px 48px 52px; min-height: 60vh; }
   .opener[data-solo] .openerPage { padding-right: 40%; min-height: 48vh; }

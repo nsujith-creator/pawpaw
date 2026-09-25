@@ -41,7 +41,7 @@ export default function StoryChart({ items }: { items: ChapterIndexItem[] }) {
       {groups.map((group, index) => (
         <div className={styles.mark} key={`${group.age}-${index}`}>
           <p className={styles.age}>
-            {group.age ?? 'undated'}
+            {group.age}
             {group.date && <small>{group.date}</small>}
           </p>
           {group.items.map(item => {
