@@ -118,6 +118,8 @@
 .openerTitle { font: 800 clamp(3rem, 14vw, 5.6rem)/0.92 var(--display); letter-spacing: -0.05em; margin: 10px 0 14px; overflow-wrap: anywhere; }
 .openerSummary { font: 600 1.05rem/1.4 var(--display); max-width: 34rem; }
 .openerPhoto { padding: 16px; background: var(--paper); display: grid; place-items: center; }
+.openerPhoto figure { margin: 0; width: 100%; display: grid; justify-items: center; }
+.openerPhoto figcaption { margin-top: 0.7rem; justify-self: start; font: 500 0.95rem/1.4 var(--display); color: var(--ink-2); }
 .openerPhoto img { width: 100%; height: auto; max-height: 82vh; object-fit: contain; box-shadow: var(--shadow-photo); }
 
 .reading { padding: 16px 16px 40px 12px; }

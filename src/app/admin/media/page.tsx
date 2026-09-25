@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
 import { requireAdminPage } from '@/lib/admin/require-admin-page'
@@ -29,6 +30,10 @@ export default async function PhotosPage({ searchParams }: { searchParams: Promi
     .order('created_at', { ascending: false }).order('id', { ascending: true })
     .range((page - 1) * PAGE, page * PAGE - 1)
   if (error) return <AdminState title="Photos didn't load." body="Nothing was changed. Reload in a minute." />
+  const total = count ?? 0
+  const pages = Math.max(1, Math.ceil(total / PAGE))
+  // After deleting the last photo on a page, go back to the last page that still has photos.
+  if (page > pages) redirect(pages === 1 ? '/admin/media' : `/admin/media?page=${pages}`)
   const rows = (data ?? []) as unknown as Row[]
 
   // A photo that has ever been on her page stays, so older versions of a story never lose it.
@@ -47,8 +52,6 @@ export default async function PhotosPage({ searchParams }: { searchParams: Promi
     usedIn: row.content_media.flatMap(use => use.content_items ? [{ id: use.content_items.id, title: use.content_items.type === 'home' ? 'Home' : use.content_items.title, home: use.content_items.type === 'home' }] : []),
     deletable: row.content_media.length === 0 && !everPublished.has(row.id),
   })))
-  const total = count ?? items.length
-  const pages = Math.max(1, Math.ceil(total / PAGE))
 
   return (
     <main className={styles.page}>

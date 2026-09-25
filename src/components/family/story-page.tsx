@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import type { ChapterContent, ChapterMedia } from '@/lib/content/chapters'
 import type { PublishedVideo } from '@/lib/video/published-videos'
-import { ageAt } from '@/lib/family/age'
+import { ageAt, knownDate } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
 import FamilyVideo from './family-video'
 import Photo from './photo'
@@ -80,9 +80,16 @@ function metaLine(content: ChapterContent, photoCount: number) {
   const parts: string[] = []
   const age = ageAt(content.eventDate, content.eventDatePrecision)
   if (age) parts.push(age)
-  if (content.type === 'letter') parts.push(content.authorDisplayName ? `a letter from ${content.authorDisplayName}` : 'a letter')
-  else if (content.authorDisplayName) parts.push(`by ${content.authorDisplayName}`)
+  if (content.type === 'letter') {
+    const from = content.authorDisplayName ? ` from ${content.authorDisplayName}` : ''
+    const to = content.recipientDisplayName ? ` to ${content.recipientDisplayName}` : ''
+    parts.push(`a letter${from}${to}`)
+    const written = knownDate(content.authoredDate, content.authoredDatePrecision)
+    if (written) parts.push(`written ${written}`)
+  } else if (content.authorDisplayName) parts.push(`by ${content.authorDisplayName}`)
   else if (content.type === 'gallery' || content.bodyBlocks.length === 0) parts.push(`${photoCount} photograph${photoCount === 1 ? '' : 's'}`)
+  if (content.placeText) parts.push(content.placeText)
+  if (content.relationshipContext) parts.push(content.relationshipContext)
   return parts.join(' · ')
 }
 
@@ -128,7 +135,10 @@ export default function StoryPage({ content, videos = [], mediaState = 'complete
         </div>
         {cover && (
           <div className={styles.openerPhoto}>
-            <Photo url={cover.signedUrl} alt={cover.altText} width={cover.width} height={cover.height} eager sizes="(min-width: 900px) 46vw, 100vw" />
+            <figure>
+              <Photo url={cover.signedUrl} alt={cover.altText} width={cover.width} height={cover.height} eager sizes="(min-width: 900px) 46vw, 100vw" />
+              {caption(cover) && <figcaption>{caption(cover)}</figcaption>}
+            </figure>
           </div>
         )}
       </div>

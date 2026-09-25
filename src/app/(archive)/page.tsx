@@ -57,9 +57,13 @@ export default async function HomePage() {
             : <StoryChart items={items} />}
         </section>
 
-        {content && content.bodyBlocks.length > 0 && (
+        {content && (content.bodyBlocks.length > 0 || rest.length > 0) && (
           <section className={`${styles.section} ${styles.note}`} aria-labelledby="note-title">
-            <h2 className={styles.label} id="note-title">A note from acchan{noteDate(content.publishedAt) ? ` · ${noteDate(content.publishedAt)}` : ''}</h2>
+            <h2 className={styles.label} id="note-title">
+              {content.bodyBlocks.length > 0
+                ? `A note from acchan${noteDate(content.publishedAt) ? ` · ${noteDate(content.publishedAt)}` : ''}`
+                : 'More of her'}
+            </h2>
             {content.bodyBlocks.map((block, index) =>
               block.type === 'paragraph' || block.type === 'heading' || block.type === 'quote'
                 ? <p key={index}>{block.text}</p>

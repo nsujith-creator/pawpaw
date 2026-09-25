@@ -2,7 +2,7 @@
 
 // Choose photos already in Photos. Tap to pick several, then add them in the order picked.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { listLibraryPhotos, type LibraryPhoto } from '../media/actions'
 import { photoSrcSet } from '@/lib/media/photo-srcset'
 import styles from './editor.module.css'
@@ -13,6 +13,25 @@ export default function PhotoPicker({ onDone, onCancel }: { onDone: (ids: string
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [picked, setPicked] = useState<string[]>([])
+  const dialog = useRef<HTMLDivElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
+
+  // Keyboard focus moves into the picker, stays inside it, and returns where it was on close.
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null
+    closeButton.current?.focus()
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !dialog.current) return
+      const focusable = [...dialog.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input, [tabindex]:not([tabindex="-1"])')]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', trap)
+    return () => { document.removeEventListener('keydown', trap); before?.focus() }
+  }, [])
 
   async function load(offset: number) {
     setLoading(true)
@@ -39,10 +58,10 @@ export default function PhotoPicker({ onDone, onCancel }: { onDone: (ids: string
 
   return (
     <div className={styles.pickerBackdrop} role="dialog" aria-modal="true" aria-labelledby="picker-title">
-      <div className={styles.picker}>
+      <div className={styles.picker} ref={dialog}>
         <header className={styles.pickerHead}>
           <h2 id="picker-title">Choose from Photos</h2>
-          <button type="button" className={styles.ghost} onClick={onCancel}>Close</button>
+          <button type="button" ref={closeButton} className={styles.ghost} onClick={onCancel}>Close</button>
         </header>
         <div className={styles.pickerGrid}>
           {photos.map(photo => {
