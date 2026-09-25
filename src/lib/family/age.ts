@@ -9,9 +9,18 @@ function daysBetween(from: string, to: string): number {
 
 export function ageAt(date: string | null | undefined, precision: 'day' | 'month' | 'year' | null = 'day'): string | null {
   if (!date) return null
+  if (precision === 'year') return null
+  // Known only to the month: count whole months, never a made-up week or day.
+  if (precision === 'month') {
+    const [by, bm] = BIRTHDAY.split('-').map(Number)
+    const [y, m] = date.split('-').map(Number)
+    const months = (y - by) * 12 + (m - bm)
+    if (months < 0) return null
+    if (months < 1) return 'her first month'
+    return months < 24 ? `about ${months} month${months === 1 ? '' : 's'}` : `about ${Math.floor(months / 12)} years`
+  }
   const days = daysBetween(BIRTHDAY, date)
   if (!Number.isFinite(days) || days < 0) return null
-  if (precision === 'year') return null
   if (days < 14) return `day ${days}`
   const months = Math.round(days / 30.44)
   const nearMonth = Math.abs(days - months * 30.44) <= 1.5

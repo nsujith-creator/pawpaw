@@ -408,10 +408,13 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
       added.push(mediaId)
     }
     setBusyMedia(false)
+    // A photo appears once in the words; picking one that's already placed doesn't add it again.
+    const toPlace = added.filter(id => !placedIds.has(id))
+    if (at !== 'tray' && toPlace.length < added.length) problems.push('A photo you picked is already in the words, so it stays where it is.')
     setUploadProblems(problems)
-    if (added.length && at !== 'tray') {
-      setPendingPhotos(current => new Set([...current, ...added.filter(id => !mediaById.has(id))]))
-      setItems(current => [...current.slice(0, at), ...added.map(mediaId => ({ key: newKey(), block: { type: 'media' as const, mediaId } })), ...current.slice(at)])
+    if (toPlace.length && at !== 'tray') {
+      setPendingPhotos(current => new Set([...current, ...toPlace.filter(id => !mediaById.has(id))]))
+      setItems(current => [...current.slice(0, at), ...toPlace.map(mediaId => ({ key: newKey(), block: { type: 'media' as const, mediaId } })), ...current.slice(at)])
     }
     if (added.length) await afterMediaChange()
   }
@@ -470,9 +473,11 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
     } else setNotice(result.error ?? "Couldn't delete it.")
   }
 
+  // The preview shows what's saved, so it opens only once the words on screen are saved.
   async function openPreview() {
     const tab = window.open('about:blank', '_blank')
-    await save()
+    const saved = await save()
+    if (!saved) { tab?.close(); return }
     if (tab) tab.location.href = `/admin/content/${story.id}/preview`
   }
 

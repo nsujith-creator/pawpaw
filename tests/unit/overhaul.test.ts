@@ -68,6 +68,12 @@ describe('her chart', () => {
     expect(ageAt('2026-09-18', 'day')).toBe('16 weeks')
   })
 
+  it('never invents a week or day for a date known only to the month', () => {
+    expect(ageAt('2026-09-01', 'month')).toBe('about 4 months')
+    expect(ageAt('2026-05-01', 'month')).toBe('her first month')
+    expect(ageAt('2026-09-01', 'year')).toBeNull()
+  })
+
   it('keeps a chosen colour and otherwise picks the same one every time', () => {
     expect(storyColour('rose', 'anything')).toBe('rose')
     expect(storyColour(null, 'my-pawpaw')).toBe(storyColour('reader', 'my-pawpaw'))
@@ -94,6 +100,8 @@ describe('saving never overwrites words changed elsewhere', () => {
     expect(actions).toContain("text(formData, 'expected_fingerprint')")
     expect(actions.indexOf('conflict: true')).toBeLessThan(actions.indexOf(".update({ ...plan.payload"))
     expect(actions).toContain('if (!admin) return SIGNED_OUT')
+    // The write itself only lands if the row is unchanged since it was checked.
+    expect(actions).toContain(".eq('updated_at', readAt!)")
   })
 
   it('keeps unsaved words in the browser and warns before leaving', () => {

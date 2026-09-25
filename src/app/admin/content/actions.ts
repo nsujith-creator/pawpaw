@@ -69,8 +69,9 @@ export async function saveChapter(formData: FormData): Promise<ContentActionResu
   if (id && !isValidId(id)) return { error: "This story isn't there any more." }
 
   let existing: ExistingContent | null = null
+  let readAt: string | null = null
   if (id) {
-    const item = await db.from('content_items').select(`id, type, slug, ${FINGERPRINT_SELECT}`).eq('id', id).neq('type', 'home').maybeSingle()
+    const item = await db.from('content_items').select(`id, type, slug, updated_at, ${FINGERPRINT_SELECT}`).eq('id', id).neq('type', 'home').maybeSingle()
     if (item.error) return { error: "Couldn't reach the story just now. Retry in a moment." }
     if (!item.data) return { error: "This story isn't there any more." }
     // Another tab or device saved this story since this page loaded. Don't overwrite it blind.
@@ -80,6 +81,7 @@ export async function saveChapter(formData: FormData): Promise<ContentActionResu
     const history = await db.from('content_revisions').select('id', { count: 'exact', head: true }).eq('content_item_id', id)
     if (history.error || history.count === null) return { error: "Couldn't reach the story just now. Retry in a moment." }
     existing = { id: item.data.id as string, type: item.data.type as string, slug: item.data.slug as string, hasRevisionHistory: history.count > 0 }
+    readAt = item.data.updated_at as string
   }
 
   const blocks = parseBlocks(formData)
@@ -124,9 +126,12 @@ export async function saveChapter(formData: FormData): Promise<ContentActionResu
     if (inserted.error || !inserted.data) return { error: "Not saved. Couldn't reach the server; retry in a moment." }
     saved = inserted.data as unknown as SavedRow
   } else {
+    // Write only if the story is still exactly as read above, so two saves arriving together
+    // can't both pass the check: the second one finds the row changed and stops.
     const updated = await db.from('content_items').update({ ...plan.payload, updated_by: admin.id })
-      .eq('id', id).neq('type', 'home').select(`id, slug, ${FINGERPRINT_SELECT}`).maybeSingle()
-    if (updated.error || !updated.data) return { error: "Not saved. Couldn't reach the server; retry in a moment." }
+      .eq('id', id).eq('updated_at', readAt!).neq('type', 'home').select(`id, slug, ${FINGERPRINT_SELECT}`).maybeSingle()
+    if (updated.error) return { error: "Not saved. Couldn't reach the server; retry in a moment." }
+    if (!updated.data) return { conflict: true, error: 'This story was changed somewhere else at the same moment. Reload to see that version; copy anything you want to keep first.' }
     saved = updated.data as unknown as SavedRow
   }
 
