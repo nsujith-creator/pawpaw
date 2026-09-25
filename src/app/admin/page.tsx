@@ -1,291 +1,115 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { requireActiveAdmin } from '@/lib/auth/admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
-import {
-  filterAndSortContent,
-  formatAdminDateTime,
-  parseContentFilters,
-  publishedTimestamp,
-  summarizeAttachments,
-  type AttachmentCandidate,
-  type ContentViewItem,
-} from '@/lib/admin/library-view'
-import {
-  draftMatchesRevision,
-  type ChapterRow,
-  type RevisionMediaRow,
-  type RevisionRow,
-} from '@/lib/content/chapters'
+import { requireAdminPage } from '@/lib/admin/require-admin-page'
+import { ageAt } from '@/lib/family/age'
+import { storyColour } from '@/lib/family/story-colour'
+import { chartOrder } from '@/lib/family/chart-order'
+import AdminState from './admin-state'
 import styles from './admin.module.css'
 
-interface DashboardAttachmentRow {
-  sort_order: number
-  media_assets: {
-    id: string
-    storage_path: string
-    alt_text: string | null
-  } | null
+export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Stories' }
+
+interface Row {
+  id: string
+  type: string
+  slug: string
+  title: string
+  updated_at: string
+  created_at: string
+  event_date: string | null
+  event_date_precision: 'day' | 'month' | 'year' | null
+  author_display_name: string | null
+  visual_scene: string | null
+  cover_media_id: string | null
+  active_published_revision_id: string | null
+  content_media: { sort_order: number; media_assets: { id: string; storage_path: string } | null }[]
 }
 
-interface DashboardItem extends ContentViewItem {
-  attachedMediaCount: number
-  firstMedia: AttachmentCandidate['media']
-}
+const KIND: Record<string, string> = { story: 'story', letter: 'letter', gallery: 'photos', moment: 'moment' }
 
-const CONTENT_TYPES = ['home', 'story', 'gallery', 'letter', 'moment'] as const
-
-export default async function AdminDashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; status?: string; type?: string }>
-}) {
-  const supabase = await createClient()
-  try {
-    await requireActiveAdmin(supabase)
-  } catch {
-    redirect('/admin/login')
-  }
-
-  const filters = parseContentFilters(await searchParams)
+export default async function StoriesPage() {
+  await requireAdminPage()
   const db = createAdminClient()
+  const { data, error } = await db.from('content_items')
+    .select('id, type, slug, title, updated_at, created_at, event_date, event_date_precision, author_display_name, visual_scene, cover_media_id, active_published_revision_id, content_media(sort_order, media_assets(id, storage_path))')
+    .neq('type', 'home')
+  if (error) return <AdminState title="Her stories didn't load." body="Nothing was changed. Reload in a minute." />
+  const rows = (data ?? []) as unknown as Row[]
 
-  const [contentResult, mediaResult] = await Promise.all([
-    db
-      .from('content_items')
-      .select(`
-        id, type, slug, title, summary, body_blocks, status, cover_media_id,
-        published_at, active_published_revision_id,
-        event_date, event_date_precision, event_date_is_approximate,
-        authored_date, authored_date_precision, authored_date_is_approximate,
-        author_display_name, recipient_display_name, place_text, relationship_context,
-        visual_scene, created_at, updated_at, created_by,
-        content_media (
-          sort_order, caption_override, placement,
-          media_assets (id, storage_path, alt_text, caption, width, height, mime_type, byte_size)
-        )
-      `)
-      .order('updated_at', { ascending: false })
-      .order('id', { ascending: true }),
-    db
-      .from('media_assets')
-      .select('id', { count: 'exact', head: true }),
-  ])
+  const revisionIds = rows.flatMap(row => row.active_published_revision_id ? [row.active_published_revision_id] : [])
+  const revisions = revisionIds.length
+    ? await db.from('content_revisions').select('id, created_at').in('id', revisionIds)
+    : { data: [] as { id: string; created_at: string }[], error: null }
+  const publishedAt = new Map((revisions.data ?? []).map(revision => [revision.id, revision.created_at]))
 
-  if (contentResult.error || mediaResult.error) {
-    console.error('AdminDashboard query failed:', contentResult.error ?? mediaResult.error)
-    return (
-      <div className={styles.page}>
-        <p className={styles.eyebrow}>Author&apos;s studio</p>
-        <h1 className={styles.pageTitle}>Today in Pawpaw</h1>
-        <p role="alert" className={styles.errorNotice}>
-          Dashboard data could not be loaded right now. Refresh the page to try again.
-        </p>
-      </div>
-    )
-  }
-
-  const revisionIds = (contentResult.data ?? []).map(row => row.active_published_revision_id).filter((id): id is string => Boolean(id))
-  const revisionMap = new Map<string, RevisionRow & { content_revision_media: RevisionMediaRow[] }>()
-  if (revisionIds.length > 0) {
-    const revisions = await db.from('content_revisions').select(`
-      id, content_item_id, revision_number, type, slug, title, summary, body_blocks,
-      cover_media_id, event_date, event_date_precision, event_date_is_approximate,
-      authored_date, authored_date_precision, authored_date_is_approximate,
-      author_display_name, recipient_display_name, place_text, relationship_context,
-      visual_scene, created_at, created_by,
-      content_revision_media!content_revision_media_revision_id_fkey (revision_id, media_id, sort_order, caption_override, placement, storage_path, alt_text, caption, width, height, mime_type, byte_size)
-    `).in('id', revisionIds)
-    if (revisions.error) {
-      console.error('AdminDashboard revision query failed:', revisions.error)
-      return <div className={styles.page}><p role="alert" className={styles.errorNotice}>Publication state could not be loaded safely.</p></div>
-    }
-    for (const revision of revisions.data ?? []) revisionMap.set(revision.id, revision as unknown as RevisionRow & { content_revision_media: RevisionMediaRow[] })
-  }
-
-  const allItems: DashboardItem[] = (contentResult.data ?? []).map(row => {
-    const attachmentRows = ((row.content_media ?? []) as unknown as DashboardAttachmentRow[])
-    const summary = summarizeAttachments(attachmentRows.map(attachment => ({
-      sortOrder: attachment.sort_order,
-      media: attachment.media_assets ? {
-        id: attachment.media_assets.id,
-        storagePath: attachment.media_assets.storage_path,
-        altText: attachment.media_assets.alt_text,
-      } : null,
-    })))
-    const active = row.active_published_revision_id ? revisionMap.get(row.active_published_revision_id) ?? null : null
-    const draftMedia: RevisionMediaRow[] = ((row.content_media ?? []) as unknown as Array<{
-      sort_order: number
-      caption_override: string | null
-      placement: string | null
-      media_assets: Omit<RevisionMediaRow, 'media_id' | 'sort_order' | 'caption_override'> & { id: string } | null
-    }>).flatMap(attachment => attachment.media_assets ? [{
-      revision_id: undefined,
-      media_id: attachment.media_assets.id,
-      sort_order: attachment.sort_order,
-      caption_override: attachment.caption_override,
-      placement: attachment.placement,
-      storage_path: attachment.media_assets.storage_path,
-      alt_text: attachment.media_assets.alt_text,
-      caption: attachment.media_assets.caption,
-      width: attachment.media_assets.width,
-      height: attachment.media_assets.height,
-      mime_type: attachment.media_assets.mime_type,
-      byte_size: attachment.media_assets.byte_size,
-    }] : [])
-    const status: ContentViewItem['status'] = row.type === 'home'
-      ? row.status === 'published' ? 'published' : 'unpublished'
-      : !active ? 'unpublished'
-        : draftMatchesRevision(row as unknown as ChapterRow, draftMedia, active, active.content_revision_media ?? []) ? 'published' : 'published-draft'
-
+  const stories = await Promise.all(rows.map(async row => {
+    const media = [...row.content_media].sort((a, b) => a.sort_order - b.sort_order).flatMap(item => item.media_assets ? [item.media_assets] : [])
+    const cover = media.find(item => item.id === row.cover_media_id) ?? media[0] ?? null
+    const liveAt = row.active_published_revision_id ? publishedAt.get(row.active_published_revision_id) ?? null : null
+    const state = !liveAt ? 'draft' : new Date(row.updated_at) > new Date(liveAt) ? 'changed' : 'live'
     return {
-      id: row.id,
-      title: row.title,
-      type: row.type,
-      status,
-      updatedAt: row.updated_at,
-      publishedAt: row.type === 'home' ? row.published_at : active?.created_at ?? null,
-      attachedMediaCount: summary.count,
-      firstMedia: summary.first,
-    }
-  })
-
-  const filteredItems = filterAndSortContent(allItems, filters).slice(0, 10)
-  const recentItems = await Promise.all(filteredItems.map(async item => {
-    if (!item.firstMedia) return { ...item, signedThumbnail: null as string | null }
-    try {
-      return { ...item, signedThumbnail: await generateSignedUrl(item.firstMedia.storagePath) }
-    } catch (error) {
-      console.error('AdminDashboard thumbnail signing failed:', error)
-      return { ...item, signedThumbnail: null as string | null }
+      ...row,
+      eventDate: row.event_date,
+      publishedAt: liveAt ?? row.created_at,
+      coverUrl: cover ? await generateSignedUrl(cover.storage_path) : null,
+      photoCount: media.length,
+      state,
     }
   }))
 
-  const draftCount = allItems.filter(item => item.status === 'unpublished' || item.status === 'published-draft').length
-  const publishedCount = allItems.filter(item => item.status === 'published' || item.status === 'published-draft').length
-  const missingAltMediaIds = new Set<string>()
-  for (const row of contentResult.data ?? []) {
-    const attachments = ((row.content_media ?? []) as unknown as DashboardAttachmentRow[])
-    for (const attachment of attachments) {
-      const media = attachment.media_assets
-      if (media && !media.alt_text?.trim()) missingAltMediaIds.add(media.id)
-    }
-  }
-  const missingAltCount = missingAltMediaIds.size
-  const hasFilters = Boolean(filters.query || filters.status !== 'all' || filters.type !== 'all')
+  const drafts = stories.filter(story => story.state === 'draft').sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+  const onHerPage = chartOrder(stories.filter(story => story.state !== 'draft'))
+
+  const list = (items: typeof stories) => (
+    <ul className={styles.stories}>
+      {items.map(story => {
+        const age = ageAt(story.event_date, story.event_date_precision)
+        const meta = [age, KIND[story.type] ?? story.type, story.author_display_name ? `by ${story.author_display_name}` : null,
+          story.photoCount ? `${story.photoCount} photo${story.photoCount === 1 ? '' : 's'}` : null].filter(Boolean).join(' · ')
+        return (
+          <li key={story.id}>
+            <Link href={`/admin/content/${story.id}`} className={styles.storyRow} data-colour={storyColour(story.visual_scene, story.slug)}>
+              <span className={styles.storyThumb} aria-hidden="true">
+                {story.coverUrl
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={`${story.coverUrl}?w=480`} alt="" loading="lazy" decoding="async" />
+                  : <span>{story.title.slice(0, 1)}</span>}
+              </span>
+              <span className={styles.storyText}>
+                <strong>{story.title}</strong>
+                {meta && <small>{meta}</small>}
+              </span>
+              <span className={styles.storyState} data-state={story.state}>
+                {story.state === 'live' ? 'On her page' : story.state === 'changed' ? 'Changes not up yet' : 'Draft'}
+              </span>
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+  )
 
   return (
-    <div className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.eyebrow}>Author&apos;s studio</p>
-          <h1 className={styles.pageTitle}>Today in Pawpaw</h1>
-          <p className={styles.lede}>Pick up a memory, begin a new one, or simply see what the family can already enjoy.</p>
-        </div>
-      </header>
-
-      <div className={styles.statsStrip} aria-label="Current studio counts">
-        <Link href="/admin/content?status=unpublished" className={styles.statLink}>
-          <span className={styles.statNumber}>{draftCount}</span>
-          <span className={styles.statLabel}>Drafts</span>
-        </Link>
-        <Link href="/admin/content?status=published" className={styles.statLink}>
-          <span className={styles.statNumber}>{publishedCount}</span>
-          <span className={styles.statLabel}>Published</span>
-        </Link>
-        <a href="/admin/media" className={styles.statLink}>
-          <span className={styles.statNumber}>{mediaResult.count ?? 0}</span>
-          <span className={styles.statLabel}>Media files</span>
-        </a>
+    <main className={styles.page}>
+      <div className={styles.pageHead}>
+        <h1 className={styles.pageTitle}>Her stories</h1>
+        <Link href="/admin/content/new" className={styles.primary}>Write a new story</Link>
       </div>
-
-      <div className={styles.dashboardGrid}>
-        <section className={styles.panel} aria-labelledby="continue-editing-title">
-          <h2 id="continue-editing-title" className={styles.sectionTitle}>What would you like to remember?</h2>
-          <p className={styles.help}>A few honest lines are enough. Photographs, mood, and sharing come when you are ready.</p>
-          <p><Link href="/admin/content/new" className={styles.action}>Begin a memory</Link></p>
-          <div className={styles.quickLinks}>
-            <a href="/admin/home" className={styles.quickLink}>Shape the welcome page</a>
-            <Link href="/admin/content" className={styles.quickLink}>Return to a memory</Link>
-            <a href="/admin/media" className={styles.quickLink}>Find a photograph</a>
-          </div>
+      {stories.length === 0 && <p className={styles.lede}>Nothing written yet. The first story you put up hangs on her chart at her age when it happened.</p>}
+      {drafts.length > 0 && (
+        <section className={styles.group} aria-labelledby="drafts-title">
+          <h2 id="drafts-title" className={styles.groupTitle}>Not on her page yet</h2>
+          {list(drafts)}
         </section>
-
-        <section className={styles.panel} aria-labelledby="needs-attention-title">
-          <h2 id="needs-attention-title" className={styles.sectionTitle}>Needs attention</h2>
-          {missingAltCount > 0 || draftCount > 0 ? (
-            <ul className={styles.attentionList}>
-              {missingAltCount > 0 && (
-                <li className={styles.attentionItem}>{missingAltCount} attached photo{missingAltCount === 1 ? '' : 's'} missing alt text</li>
-              )}
-              {draftCount > 0 && (
-                <li className={styles.attentionItem}>{draftCount} unpublished draft{draftCount === 1 ? '' : 's'}</li>
-              )}
-            </ul>
-          ) : (
-            <p className={styles.emptyState}>Nothing needs attention.</p>
-          )}
+      )}
+      {onHerPage.length > 0 && (
+        <section className={styles.group} aria-labelledby="live-title">
+          <h2 id="live-title" className={styles.groupTitle}>On her page</h2>
+          {list(onHerPage)}
         </section>
-      </div>
-
-      <section aria-labelledby="recently-updated-title">
-        <div className={styles.sectionHeader}>
-          <h2 id="recently-updated-title" className={styles.sectionTitle}>Recently updated</h2>
-        </div>
-
-        <form method="GET" className={`${styles.filterBar} ${styles.filterBarCompact}`}>
-          <input name="q" type="search" defaultValue={filters.query} placeholder="Search by title" aria-label="Search content by title" className={styles.field} />
-          <select name="status" defaultValue={filters.status} aria-label="Filter by status" className={styles.select}>
-            <option value="all">All statuses</option>
-            <option value="unpublished">Unpublished draft</option>
-            <option value="published">Published and unchanged</option>
-            <option value="published-draft">Published with newer private draft</option>
-          </select>
-          <select name="type" defaultValue={filters.type} aria-label="Filter by content type" className={styles.select}>
-            <option value="all">All types</option>
-            {CONTENT_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
-          </select>
-          <button type="submit" className={styles.action}>Apply</button>
-          <a href="/admin" className={styles.secondaryAction}>Clear</a>
-        </form>
-
-        {allItems.length === 0 ? (
-          <p className={styles.emptyState}>Nothing saved yet.</p>
-        ) : recentItems.length === 0 ? (
-          <p className={styles.emptyState}>No content matches these filters. <a href="/admin" className={styles.inlineLink}>Clear filters</a>.</p>
-        ) : (
-          <div className={styles.list}>
-            {recentItems.map(item => {
-              const published = publishedTimestamp(item)
-              return (
-                <article key={item.id} className={styles.recordRow}>
-                  {item.signedThumbnail ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.signedThumbnail} alt={item.firstMedia?.altText ?? `First attached photo for ${item.title ?? 'this content'}`} width={64} height={64} className={styles.recordThumb} />
-                  ) : (
-                    <div aria-hidden="true" className={`${styles.recordPlaceholder} ${styles.recordThumb}`} />
-                  )}
-                  <div className={styles.recordContent}>
-                    <p className={styles.recordTitle}>{item.title ?? '(untitled)'}</p>
-                    <p className={styles.recordMeta}>Updated {formatAdminDateTime(item.updatedAt)}</p>
-                    {published && <p className={styles.recordMeta}>{published}</p>}
-                  </div>
-                  <span className={styles.recordType}>{item.type}</span>
-                  <span className={`${styles.badge} ${item.status === 'published' ? styles.badgePublished : styles.badgeDraft}`}>{item.status === 'unpublished' ? 'unpublished draft' : item.status === 'published-draft' ? 'published + newer draft' : 'published unchanged'}</span>
-                  <span className={styles.recordMeta}>{item.attachedMediaCount} photo{item.attachedMediaCount === 1 ? '' : 's'}</span>
-                  {item.type === 'home' && <a href="/admin/home" className={styles.inlineLink}>Edit</a>}
-                </article>
-              )
-            })}
-          </div>
-        )}
-
-        {hasFilters && recentItems.length > 0 && (
-          <p className={styles.countNote}>Showing {recentItems.length} matching item{recentItems.length === 1 ? '' : 's'}.</p>
-        )}
-      </section>
-    </div>
+      )}
+    </main>
   )
 }

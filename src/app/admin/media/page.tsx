@@ -1,166 +1,69 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { requireActiveAdmin } from '@/lib/auth/admin'
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
-import {
-  filterAndSortMedia,
-  parseMediaFilters,
-  safeStorageBasename,
-  type MediaViewItem,
-} from '@/lib/admin/library-view'
-import MediaLibraryClient, { type MediaLibraryItem, type MediaTarget } from './media-library-client'
+import { requireAdminPage } from '@/lib/admin/require-admin-page'
+import AdminState from '../admin-state'
+import PhotoLibrary, { type LibraryItem } from './photo-library'
 import styles from '../admin.module.css'
 
-interface UsageRow {
-  content_id: string
-  content_items: { title: string | null } | null
+export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Photos' }
+
+const PAGE = 60
+
+interface Row {
+  id: string
+  storage_path: string
+  alt_text: string | null
+  caption: string | null
+  content_media: { content_items: { id: string; title: string; type: string } | null }[]
 }
 
-interface ServerMediaItem extends MediaViewItem {
-  sizeLabel: string
-  storagePath: string
-}
-
-function formatSize(bytes: number | null): string {
-  if (!bytes) return ''
-  return bytes >= 1024 * 1024
-    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(bytes / 1024))} KB`
-}
-
-export default async function MediaLibraryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; type?: string; attachment?: string; sort?: string }>
-}) {
-  const supabase = await createClient()
-  try {
-    await requireActiveAdmin(supabase)
-  } catch {
-    redirect('/admin/login')
-  }
-
-  const filters = parseMediaFilters(await searchParams)
+export default async function PhotosPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  await requireAdminPage()
+  const page = Math.max(1, Number((await searchParams).page) || 1)
   const db = createAdminClient()
-  const { data: rows, error: queryError } = await db
-    .from('media_assets')
-    .select(`
-      id, storage_path, alt_text, caption, mime_type, byte_size, created_at,
-      content_media (
-        content_id,
-        content_items (title)
-      )
-    `)
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: true })
+  const { data, error, count } = await db.from('media_assets')
+    .select('id, storage_path, alt_text, caption, content_media(content_items(id, title, type))', { count: 'exact' })
+    .eq('processing_status', 'ready')
+    .order('created_at', { ascending: false }).order('id', { ascending: true })
+    .range((page - 1) * PAGE, page * PAGE - 1)
+  if (error) return <AdminState title="Photos didn't load." body="Nothing was changed. Reload in a minute." />
+  const rows = (data ?? []) as unknown as Row[]
 
-  if (queryError) {
-    console.error('MediaLibraryPage query failed:', queryError)
-    return (
-      <div className={styles.page}>
-        <p className={styles.eyebrow}>Photograph desk</p>
-        <h1 className={styles.pageTitle}>Photo shelf</h1>
-        <p role="alert" className={styles.errorNotice}>The media list could not be loaded right now. Refresh the page to try again.</p>
-      </div>
-    )
-  }
+  // A photo that has ever been on her page stays, so older versions of a story never lose it.
+  const ids = rows.map(row => row.id)
+  const kept = ids.length
+    ? await db.from('content_revision_media').select('media_id').in('media_id', ids)
+    : { data: [] as { media_id: string }[], error: null }
+  if (kept.error) return <AdminState title="Photos didn't load." body="Nothing was changed. Reload in a minute." />
+  const everPublished = new Set((kept.data ?? []).map(row => row.media_id))
 
-  const baseItems: ServerMediaItem[] = (rows ?? []).map(row => {
-    const usage = ((row.content_media ?? []) as unknown as UsageRow[])
-    const usageTitles = usage.map(item => item.content_items?.title?.trim() || '(untitled content)').sort((a, b) => a.localeCompare(b))
-    return {
-      mediaId: row.id,
-      altText: row.alt_text ?? '',
-      caption: row.caption ?? null,
-      mimeType: row.mime_type ?? null,
-      sizeLabel: formatSize(row.byte_size),
-      createdAt: row.created_at,
-      fileName: safeStorageBasename(row.storage_path),
-      attachmentCount: usage.length,
-      usageTitles,
-      storagePath: row.storage_path,
-    }
-  })
-
-  const filteredItems = filterAndSortMedia(baseItems, filters)
-  const items: MediaLibraryItem[] = await Promise.all(filteredItems.map(async item => {
-    let signedUrl: string | null = null
-    try {
-      signedUrl = await generateSignedUrl(item.storagePath)
-    } catch (error) {
-      console.error('MediaLibraryPage thumbnail signing failed:', error)
-    }
-    return {
-      mediaId: item.mediaId,
-      signedUrl,
-      altText: item.altText,
-      caption: item.caption,
-      mimeType: item.mimeType,
-      sizeLabel: item.sizeLabel,
-      createdAt: item.createdAt,
-      fileName: item.fileName,
-      attachmentCount: item.attachmentCount,
-      usageTitles: item.usageTitles,
-    }
-  }))
-
-  const hasFilters = Boolean(filters.query || filters.type !== 'all' || filters.attachment !== 'all' || filters.sort !== 'newest')
-  const { data: targetRows, error: targetError } = await db
-    .from('content_items')
-    .select('id, type, title, slug')
-    .order('type', { ascending: true })
-    .order('title', { ascending: true })
-    .order('id', { ascending: true })
-  const targets: MediaTarget[] = targetError ? [] : (targetRows ?? []).map(row => ({
+  const items: LibraryItem[] = await Promise.all(rows.map(async row => ({
     id: row.id,
-    label: row.type === 'home' && row.slug === 'home' ? 'Home' : row.title,
-    type: row.type,
-  }))
+    url: await generateSignedUrl(row.storage_path),
+    altText: row.alt_text?.trim() || 'Family photograph',
+    caption: row.caption,
+    usedIn: row.content_media.flatMap(use => use.content_items ? [{ id: use.content_items.id, title: use.content_items.type === 'home' ? 'Home' : use.content_items.title, home: use.content_items.type === 'home' }] : []),
+    deletable: row.content_media.length === 0 && !everPublished.has(row.id),
+  })))
+  const total = count ?? items.length
+  const pages = Math.max(1, Math.ceil(total / PAGE))
 
   return (
-    <div className={styles.page}>
-      <header className={styles.splitHeader}>
-        <div>
-          <p className={styles.eyebrow}>Your visual memory box</p>
-          <h1 className={styles.pageTitle}>Photo shelf</h1>
-          <p className={styles.lede}>Choose a photograph, give it useful words, and add it to a memory. One photograph at a time.</p>
-        </div>
-        <span className={styles.countNote}>{items.length} of {baseItems.length} file{baseItems.length !== 1 ? 's' : ''}</span>
-      </header>
-
-      <form method="GET" className={styles.filterBar}>
-        <input name="q" type="search" defaultValue={filters.query} placeholder="Search photos or usage" aria-label="Search media" className={styles.field} />
-        <select name="type" defaultValue={filters.type} aria-label="Filter by image type" className={styles.select}>
-          <option value="all">All image types</option>
-          <option value="jpeg">JPEG</option>
-          <option value="png">PNG</option>
-          <option value="webp">WebP</option>
-        </select>
-        <select name="attachment" defaultValue={filters.attachment} aria-label="Filter by attachment status" className={styles.select}>
-          <option value="all">Attached and unattached</option>
-          <option value="attached">Attached</option>
-          <option value="unattached">Unattached</option>
-        </select>
-        <select name="sort" defaultValue={filters.sort} aria-label="Sort media" className={styles.select}>
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-        </select>
-        <button type="submit" className={styles.action}>Apply</button>
-        <a href="/admin/media" className={styles.secondaryAction}>Clear</a>
-      </form>
-
-      {baseItems.length === 0 ? (
-        <p className={styles.emptyState}>No photos uploaded yet. Upload photos from the <a href="/admin/home" className={styles.inlineLink}>Home page</a>.</p>
-      ) : items.length === 0 ? (
-        <p className={styles.emptyState}>No media matches these filters. <a href="/admin/media" className={styles.inlineLink}>Clear filters</a>.</p>
-      ) : (
-        <MediaLibraryClient items={items} targets={targets} />
+    <main className={styles.page}>
+      <div className={styles.pageHead}>
+        <h1 className={styles.pageTitle}>Photos</h1>
+      </div>
+      <p className={styles.lede}>{total} photo{total === 1 ? '' : 's'}. Add as many as you like at once; keep this page open while they go up.</p>
+      <PhotoLibrary items={items} />
+      {pages > 1 && (
+        <nav className={styles.pager} aria-label="More photos">
+          {page > 1 ? <Link href={`/admin/media?page=${page - 1}`}>← Newer</Link> : <span />}
+          <span>Page {page} of {pages}</span>
+          {page < pages ? <Link href={`/admin/media?page=${page + 1}`}>Older →</Link> : <span />}
+        </nav>
       )}
-
-      {hasFilters && items.length > 0 && (
-        <p className={styles.countNote}>Search covers alt text, caption, safe filename, and attached content titles.</p>
-      )}
-    </div>
+    </main>
   )
 }

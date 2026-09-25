@@ -1,89 +1,24 @@
-import Link from 'next/link'
-import VaradaScene from '@/components/archive/varada-scene'
 import { listPublishedChapters } from '@/lib/content/chapters'
-import styles from './chapters.module.css'
+import StoryChart from '@/components/family/story-chart'
+import StatePage from '@/components/family/state-page'
+import styles from '@/components/family/family.module.css'
 
 export const dynamic = 'force-dynamic'
 
-const TYPE_LABELS: Record<string, string> = {
-  story: 'Story',
-  gallery: 'Gallery',
-  letter: 'Letter',
-  moment: 'Moment',
-}
+export const metadata = { title: 'Her stories' }
 
-function formatEventDate(value: string, precision: 'day' | 'month' | 'year', approximate: boolean) {
-  const date = new Date(`${value}T00:00:00Z`)
-  const options: Intl.DateTimeFormatOptions = precision === 'day'
-    ? { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
-    : precision === 'month' ? { month: 'long', year: 'numeric', timeZone: 'UTC' }
-      : { year: 'numeric', timeZone: 'UTC' }
-  return `${approximate ? 'Around ' : ''}${new Intl.DateTimeFormat('en-IN', options).format(date)}`
-}
-
-export default async function ChaptersPage() {
+export default async function StoriesRoute() {
   const result = await listPublishedChapters()
   if (result.state === 'error') {
-    return (
-      <main className={styles.state}>
-        <h1>Chapters</h1>
-        <p role="alert">The family chapters could not be loaded right now. Please try again.</p>
-      </main>
-    )
+    return <StatePage colour="rose" title="Her stories didn't load." body="Something went wrong on our side. Reload in a minute." action={{ href: '/', label: 'Home' }} />
   }
-
   return (
-    <main className={styles.index}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>Private family archive</p>
-          <h1>Chapters</h1>
-          <p>Published stories, photographs, letters, and moments kept for Varada and her family.</p>
-        </div>
-        <VaradaScene
-          pageKey="chapters-index"
-          sizes="(max-width: 52rem) 10rem, 15rem"
-          className={styles.character}
-        />
-      </header>
-
-      {result.items.length === 0 ? (
-        <p className={styles.empty}>
-          No other chapters are published yet. <Link href="/first-days">Read First Days.</Link>
-        </p>
-      ) : (
-        <div className={styles.grid}>
-          {result.items.map(item => {
-            const href = item.slug === 'first-days' ? '/first-days' : `/chapters/${item.slug}`
-            return (
-              <article key={item.id} className={`${styles.card} ${styles[item.type]}`}>
-                <Link href={href} className={styles.cardLink}>
-                  <div className={styles.cover}>
-                    {item.cover ? (
-                      // Signed private media is short-lived and must not be statically optimised.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.cover.signedUrl} alt={item.cover.altText} loading="lazy" decoding="async" />
-                    ) : (
-                      <div className={styles.placeholder} aria-hidden="true">
-                        <span>{TYPE_LABELS[item.type] ?? item.type}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.cardBody}>
-                    <p className={styles.type}>{TYPE_LABELS[item.type] ?? item.type}</p>
-                    <h2>{item.title}</h2>
-                    {item.summary && <p className={styles.summary}>{item.summary}</p>}
-                    {item.eventDate && item.eventDatePrecision && <p className={styles.date}>{formatEventDate(item.eventDate, item.eventDatePrecision, item.eventDateIsApproximate)}</p>}
-                    {item.authorDisplayName && <p className={styles.date}>By {item.authorDisplayName}</p>}
-                    {item.recipientDisplayName && <p className={styles.date}>For {item.recipientDisplayName}</p>}
-                    <span className={styles.read}>Open this memory <span aria-hidden="true">→</span></span>
-                  </div>
-                </Link>
-              </article>
-            )
-          })}
-        </div>
-      )}
+    <main>
+      <section className={`${styles.section} ${styles.stories}`} aria-labelledby="stories-title">
+        <h1 className={styles.sectionTitle} id="stories-title">Her stories</h1>
+        <p className={styles.lede}>Hung on her height chart, at her age when each one happened. Newest at the top.</p>
+        <StoryChart items={result.items} />
+      </section>
     </main>
   )
 }

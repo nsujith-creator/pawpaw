@@ -26,7 +26,7 @@ export async function loginViewer(
 ): Promise<LoginState> {
   const submitted = ((formData.get('passphrase') as string | null) ?? '').trim()
   if (!submitted) {
-    return { error: 'Pop in the family passphrase first.' }
+    return { error: 'Type the family passphrase first.' }
   }
 
   const headersList = await headers()
@@ -34,7 +34,7 @@ export async function loginViewer(
 
   const { blocked } = await checkThrottle(clientId)
   if (blocked) {
-    return { error: 'Too many failed attempts. Please try again later.' }
+    return { error: "Too many tries. Wait a few minutes, then try again." }
   }
 
   const valid     = await verifyPassphrase(submitted)
@@ -43,15 +43,15 @@ export async function loginViewer(
     try {
       await recordFailure(clientId)
     } catch {
-      return { error: 'Login is temporarily unavailable. Please try again later.' }
+      return { error: "The door's stuck on our side. Try again in a few minutes." }
     }
-    return { error: 'That passphrase did not open the door. Have another go.' }
+    return { error: "That's not it. Try again." }
   }
 
   try {
     await clearThrottle(clientId)
   } catch {
-    return { error: 'Login is temporarily unavailable. Please try again later.' }
+    return { error: "The door's stuck on our side. Try again in a few minutes." }
   }
 
   const cookieValue = await signViewerCookie(

@@ -8,7 +8,9 @@ export const DATE_PRECISIONS = ['day', 'month', 'year'] as const
 export type DatePrecision = typeof DATE_PRECISIONS[number]
 export type PublicationState = 'unpublished' | 'published' | 'published-draft'
 export type ContentIntent = 'save' | 'publish'
-export const VISUAL_SCENES = ['artist', 'base-wave', 'explorer', 'festive-child', 'gardener', 'reader'] as const
+// A story's page colour. The old illustration keys stay valid for drafts saved before the colours.
+export const STORY_COLOUR_KEYS = ['teal', 'rose', 'sky', 'duck', 'night'] as const
+export const VISUAL_SCENES = [...STORY_COLOUR_KEYS, 'artist', 'base-wave', 'explorer', 'festive-child', 'gardener', 'reader'] as const
 export type VisualScene = typeof VISUAL_SCENES[number]
 
 const RESERVED_SLUGS = new Set([
@@ -166,7 +168,7 @@ export function validateContentInput(input: ContentInput, existing: ExistingCont
   const placeText = cleanText(input.placeText, 300, 'placeText', fieldErrors)
   const relationshipContext = cleanText(input.relationshipContext, 500, 'relationshipContext', fieldErrors)
   const visualScene = input.visualScene?.trim() || null
-  if (visualScene && !VISUAL_SCENES.includes(visualScene as VisualScene)) fieldErrors.visualScene = 'Choose one of the approved illustration scenes or no illustration.'
+  if (visualScene && !VISUAL_SCENES.includes(visualScene as VisualScene)) fieldErrors.visualScene = 'Choose one of the page colours.'
 
   const eventDate = input.eventDate?.trim() || null
   const eventDatePrecision = precision(input.eventDatePrecision)

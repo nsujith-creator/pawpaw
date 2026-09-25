@@ -1,169 +1,144 @@
-/* Approved Release 2 visual foundation. Route-specific composition stays in
-   local CSS modules; these are the single canonical semantic token values. */
+/* pawpaw · Direction B (picture-book spreads) with Direction C's height chart.
+   Paper is white. Colour lives on whole colour pages, never as a tint behind reading.
+   Type: Bricolage Grotesque for names, titles and interface; Literata for reading;
+   Baloo Chettan 2 for Malayalam. */
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --color-canvas: #fff8ee;
-  --color-surface: #fffdf7;
-  --color-surface-deep: #f7f1e4;
-  --color-paper: #fffef8;
-  --color-ink: #2a1f14;
-  --color-ink-secondary: #5c4e3d;
-  --color-ink-muted: #8c7e6d;
-  --color-border: #e0d5c4;
-  --color-border-strong: #c4b8a6;
+  /* Picture-book colours: each story gets one, taken from its photographs. */
+  --duck: #ffc93c;
+  --teal: #0e7c74;
+  --rose: #c8325a;
+  --sky: #2f6f9f;
+  --night: #22163a;
+  --blue-light: #2451d6;
 
-  --color-home-primary: #e8526a;
-  --color-home-soft: #fceaed;
-  --color-home-on-soft: #8b1a2f;
-  --color-story-primary: #9b5fc0;
-  --color-story-soft: #f2ebf8;
-  --color-story-on-soft: #4e1a6e;
-  --color-letter-primary: #4590cc;
-  --color-letter-soft: #e6f1fa;
-  --color-letter-on-soft: #1a4878;
-  --color-gallery-primary: #e35f45;
-  --color-gallery-soft: #fdeee9;
-  --color-gallery-on-soft: #7a2c15;
-  --color-moment-primary: #359575;
-  --color-moment-soft: #e5f4ef;
-  --color-moment-on-soft: #185c40;
-  --color-neutral-primary: #5f5e8a;
-  --color-neutral-soft: #eeeefc;
-  --color-neutral-on-soft: #2a2950;
+  /* Paper and ink */
+  --paper: #ffffff;
+  --paper-2: #f5f6f9;          /* quiet panels: a cool grey */
+  --ink: #22163a;
+  --ink-2: #4a3f5c;
+  --ink-3: #6b6178;
+  --rule: #e4e1ea;
+  --graphite: #34343c;         /* C: the height chart line */
+  --crayon: #c23a22;           /* C: age ticks and labels */
 
-  --color-success: #23633b;
-  --color-success-soft: #e5f2eb;
+  /* Type */
+  --display: var(--font-display), system-ui, sans-serif;
+  --reading: var(--font-reading), Georgia, serif;
+  --ml: var(--font-malayalam), var(--font-display), sans-serif;
+
+  /* One rule per axis */
+  --radius: 4px;
+  --shadow-photo: 0 18px 40px -18px rgba(34, 22, 58, 0.45);
+  --shadow-card: 0 14px 30px -20px rgba(34, 22, 58, 0.55);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* The page's own colour; story pages set it from the story. */
+  --pc: var(--teal);
+  --pf: #ffffff;
+
+  /* Older names still used by a few screens, mapped onto this palette so nothing drifts. */
+  --color-canvas: var(--paper);
+  --color-surface: var(--paper);
+  --color-surface-deep: var(--paper-2);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-2);
+  --color-ink-muted: var(--ink-3);
+  --color-border: var(--rule);
+  --color-border-strong: #c9c4d3;
+  --color-home-primary: var(--rose);
+  --color-home-soft: #fbe9ee;
+  --color-home-on-soft: #7d1c38;
+  --color-story-primary: var(--teal);
+  --color-story-soft: #e3f1ef;
+  --color-story-on-soft: #0a4f4a;
+  --color-letter-primary: var(--sky);
+  --color-letter-soft: #e4eef6;
+  --color-letter-on-soft: #173c58;
+  --color-gallery-primary: var(--rose);
+  --color-gallery-soft: #fbe9ee;
+  --color-gallery-on-soft: #7d1c38;
+  --color-moment-primary: var(--teal);
+  --color-moment-soft: #e3f1ef;
+  --color-moment-on-soft: #0a4f4a;
+  --color-neutral-primary: var(--ink-2);
+  --color-neutral-soft: var(--paper-2);
+  --color-neutral-on-soft: var(--ink);
+  --color-success: #1f6b3d;
+  --color-success-soft: #e4f2ea;
   --color-success-on-soft: #0f3d22;
   --color-warning: #7a5511;
-  --color-warning-soft: #fef6e4;
+  --color-warning-soft: #fff4d6;
   --color-warning-on-soft: #4a3208;
-  --color-error: #b33535;
-  --color-error-soft: #fdeaea;
-  --color-error-on-soft: #6e1a1a;
-  --color-information: #315f7a;
-  --color-information-soft: #e4eef5;
-  --color-information-on-soft: #163347;
-
-  --radius-sm: 0.5rem;
-  --radius-md: 0.875rem;
-  --radius-lg: 1.5rem;
-  --radius-xl: 2rem;
-  --shadow-photo: 0 1.25rem 3.5rem rgba(63, 42, 26, 0.14);
-  --shadow-float: 0 0.75rem 2rem rgba(63, 42, 26, 0.09);
+  --color-error: #b3261e;
+  --color-error-soft: #fde8e6;
+  --color-error-on-soft: #6e1612;
+  --color-information: var(--sky);
+  --color-information-soft: #e4eef6;
+  --color-information-on-soft: #173c58;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --shadow-float: var(--shadow-card);
   --motion-fast: 120ms;
   --motion-standard: 240ms;
-  --motion-gentle: 520ms;
-  --motion-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-gentle: 420ms;
+  --motion-ease-out: var(--ease);
 }
 
+[data-colour="duck"]  { --pc: var(--duck); --pf: var(--ink); }
+[data-colour="teal"]  { --pc: var(--teal); --pf: #ffffff; }
+[data-colour="rose"]  { --pc: var(--rose); --pf: #ffffff; }
+[data-colour="sky"]   { --pc: var(--sky);  --pf: #ffffff; }
+[data-colour="night"] { --pc: var(--night); --pf: #ffffff; }
+
 html {
-  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--color-canvas);
-  color: var(--color-ink);
+  font-family: var(--display);
+  background: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
 }
 
-body {
-  min-width: 320px;
-  min-height: 100dvh;
-  background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.38), transparent 28%),
-    var(--color-canvas);
-}
+body { min-width: 320px; min-height: 100dvh; background: var(--paper); }
 
-::selection {
-  background: color-mix(in srgb, var(--color-home-primary) 26%, var(--color-paper));
-  color: var(--color-ink);
-}
+::selection { background: color-mix(in srgb, var(--duck) 55%, #fff); color: var(--ink); }
 
-.pwaStatus {
-  position: fixed;
-  z-index: 50;
-  right: 1rem;
-  bottom: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.85rem;
-  max-width: min(24rem, calc(100vw - 2rem));
-  padding: 0;
-  color: var(--color-ink-secondary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.pwaStatusNotice {
-  min-height: 2.25rem;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-deep);
-  box-shadow: var(--shadow-float);
-}
-
-.pwaStatus button {
-  min-height: 2rem;
-  padding: 0.35rem 0.65rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-paper);
-  color: var(--color-neutral-on-soft);
-  font-weight: 700;
-  box-shadow: 0 0.3rem 1rem rgba(42, 31, 20, 0.08);
-  opacity: 0.76;
-}
-
-.pwaStatus button:hover,
-.pwaStatus button:focus-visible { background: var(--color-neutral-soft); opacity: 1; }
-
-@media (max-width: 479px) {
-  .pwaStatus { right: 0.75rem; bottom: 0.75rem; }
-}
-
-[lang="ml"] {
-  font-family: var(--font-malayalam), var(--font-body), sans-serif;
-}
+[lang="ml"] { font-family: var(--ml); }
 
 a { color: inherit; text-decoration: none; text-underline-offset: 0.18em; }
-
 img { max-width: 100%; display: block; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+input, textarea, select { font: inherit; color: inherit; }
 
-button {
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-button,
-a,
-input,
-textarea,
-select {
-  -webkit-tap-highlight-color: transparent;
-}
-
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-:where(a, button, input, textarea, select):focus-visible {
-  outline: 3px solid var(--color-home-primary);
+:where(a, button, input, textarea, select, [contenteditable]):focus-visible {
+  outline: 3px solid var(--sky);
   outline-offset: 3px;
 }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Install and update prompts: quiet, only when relevant */
+.pwaStatus {
+  position: fixed; z-index: 50; right: 1rem; bottom: 1rem;
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem 0.85rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+  color: var(--ink-2); font: 600 0.8125rem/1.3 var(--display); text-align: center;
+}
+.pwaStatusNotice { min-height: 2.25rem; padding: 0.55rem 0.75rem; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--paper); }
+.pwaStatus button { min-height: 2.25rem; padding: 0.35rem 0.8rem; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); font-weight: 700; }
+.pwaStatus button:hover, .pwaStatus button:focus-visible { background: var(--ink); color: var(--paper); }
+@media (max-width: 479px) { .pwaStatus { right: 0.75rem; bottom: 0.75rem; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

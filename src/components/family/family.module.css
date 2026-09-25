@@ -1,0 +1,231 @@
+/* Family pages · Direction B spreads with Direction C's height chart. */
+
+/* ---------- Header ---------- */
+.top {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.7rem 16px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--pc, var(--ink));
+}
+.top[data-plain] { border-bottom-color: var(--ink); }
+.word { font: 800 1.55rem/1 var(--display); letter-spacing: -0.03em; }
+.nav { margin-left: auto; display: flex; align-items: center; gap: 0.2rem; font: 600 0.95rem/1 var(--display); }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.8rem; border-radius: 999px; }
+.nav a[aria-current] { background: var(--ink); color: var(--paper); }
+.leave {
+  display: inline-flex; align-items: center; min-height: 44px; margin-left: 0.2rem; padding: 0 0.9rem;
+  border: 2px solid var(--ink); border-radius: 999px; font: 600 0.95rem/1 var(--display);
+}
+.leave:hover, .leave:focus-visible { background: var(--ink); color: var(--paper); }
+.leave:disabled { opacity: 0.6; cursor: default; }
+
+/* ---------- Cut-paper shapes ---------- */
+.motif { position: absolute; pointer-events: none; filter: drop-shadow(2px 3px 0 rgba(34, 22, 58, 0.22)); }
+
+/* ---------- Home spread: a colour page with her name, facing a photograph ---------- */
+.spread { display: grid; }
+.namePage {
+  order: -1; position: relative; overflow: hidden;
+  background: var(--duck); color: var(--ink);
+  padding: 26px 16px 150px;
+}
+.kicker { font: 700 0.8rem/1.3 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.herName { font: 800 clamp(5.2rem, 28vw, 10rem)/1.05 var(--ml); margin: 6px 0 0 -0.04em; }
+.nameSub { font: 700 1.25rem/1.3 var(--display); margin-top: 4px; }
+.also { font: 500 1.3rem/1.35 var(--display); margin-top: 14px; max-width: 24ch; min-height: 2.7em; }
+.also b { font-weight: 800; }
+.alsoWord { display: inline; font-weight: 800; transition: opacity 0.35s; }
+.alsoWord[lang="ml"] { font-size: 1.1em; }
+.photoPage { background: var(--paper); padding: 16px; display: grid; place-items: center; }
+.photoPage img { width: 100%; height: auto; box-shadow: var(--shadow-photo); }
+
+/* ---------- Sections on paper ---------- */
+.section { padding: 48px 16px; }
+.sectionTitle { font: 800 clamp(2rem, 8vw, 2.8rem)/1 var(--display); letter-spacing: -0.03em; margin-bottom: 22px; }
+.label { font: 700 0.8rem/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+.note { max-width: 40rem; }
+.note p { font: 400 1.2rem/1.7 var(--reading); }
+.note p + p { margin-top: 1rem; }
+.lede { font: 400 1.15rem/1.6 var(--reading); color: var(--ink-2); max-width: 34rem; margin: -8px 0 32px; }
+.stories { max-width: 760px; margin: 0 auto; }
+.byline { margin-top: 14px; font: 600 0.95rem/1.3 var(--display); color: var(--ink-2); }
+.pair { display: grid; gap: 0; }
+
+/* A quiet strip of the other Home photographs */
+.strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
+.strip figure { margin: 0; }
+.strip img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; box-shadow: var(--shadow-card); }
+.strip figcaption { margin-top: 6px; font: 500 0.88rem/1.35 var(--display); color: var(--ink-2); }
+
+/* ---------- Height chart (C): graphite line, crayon ticks, age labels ---------- */
+.chart { position: relative; padding-left: 88px; }
+.chart::before { content: ""; position: absolute; left: 74px; top: 6px; bottom: 24px; border-left: 3px solid var(--graphite); }
+.mark { position: relative; margin: 0 0 28px; }
+.mark::before { content: ""; position: absolute; left: -16px; top: 14px; width: 22px; border-top: 3px solid var(--crayon); transform: rotate(-4deg); }
+.age { position: absolute; left: -88px; width: 66px; top: 6px; text-align: right; font: 700 0.92rem/1.2 var(--display); color: var(--crayon); }
+.age small { display: block; margin-top: 2px; font: 500 0.78rem/1.25 var(--display); color: var(--ink-2); }
+.book { display: block; overflow: hidden; border-radius: var(--radius); background: var(--pc); color: var(--pf); box-shadow: var(--shadow-card); }
+.book + .book { margin-top: 14px; }
+.bookCover { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 35%; }
+.bookBlank { width: 100%; aspect-ratio: 4 / 3; display: grid; place-items: center; }
+.bookBlank span { font: 800 3.4rem/1 var(--display); opacity: 0.9; }
+.bookBand { padding: 14px 16px 16px; }
+.bookTitle { font: 800 1.5rem/1.02 var(--display); letter-spacing: -0.03em; }
+.bookMeta { margin-top: 6px; font: 500 0.95rem/1.35 var(--display); }
+.chartEmpty { font: 400 1.1rem/1.6 var(--reading); color: var(--ink-2); max-width: 32rem; }
+
+/* ---------- Her names: a teal page with a four-line copybook ---------- */
+.namesPage { background: var(--teal); color: #fff; }
+.copybook { list-style: none; }
+.copybook li {
+  position: relative; padding: 18px 0 12px;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 14px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)) 0 18px / 100% 1px no-repeat,
+    linear-gradient(rgba(255, 201, 60, 0.9), rgba(255, 201, 60, 0.9)) 0 calc(100% - 24px) / 100% 1.5px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)) 0 calc(100% - 8px) / 100% 1px no-repeat;
+}
+.nameMl { font: 800 clamp(2.6rem, 13vw, 4.2rem)/1.15 var(--ml); }
+.nameLat { font: 800 clamp(2.4rem, 12vw, 3.9rem)/1.1 var(--display); letter-spacing: -0.04em; }
+.nameSmall { font: 800 1.9rem/1.2 var(--display); letter-spacing: -0.03em; }
+.nameNote { font: 600 1rem/1.3 var(--display); }
+.nameLink { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 0.2em; text-decoration-color: var(--duck); }
+
+/* ---------- Her people: a sky page ---------- */
+.peoplePage { background: var(--sky); color: #fff; }
+.utter { font: italic 400 1.1rem/1.5 var(--reading); margin-bottom: 18px; max-width: 30rem; }
+.people { list-style: none; display: grid; gap: 14px; }
+.people li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: baseline; }
+.personMl { font: 800 clamp(1.9rem, 9vw, 2.3rem)/1.15 var(--ml); }
+.personSaid { font: 700 1.05rem/1.2 var(--display); }
+.people li[data-last] .personMl { font-size: 1.35rem; }
+
+.footer { padding: 28px 16px 44px; background: var(--ink); color: #fff; font: 600 0.95rem/1.4 var(--display); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.footer a { text-decoration: underline; }
+
+/* ---------- Story pages: colour opener facing a photograph, reading on paper ---------- */
+.opener { display: grid; }
+.openerPage {
+  order: -1; position: relative; overflow: hidden;
+  background: var(--pc); color: var(--pf);
+  padding: 30px 16px 34px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.openerPage[data-solo] { min-height: 58vh; }
+.openerMeta { font: 700 0.8rem/1.3 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.openerTitle { font: 800 clamp(3rem, 14vw, 5.6rem)/0.92 var(--display); letter-spacing: -0.05em; margin: 10px 0 14px; overflow-wrap: anywhere; }
+.openerSummary { font: 600 1.05rem/1.4 var(--display); max-width: 34rem; }
+.openerPhoto { padding: 16px; background: var(--paper); display: grid; place-items: center; }
+.openerPhoto img { width: 100%; height: auto; max-height: 82vh; object-fit: contain; box-shadow: var(--shadow-photo); }
+
+.reading { padding: 16px 16px 40px 12px; }
+.column { max-width: 38rem; margin: 0 auto; border-left: 4px solid var(--pc); padding-left: 16px; }
+.column[data-colour="duck"] { border-left-color: #f2b21b; }
+.column > :first-child { margin-top: 24px; }
+.column p { font: 400 1.125rem/1.72 var(--reading); margin: 0 0 1.15rem; }
+.column h2 { font: 800 clamp(1.9rem, 7vw, 2.4rem)/1.02 var(--display); letter-spacing: -0.03em; margin: 44px 0 10px; }
+.column h3 { font: 800 1.45rem/1.1 var(--display); letter-spacing: -0.02em; margin: 32px 0 8px; }
+.said { margin: 30px 0 22px; }
+.said p { font: 800 clamp(2.1rem, 10vw, 3.4rem)/1.04 var(--display); letter-spacing: -0.04em; color: var(--pc); margin: 0; }
+.column[data-colour="duck"] .said p { color: var(--crayon); }
+.said p[lang="ml"] { font-family: var(--ml); letter-spacing: 0; }
+.said cite { display: block; margin-top: 8px; font: 600 1rem/1.4 var(--display); font-style: normal; color: var(--ink-2); }
+
+.figure { margin: 28px 0; }
+.figure img { width: 100%; height: auto; box-shadow: var(--shadow-photo); }
+.figure figcaption { margin-top: 0.7rem; font: 500 0.95rem/1.4 var(--display); color: var(--ink-2); }
+.figurePortrait { max-width: 26rem; }
+.missing {
+  display: grid; place-items: center; min-height: 12rem; padding: 1.5rem;
+  background: var(--paper-2); color: var(--ink-2); font: 600 0.95rem/1.4 var(--display); text-align: center;
+}
+
+.video { margin: 28px 0; }
+.videoTile { position: relative; display: grid; place-items: center; aspect-ratio: 9 / 13; max-height: 78vh; background: var(--night); border-radius: var(--radius); }
+.videoFrame { display: block; width: 100%; aspect-ratio: 9 / 16; max-height: 82vh; border: 0; border-radius: var(--radius); background: #000; }
+.playButton { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; color: #fff; min-width: 44px; min-height: 44px; }
+.playIcon { width: 76px; height: 76px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.playIcon::after { content: ""; margin-left: 6px; border-left: 24px solid var(--night); border-top: 15px solid transparent; border-bottom: 15px solid transparent; }
+.playLabel { font: 700 1rem/1 var(--display); }
+.videoNote { color: #fff; font: 600 1rem/1.5 var(--display); padding: 1.5rem; text-align: center; }
+.videoNote a, .linkButton { color: var(--duck); text-decoration: underline; font-weight: 800; }
+.video figcaption { margin-top: 0.7rem; font: 500 0.95rem/1.4 var(--display); color: var(--ink-2); }
+
+/* Photograph sequences (First Days): paced by size so similar frames never repeat.
+   They sit below the words at full page width, not squeezed into the reading column. */
+.sequenceWrap { padding: 0 16px 40px; }
+.sequence { display: grid; gap: 28px; }
+.sequence figure { margin: 0; }
+.sequence img { width: 100%; height: auto; box-shadow: var(--shadow-photo); }
+.sequence figcaption { margin-top: 0.6rem; font: 500 0.95rem/1.4 var(--display); color: var(--ink-2); }
+.seqWide { width: 100%; }
+.seqInset { width: 78%; margin-left: auto !important; }
+.seqPair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+.seqPair img { aspect-ratio: 3 / 4; object-fit: cover; }
+.seqPair figcaption { font-size: 0.88rem; }
+.seqSmall { width: 62%; }
+
+.ending { max-width: 38rem; margin: 8px auto 0; padding: 24px 16px 0 32px; }
+.endingNext { display: block; padding: 18px 20px; border-radius: var(--radius); background: var(--pc); color: var(--pf); box-shadow: var(--shadow-card); }
+.endingNextLabel { font: 700 0.8rem/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.endingNextTitle { font: 800 1.7rem/1.05 var(--display); letter-spacing: -0.03em; margin-top: 6px; }
+.endingLinks { display: flex; justify-content: space-between; gap: 1rem; border-top: 2px solid var(--ink); margin: 32px 0 48px; padding-top: 1rem; font: 700 1.05rem/1.3 var(--display); }
+.endingLinks a { display: inline-flex; min-height: 44px; align-items: center; }
+
+.alert { margin: 16px auto; max-width: 38rem; padding: 12px 16px; border-left: 4px solid var(--crayon); background: var(--paper-2); font: 600 0.98rem/1.45 var(--display); }
+
+/* ---------- Plain state pages (empty, error, not found) ---------- */
+.state { display: grid; min-height: calc(100dvh - 60px); }
+.statePage { background: var(--pc); color: var(--pf); padding: 40px 16px 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; }
+.stateTitle { font: 800 clamp(2.6rem, 12vw, 4.8rem)/0.95 var(--display); letter-spacing: -0.045em; max-width: 14ch; }
+.stateBody { font: 400 1.15rem/1.6 var(--reading); max-width: 32rem; }
+.stateActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.pill { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.2rem; border-radius: 999px; background: var(--ink); color: var(--paper); font: 700 1rem/1 var(--display); }
+.pillGhost { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.2rem; border-radius: 999px; border: 2px solid currentColor; font: 700 1rem/1 var(--display); }
+
+@media (min-width: 900px) {
+  .top { padding: 0.8rem 40px; }
+  .spread { grid-template-columns: 1.05fr 1fr; margin: 0 2rem; }
+  .namePage { padding: 56px 56px 220px; }
+  .photoPage { padding: 3rem; }
+  .photoPage img { max-height: 76vh; width: auto; }
+  .section { padding: 80px 40px; }
+  .pair { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 64px; max-width: 1200px; margin: 0 auto; align-items: start; padding: 0 40px; }
+  .pair > .section { padding-left: 0; padding-right: 0; }
+  .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chart { padding-left: 120px; }
+  .chart::before { left: 104px; }
+  .age { left: -120px; width: 92px; }
+  .book { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .bookCover, .bookBlank { height: 100%; aspect-ratio: auto; min-height: 200px; }
+  .bookBand { display: flex; flex-direction: column; justify-content: flex-end; padding: 18px 20px; }
+  .namesPage > *, .peoplePage > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+  .copybook { columns: 3; column-gap: 48px; }
+  .copybook li { break-inside: avoid; }
+  .nameMl { font-size: 3.1rem; }
+  .nameLat { font-size: 2.9rem; }
+  .people { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; }
+  .opener { grid-template-columns: 1.05fr 1fr; margin: 0 2rem; }
+  .openerPage { padding: 56px 56px 60px; min-height: 70vh; }
+  .openerPage[data-solo] { min-height: 64vh; padding-right: 45%; }
+  .opener[data-solo] { grid-template-columns: 1fr; }
+  .openerPhoto { padding: 3rem; }
+  .openerPhoto img { width: auto; max-width: 100%; max-height: 78vh; }
+  .column { padding-left: 32px; }
+  .figure { max-width: 32rem; }
+  .figurePortrait { max-width: 24rem; }
+  .video { max-width: 24rem; }
+  .sequence { max-width: 1020px; margin-left: auto; margin-right: auto; }
+  .seqWide { width: 72%; }
+  .seqInset { width: 48%; }
+  .seqPair { gap: 24px; }
+  .seqSmall { width: 34%; }
+  .state { grid-template-columns: 1fr; }
+  .statePage { padding: 80px 56px; }
+}
+
+/* ---------- Loading: quiet, no pretend content ---------- */
+.loading { min-height: 60dvh; display: grid; place-items: center; }
+.loading p { font: 600 1rem/1 var(--display); color: var(--ink-2); animation: breathe 1.6s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: 0.35; } }

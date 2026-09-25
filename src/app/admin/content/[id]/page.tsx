@@ -1,88 +1,27 @@
-import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { requireActiveAdmin } from '@/lib/auth/admin'
-import { generateSignedUrl } from '@/lib/media/private-url'
+import { notFound } from 'next/navigation'
 import { getAdminChapter } from '@/lib/content/chapters'
 import { getAdminVideos } from '@/lib/video/published-videos'
-import ChapterEditor from '../chapter-editor'
-import type { ReplacementCandidate } from '../../media/attachment-list'
-import styles from '../../admin.module.css'
+import { contentFingerprint } from '@/lib/content/fingerprint'
+import { requireAdminPage } from '@/lib/admin/require-admin-page'
+import StoryEditor from '../story-editor'
+import AdminState from '../../admin-state'
 
-export default async function EditChapterPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ step?: string }>
-}) {
-  const supabase = await createClient()
-  try {
-    await requireActiveAdmin(supabase)
-  } catch {
-    redirect('/admin/login')
-  }
+export const dynamic = 'force-dynamic'
+
+export default async function EditStoryPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage()
   const { id } = await params
-  const requestedStep = (await searchParams).step
-  const initialStep = requestedStep === 'story' || requestedStep === 'scene' || requestedStep === 'media' || requestedStep === 'review'
-    ? requestedStep
-    : 'details'
   const result = await getAdminChapter(id)
   if (result.state === 'empty') notFound()
   if (result.state === 'error') {
-    return (
-      <div className={styles.pageNarrow}>
-        <h1 className={styles.pageTitle}>Chapter editor</h1>
-        <p role="alert" className={styles.errorNotice}>This chapter could not be loaded safely. Nothing has been changed.</p>
-      </div>
-    )
+    return <AdminState title="This story didn't open." body="Nothing was changed. Reload in a minute." />
   }
-  const videoResult = await getAdminVideos(result.content.id)
-
-  const db = createAdminClient()
-  const { data: mediaRows, error: mediaError } = await db
-    .from('media_assets')
-    .select('id, storage_path, alt_text, caption')
-    .eq('processing_status', 'ready')
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: true })
-  const replacementCandidates: ReplacementCandidate[] = mediaError ? [] : await Promise.all((mediaRows ?? []).map(async row => {
-    let signedUrl: string | null = null
-    try {
-      signedUrl = await generateSignedUrl(row.storage_path)
-    } catch {
-      // The candidate remains listed without a thumbnail.
-    }
-    return {
-      mediaId: row.id,
-      signedUrl,
-      altText: row.alt_text?.trim() || 'Family photograph',
-      caption: row.caption,
-    }
-  }))
-
-  return (
-    <div className={styles.pageNarrow}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.eyebrow}>Your {result.content.type}</p>
-          <h1 className={styles.pageTitle}>Shape this memory</h1>
-          <p className={styles.lede}>One useful decision at a time. Save whenever you like; family sees nothing new until you share it.</p>
-        </div>
-        <Link href="/admin/content" className={styles.secondaryAction}>Back to content</Link>
-      </header>
-      {result.mediaState === 'degraded' && (
-        <p role="alert" className={styles.warningNotice}>Some private photo previews are unavailable. The saved copy and photo records remain intact.</p>
-      )}
-      <section className={styles.editorSection}>
-        <ChapterEditor
-          existing={result.content}
-          replacementCandidates={replacementCandidates}
-          attachedVideos={videoResult.videos}
-          initialStep={initialStep}
-        />
-      </section>
-    </div>
-  )
+  const videos = await getAdminVideos(result.content.id)
+  const story = result.content
+  const fingerprint = contentFingerprint({
+    title: story.title, summary: story.summary, body_blocks: story.bodyBlocks, event_date: story.eventDate,
+    event_date_precision: story.eventDatePrecision, authored_date: story.authoredDate,
+    author_display_name: story.authorDisplayName, recipient_display_name: story.recipientDisplayName, visual_scene: story.visualScene,
+  })
+  return <StoryEditor story={story} videos={videos.videos} fingerprint={fingerprint} />
 }

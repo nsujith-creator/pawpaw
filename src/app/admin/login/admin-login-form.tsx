@@ -9,24 +9,17 @@ export default function AdminLoginForm({ callbackFailed }: { callbackFailed: boo
   const error = state.error || (callbackFailed ? 'That sign-in link expired or was already used. Sign in here instead.' : '')
 
   return (
-    <section className={styles.loginCard} aria-labelledby="admin-sign-in-title">
-      <p className={styles.eyebrow}>Your writing desk</p>
-      <h2 id="admin-sign-in-title" className={styles.loginTitle}>Welcome back.</h2>
-      <p className={styles.loginIntro}>Sign in and Pawpaw will take you to the next useful thing.</p>
-      <form action={formAction} className={styles.formStack} aria-busy={pending}>
-        <div className={styles.fieldGroup}>
-          <label htmlFor="email" className={styles.fieldLabel}>Email</label>
-          <input id="email" name="email" type="email" required autoComplete="email" className={styles.field} autoFocus />
-        </div>
-        <div className={styles.fieldGroup}>
-          <label htmlFor="password" className={styles.fieldLabel}>Password</label>
-          <input id="password" name="password" type="password" required autoComplete="current-password" className={styles.field} />
-        </div>
-        {error && <p role="alert" className={styles.errorNotice}>{error}</p>}
-        <button type="submit" disabled={pending} className={`${styles.action} ${styles.loginSubmit}`}>
-          {pending ? 'Opening your desk…' : 'Open the studio'}
-        </button>
-      </form>
-    </section>
+    <form action={formAction} className={styles.loginForm} aria-busy={pending}>
+      <label className={styles.field}>
+        <span>Email</span>
+        <input name="email" type="email" required autoComplete="email" autoFocus />
+      </label>
+      <label className={styles.field}>
+        <span>Password</span>
+        <input name="password" type="password" required autoComplete="current-password" />
+      </label>
+      {error && <p role="alert" className={styles.error}>{error}</p>}
+      <button type="submit" disabled={pending} className={styles.primary}>{pending ? 'Signing in…' : 'Sign in'}</button>
+    </form>
   )
 }

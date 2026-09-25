@@ -1,12 +1,18 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { loadAuthorizedFamilyData } from '@/lib/auth/family-access'
-import { createPrivatePlayerUrl } from './cloudflare'
+import { encodeMediaToken } from '@/lib/media/media-token'
 
+// Pages never carry a playback link, only a sealed token. The /v route turns it into a fresh
+// Cloudflare link at the moment someone presses play, so a page left open still plays.
 export interface PublishedVideo {
   id: string
-  playerUrl: string | null
+  playToken: string | null
   caption: string | null
   durationSeconds: number | null
+}
+
+export function videoPlayToken(cloudflareUid: string): string | null {
+  try { return encodeMediaToken(`video:${cloudflareUid}`) } catch { return null }
 }
 
 export interface AdminVideo extends PublishedVideo {
@@ -31,14 +37,6 @@ interface AdminVideoRow {
   }[] | null
 }
 
-async function playerUrl(cloudflareUid: string): Promise<string | null> {
-  try {
-    return await createPrivatePlayerUrl(cloudflareUid)
-  } catch {
-    return null
-  }
-}
-
 export async function getAdminVideos(contentId: string) {
   const db = createAdminClient()
   const { data, error } = await db
@@ -54,7 +52,7 @@ export async function getAdminVideos(contentId: string) {
     if (!asset) continue
     videos.push({
       id: asset.id,
-      playerUrl: asset.status === 'ready' ? await playerUrl(asset.cloudflare_uid) : null,
+      playToken: asset.status === 'ready' ? videoPlayToken(asset.cloudflare_uid) : null,
       caption: row.caption_override?.trim() || asset.caption?.trim() || null,
       durationSeconds: asset.duration_seconds,
       status: asset.status,
@@ -69,12 +67,12 @@ export async function getPublishedVideos(revisionId: string) {
     const db = createAdminClient()
     const { data, error } = await db.from('content_revision_videos').select('video_id, cloudflare_uid, caption, caption_override, duration_seconds').eq('revision_id', revisionId).order('sort_order', { ascending: true })
     if (error) return { state: 'error' as const, videos: [] as PublishedVideo[] }
-    const videos = await Promise.all((data ?? []).map(async row => ({
+    const videos = (data ?? []).map(row => ({
       id: row.video_id,
-      playerUrl: await playerUrl(row.cloudflare_uid),
+      playToken: videoPlayToken(row.cloudflare_uid),
       caption: row.caption_override?.trim() || row.caption?.trim() || null,
       durationSeconds: row.duration_seconds,
-    })))
+    }))
     return { state: 'ready' as const, videos }
   })
 }

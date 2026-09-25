@@ -1,7 +1,7 @@
 'use client'
 
-import JourneyState from '@/components/journey/journey-state'
+import StatePage from '@/components/family/state-page'
 
 export default function AdminError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  return <JourneyState eyebrow="Author’s studio" title="That didn’t save the way it should." message="Your page has not been published or deleted. Try the action again; if it still misbehaves, return to the studio." scene="artist" onRetry={reset} primaryHref="/admin" primaryLabel="Studio dashboard" />
+  return <StatePage colour="rose" title="That page broke." body="Nothing went up on her page and nothing was deleted. Words you were typing are kept in this browser; open the story again to bring them back." onRetry={reset} action={{ href: '/admin', label: 'Her stories' }} />
 }

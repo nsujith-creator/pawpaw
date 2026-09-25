@@ -16,19 +16,27 @@ import {
 
 // Generic user-facing message for unexpected persistence failures.
 // Details go to the server log only — never to the browser.
-export async function saveHomeContent(formData: FormData) {
-  const headersList = await headers()
-  checkOrigin(headersList)
+async function adminOrNull() {
+  try {
+    checkOrigin(await headers())
+    return await requireActiveAdmin(await createClient())
+  } catch {
+    return null
+  }
+}
 
-  const supabase = await createClient()
-  const admin    = await requireActiveAdmin(supabase)
+const SIGNED_OUT = { error: "You've been signed out. Your words are still here; sign in again in another tab, then press Update Home again." }
+
+export async function saveHomeContent(formData: FormData) {
+  const admin = await adminOrNull()
+  if (!admin) return SIGNED_OUT
 
   const title      = (formData.get('title') as string | null)?.trim() ?? ''
   const mode       = formData.get('mode') === 'json' ? 'json' : 'text'
   const action     = formData.get('action') as 'draft' | 'publish'
   const existingId = formData.get('id') as string | null
 
-  if (!title) return { error: 'Please enter a title before saving.' }
+  if (!title) return { error: 'Home needs a title behind the scenes. Reload and try again.' }
 
   let blocks: unknown
   if (mode === 'text') {
@@ -71,11 +79,8 @@ export async function saveHomeContent(formData: FormData) {
 }
 
 export async function unpublishHome() {
-  const headersList = await headers()
-  checkOrigin(headersList)
-
-  const supabase = await createClient()
-  const admin = await requireActiveAdmin(supabase)
+  const admin = await adminOrNull()
+  if (!admin) return SIGNED_OUT
   const result = await unpublishCanonicalHome(
     createHomeMutationStore(createAdminClient()),
     admin.id,

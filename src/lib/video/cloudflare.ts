@@ -30,8 +30,10 @@ export async function deletePrivateVideo(cloudflareUid: string) {
   const { accountId, apiToken } = config(); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${normalizeCloudflareUid(cloudflareUid)}`, { method: 'DELETE', headers: authHeaders(apiToken), cache: 'no-store' })
   if (!response.ok && response.status !== 404) throw new Error(`Cloudflare Stream could not remove the video (${response.status})`)
 }
-export async function createPrivatePlayerUrl(cloudflareUid: string) {
-  const { accountId, apiToken } = config(); const uid = normalizeCloudflareUid(cloudflareUid); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}/token`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Content-Type': 'application/json' }, body: JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 300, downloadable: false }), cache: 'no-store' })
+// lifetimeSeconds: how long the playback link keeps working. Links are made when someone presses play,
+// so a video can be started late and watched to the end.
+export async function createPrivatePlayerUrl(cloudflareUid: string, lifetimeSeconds = 4 * 60 * 60) {
+  const { accountId, apiToken } = config(); const uid = normalizeCloudflareUid(cloudflareUid); const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}/token`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Content-Type': 'application/json' }, body: JSON.stringify({ exp: Math.floor(Date.now() / 1000) + lifetimeSeconds, downloadable: false }), cache: 'no-store' })
   const body = await response.json() as CloudflareResult<{ token?: string }>
   if (!response.ok || !body.success || !body.result?.token) throw new Error('Cloudflare Stream could not create private playback')
   const videoResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}`, { headers: authHeaders(apiToken), cache: 'no-store' })

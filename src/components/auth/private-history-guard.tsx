@@ -19,6 +19,7 @@ export const HISTORY_GUARD = `(() => {
     }
     if (persisted || isHistoryTraversal()) {
       hide();
+      try { sessionStorage.setItem('pawpaw-restore', window.location.pathname); } catch {}
       window.location.replace(window.location.href);
       return;
     }
@@ -27,6 +28,7 @@ export const HISTORY_GUARD = `(() => {
 
   if (isProtectedPath() && isHistoryTraversal()) {
     hide();
+    try { sessionStorage.setItem('pawpaw-restore', window.location.pathname); } catch {}
     window.location.replace(window.location.href);
   } else {
     reveal();
