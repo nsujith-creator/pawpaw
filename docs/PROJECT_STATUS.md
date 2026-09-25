@@ -1,5 +1,23 @@
 # Pawpaw — Project Build Status, Pending Work, and Manual Test Register
 
+## Current state · 25 September 2026
+
+**Live:** heyvarada.in runs the picture-book overhaul (PRs #10–#14): new family pages, the story chart, one shared story renderer, and a desk (Stories, one self-saving editor, Home, Photos). Functions run in Mumbai.
+**Design:** [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (replaces the 19 July system). **Decisions and production fixes:** [DECISIONS.md](DECISIONS.md).
+**Verified on production:**
+- 17 pages at 360, 390, 768 and 1440 px, signed in as family and as admin: no sideways scrolling, no touching text, no broken photos, no page errors;
+- a two-tab conflict test stops the stale tab and keeps its words;
+- the four new stories are hash-identical to their source text.
+
+**Checks:** `tsc` clean; 276 unit tests passing. The integration and e2e suites write to the live database and were not run.
+**Open:**
+- Two August test drafts can't be deleted under the published-history rule; they need Sujith's say-so to remove.
+- Add about 1,000 photos through Photos.
+- Everything below this section is the earlier history, kept for reference.
+
+---
+
+
 **Status date:** 22 July 2026 (PR-004A Author's Studio foundation released and production verified)
 **Repository:** `nsujith-creator/pawpaw`
 **Working branch:** `main`
