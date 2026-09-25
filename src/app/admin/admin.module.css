@@ -79,7 +79,7 @@
 .noteColumn { max-width: 40rem; border-left: 4px solid var(--duck); padding-left: 16px; }
 .note { display: block; width: 100%; resize: none; overflow: hidden; border: 0; background: transparent; padding: 6px 0; font: 400 1.15rem/1.7 var(--reading); color: var(--ink); }
 .note:focus-visible { outline: 2px dashed var(--ink-2); outline-offset: 6px; }
-.firstTag { margin-top: 6px; font: 700 0.78rem/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--crayon); }
+.firstTag { position: absolute; top: 8px; left: 8px; padding: 6px 9px; border-radius: 999px; background: var(--duck); color: var(--ink); font: 700 0.72rem/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
 
 /* ---------- Photos ---------- */
 .usedIn { margin-top: 6px; font: 500 0.85rem/1.35 var(--display); color: var(--ink-2); }

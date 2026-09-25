@@ -655,7 +655,7 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
                   rows={1}
                   {...common}
                 />
-                {block.type === 'quote' && (
+                {block.type === 'quote' && (activeKey === item.key || block.attribution) && (
                   <input
                     className={styles.cite}
                     value={block.attribution ?? ''}
