@@ -130,6 +130,7 @@
 .said { margin: 30px 0 22px; }
 .said p { font: 800 clamp(2.1rem, 10vw, 3.4rem)/1.04 var(--display); letter-spacing: -0.04em; color: var(--pc); margin: 0; }
 .column[data-colour="duck"] .said p { color: var(--crayon); }
+.said[data-long] p { font-size: clamp(1.6rem, 6.4vw, 2.2rem); line-height: 1.12; letter-spacing: -0.03em; }
 .said p[lang="ml"] { font-family: var(--ml); letter-spacing: 0; }
 .said cite { display: block; margin-top: 8px; font: 600 1rem/1.4 var(--display); font-style: normal; color: var(--ink-2); }
 
