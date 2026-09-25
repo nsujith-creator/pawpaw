@@ -125,3 +125,18 @@
   .loginTitle { margin-top: 22vh; }
   .loginForm { align-content: center; padding: 48px 56px; }
 }
+
+/* ---------- Names ---------- */
+.listRows { list-style: none; display: grid; gap: 12px; margin: 14px 0 16px; }
+.listRow { display: grid; gap: 10px; padding: 14px; border-radius: var(--radius); background: var(--paper-2); }
+.listField { display: grid; gap: 6px; }
+.listField span { font: 700 0.75rem/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.listField input, .listField select {
+  min-height: 44px; padding: 0 12px; border: 2px solid var(--ink); border-radius: var(--radius);
+  background: var(--paper); font: 500 1rem/1 var(--display); min-width: 0;
+}
+.listField input[lang="ml"] { font-family: var(--ml); font-size: 1.15rem; }
+@media (min-width: 900px) {
+  .listRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: end; }
+  .listRows[data-kind="people"] .listRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; }
+}

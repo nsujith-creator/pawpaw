@@ -6,9 +6,10 @@ import { checkOrigin } from '@/lib/auth/origin'
 import { requireActiveAdmin } from '@/lib/auth/admin'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { deletePrivateVideo } from '@/lib/video/cloudflare'
 import { contentFingerprint, FINGERPRINT_SELECT, type FingerprintFields } from '@/lib/content/fingerprint'
 import {
-  canDeleteContent, isValidId, planContentWrite, validateContentInput,
+  isValidId, planContentWrite, validateContentInput,
   type ExistingContent, type FieldErrors,
 } from '@/lib/content/manage-content'
 
@@ -167,22 +168,48 @@ export async function unpublishChapter(formData: FormData): Promise<ContentActio
   return { ok: true, id, message: "Taken off her page. It's kept here as a draft." }
 }
 
+// Deletes a story completely: its draft, everything that was ever on her page, and its
+// videos. Its photos stay in Photos. Only Home can't be deleted (edit it instead).
 export async function deleteChapter(formData: FormData): Promise<ContentActionResult> {
-  if (!await adminOrNull()) return SIGNED_OUT
+  const admin = await adminOrNull()
+  if (!admin) return SIGNED_OUT
   const id = text(formData, 'id') ?? ''
   const confirmedTitle = (formData.get('confirmed_title') as string | null) ?? ''
-  if (!isValidId(id)) return { error: 'That chapter could not be found.' }
+  if (!isValidId(id)) return { error: "This story isn't there any more." }
   const db = createAdminClient()
-  const item = await db.from('content_items').select('id, type, slug, title').eq('id', id).maybeSingle()
-  if (item.error || !item.data) return { error: 'That chapter could not be found.' }
-  const history = await db.from('content_revisions').select('id', { count: 'exact', head: true }).eq('content_item_id', id)
-  if (history.error || history.count === null) return { error: 'Publication history could not be verified. Nothing was deleted.' }
-  if (!canDeleteContent({ type: item.data.type, slug: item.data.slug, hasRevisionHistory: history.count > 0 })) {
-    return { error: history.count > 0 ? "A story that's been on her page can't be deleted, only taken down." : "First Days can't be deleted." }
+  const item = await db.from('content_items').select(`id, type, slug, ${FINGERPRINT_SELECT}`).eq('id', id).maybeSingle()
+  if (item.error || !item.data) return { error: "This story isn't there any more." }
+  if (item.data.type === 'home') return { error: "Home can't be deleted. Change it from Home instead." }
+  // Never delete a version the author hasn't seen.
+  const expected = text(formData, 'expected_fingerprint')
+  if (!expected || contentFingerprint(item.data as unknown as FingerprintFields) !== expected) {
+    return { conflict: true, error: 'Not deleted. This story was changed somewhere else; reload to see it first.' }
   }
-  if (confirmedTitle !== item.data.title) return { error: 'Type the title exactly to delete it.' }
-  const deleted = await db.from('content_items').delete().eq('id', item.data.id).neq('type', 'home').neq('slug', 'first-days').select('id').maybeSingle()
-  if (deleted.error || !deleted.data) return { error: "Couldn't delete it just now. Nothing was changed." }
-  revalidatePath('/admin'); revalidatePath('/admin/content'); revalidatePath('/admin/media'); revalidatePath('/chapters'); revalidatePath(`/chapters/${item.data.slug}`)
+  if (confirmedTitle.trim() !== item.data.title.trim()) return { error: 'Type the title exactly to delete it.' }
+  const deleted = await db.rpc('delete_story_everywhere', { p_admin_id: admin.id, p_content_id: item.data.id })
+  if (deleted.error) {
+    console.error('delete_story_everywhere failed:', deleted.error.message)
+    return { error: "Couldn't delete it just now. Nothing was changed." }
+  }
+  // Its videos belong to nothing now: remove them from the video service too, trying each twice.
+  let videosLeft = 0
+  for (const video of (deleted.data ?? []) as { id: string; cloudflare_uid: string }[]) {
+    let removed = false
+    for (let attempt = 0; attempt < 2 && !removed; attempt += 1) {
+      try {
+        await deletePrivateVideo(video.cloudflare_uid)
+        const gone = await db.from('video_assets').delete().eq('id', video.id)
+        removed = !gone.error
+      } catch (error) {
+        console.error('Video cleanup after story delete failed:', error instanceof Error ? error.message.slice(0, 200) : 'unknown')
+      }
+    }
+    if (!removed) videosLeft += 1
+  }
+  revalidatePath('/'); revalidatePath('/admin'); revalidatePath('/admin/media'); revalidatePath('/chapters')
+  revalidatePath(item.data.slug === 'first-days' ? '/first-days' : `/chapters/${item.data.slug}`)
+  if (videosLeft) {
+    return { ok: true, id: item.data.id, message: `Deleted from her page and the desk. ${videosLeft === 1 ? 'Its video' : `${videosLeft} videos`} couldn't be removed from the video service; ${videosLeft === 1 ? 'it stays' : 'they stay'} private, and nobody can open ${videosLeft === 1 ? 'it' : 'them'}.` }
+  }
   return { ok: true, id: item.data.id, message: 'Deleted. Its photos are still in Photos.' }
 }

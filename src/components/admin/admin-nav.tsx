@@ -8,6 +8,7 @@ const LINKS = [
   { href: '/admin', label: 'Stories', current: (path: string) => path === '/admin' || path.startsWith('/admin/content') },
   { href: '/admin/home', label: 'Home', current: (path: string) => path.startsWith('/admin/home') },
   { href: '/admin/media', label: 'Photos', current: (path: string) => path.startsWith('/admin/media') },
+  { href: '/admin/names', label: 'Names', current: (path: string) => path.startsWith('/admin/names') },
 ]
 
 export default function AdminNav() {

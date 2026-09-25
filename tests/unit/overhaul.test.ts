@@ -63,7 +63,11 @@ describe('her chart', () => {
   })
 
   it('says her age the way the family does', () => {
-    expect(ageAt('2026-05-31', 'day')).toBe('day 2')
+    expect(ageAt('2026-05-29', 'day')).toBe('day 0')
+    expect(ageAt('2026-05-31', 'day')).toBe('2 days')
+    expect(ageAt('2026-06-26', 'day')).toBe('28 days')
+    expect(ageAt('2026-06-27', 'day')).toBe('1 month')
+    expect(ageAt('2026-07-03', 'day')).toBe('5 weeks')
     expect(ageAt('2026-07-15', 'day')).toBe('6 weeks')
     expect(ageAt('2026-09-18', 'day')).toBe('16 weeks')
   })
@@ -109,6 +113,16 @@ describe('saving never overwrites words changed elsewhere', () => {
     expect(actions).toContain('if (!admin) return SIGNED_OUT')
     // The write itself only lands if the row is unchanged since it was checked.
     expect(actions).toContain(".eq('updated_at', readAt!)")
+  })
+
+  it('never deletes a version the author has not seen, and never saves over lists changed elsewhere', () => {
+    const actions = read('src/app/admin/content/actions.ts')
+    expect(actions.indexOf("text(formData, 'expected_fingerprint')", actions.indexOf('export async function deleteChapter')))
+      .toBeLessThan(actions.indexOf("rpc('delete_story_everywhere'"))
+    expect(read('src/app/admin/content/story-editor.tsx')).toContain('if (!(await save())) return')
+    const names = read('src/app/admin/names/actions.ts')
+    expect(names).toContain(".eq('updated_at', loadedAt)")
+    expect(read('src/app/admin/names/page.tsx')).toContain('if (lists.fallback)')
   })
 
   it('keeps unsaved words in the browser and warns before leaving', () => {
@@ -209,7 +223,11 @@ describe('picture-book design', () => {
 
   it('stills motion for anyone who asks', () => {
     expect(globals).toContain('@media (prefers-reduced-motion: reduce)')
-    expect(read('src/components/family/also-called.tsx')).toContain('prefers-reduced-motion: reduce')
+    // Her names and her people keep changing on every device; reduced motion only drops the fade.
+    expect(read('src/components/family/also-called.tsx')).not.toContain('prefers-reduced-motion')
+    expect(read('src/components/family/her-people.tsx')).toContain('Math.random()')
+    // Anyone can hold a person on screen.
+    expect(read('src/components/family/her-people.tsx')).toContain("aria-pressed={paused}")
   })
 
   it('has no painted characters left anywhere', () => {

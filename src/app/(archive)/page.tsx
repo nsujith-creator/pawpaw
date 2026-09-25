@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { getPublishedHomeContent } from '@/lib/content/home'
 import { listPublishedChapters } from '@/lib/content/chapters'
-import { HER_NAMES, HER_PEOPLE } from '@/lib/family/her-names'
+import { MALAYALAM, alsoCalled } from '@/lib/family/her-names'
+import { getFamilyLists } from '@/lib/family/lists'
+import HerPeople from '@/components/family/her-people'
 import AlsoCalled from '@/components/family/also-called'
 import StoryChart, { storyHref } from '@/components/family/story-chart'
 import Photo from '@/components/family/photo'
@@ -17,7 +19,7 @@ function noteDate(value: string | null) {
 }
 
 export default async function HomePage() {
-  const [home, stories] = await Promise.all([getPublishedHomeContent(), listPublishedChapters()])
+  const [home, stories, lists] = await Promise.all([getPublishedHomeContent(), listPublishedChapters(), getFamilyLists()])
 
   if (home.state === 'error') {
     return <StatePage colour="rose" title="Home didn't load." body="Something went wrong on our side. Reload in a minute, or open her stories instead." action={{ href: '/chapters', label: 'Her stories' }} />
@@ -38,7 +40,7 @@ export default async function HomePage() {
           <p className={styles.kicker}>Varada&apos;s family pages</p>
           <h1 className={styles.herName} lang="ml">വരദ</h1>
           <p className={styles.nameSub}>Varada</p>
-          <AlsoCalled />
+          <AlsoCalled names={alsoCalled(lists.names)} />
           <Duck style={{ right: '6%', bottom: '6%', width: '42%', maxWidth: 250 }} />
           <Balloon style={{ right: '50%', bottom: '16%', width: '12%', maxWidth: 66 }} />
           <Star style={{ right: '8%', top: '10%', width: '10%', maxWidth: 56 }} />
@@ -86,8 +88,9 @@ export default async function HomePage() {
       <section className={`${styles.section} ${styles.namesPage}`} aria-labelledby="names-title">
         <h2 className={styles.label} id="names-title">Her names</h2>
         <ol className={styles.copybook}>
-          {HER_NAMES.map(name => {
-            const word = <span className={name.malayalam ? styles.nameMl : name.text.includes('·') ? styles.nameSmall : styles.nameLat} lang={name.malayalam ? 'ml' : undefined}>{name.text}</span>
+          {lists.names.map(name => {
+            const ml = MALAYALAM.test(name.text)
+            const word = <span className={ml ? styles.nameMl : name.text.includes('·') ? styles.nameSmall : styles.nameLat} lang={ml ? 'ml' : undefined}>{name.text}</span>
             return (
               <li key={name.text}>
                 {name.href && published.has(name.href) ? <Link href={name.href} className={styles.nameLink}>{word}</Link> : word}
@@ -101,14 +104,7 @@ export default async function HomePage() {
       <section className={`${styles.section} ${styles.peoplePage}`} aria-labelledby="people-title">
         <h2 className={styles.label} id="people-title">Her people</h2>
         <p className={styles.utter}>“…4 things out of an infinite number of things shes yet to utter!” · acchan</p>
-        <ul className={styles.people}>
-          {HER_PEOPLE.map(person => (
-            <li key={person.said} data-last={person.last ? '' : undefined}>
-              <span className={styles.personMl} lang="ml">{person.malayalam}</span>
-              <span className={styles.personSaid}>{person.said}</span>
-            </li>
-          ))}
-        </ul>
+        <HerPeople people={lists.people} />
       </section>
 
       <footer className={styles.footer}>

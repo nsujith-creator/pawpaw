@@ -12,12 +12,13 @@ import { finalizeUploadCore } from '@/lib/media/finalize-upload'
 import { sweepOrphans } from '@/lib/media/orphan-sweep'
 import { isValidId } from '@/lib/content/manage-content'
 import { generateSignedUrl } from '@/lib/media/private-url'
+import { PHOTO_WIDTHS } from '@/lib/media/media-token'
+import { createHash } from 'node:crypto'
 import {
   attachMediaCore,
   updateMediaDetailsCore,
   reorderAttachmentCore,
   detachMediaSafelyCore,
-  deleteMediaCore,
   replaceAttachmentCore,
   setCoverMediaCore,
 } from '@/lib/media/manage-media'
@@ -208,18 +209,33 @@ export async function replaceContentMedia(formData: FormData) {
   return result
 }
 
+// Deletes a photo from every story, every version that was on her page, and Photos, then
+// removes the file and its resized copies from storage. There is no undo.
 export async function deleteMediaForever(formData: FormData) {
-  const admin = await requireAdminWithOrigin()
+  let admin
+  try { admin = await requireAdminWithOrigin() } catch { return { error: "You've been signed out. Sign in again in another tab." } }
   const mediaId = (formData.get('media_id') as string | null) ?? ''
-  if (!isValidId(mediaId)) return { error: 'That photo could not be found.' }
+  if (!isValidId(mediaId)) return { error: "That photo isn't there any more." }
   const db = createAdminClient()
-  const { data: usages } = await db.from('content_media').select('content_id').eq('media_id', mediaId)
-  const result = await deleteMediaCore(db, admin.id, mediaId)
-  if ('ok' in result) {
-    await Promise.all((usages ?? []).map(row => revalidateTarget(row.content_id)))
-    revalidatePath('/admin/media')
+  const deleted = await db.rpc('delete_photo_everywhere', { p_admin_id: admin.id, p_media_id: mediaId })
+  if (deleted.error || typeof deleted.data !== 'string') {
+    console.error('delete_photo_everywhere failed:', deleted.error?.message)
+    return { error: "Couldn't delete it just now. Nothing was changed." }
   }
-  return result
+  const path = deleted.data
+  const hash = createHash('sha256').update(path).digest('hex').slice(0, 40)
+  const files = [path, ...PHOTO_WIDTHS.map(width => `derived/${hash}-${width}.webp`)]
+  let fileError: unknown = null
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    fileError = (await db.storage.from('media').remove(files)).error
+    if (!fileError) break
+  }
+  revalidatePath('/', 'layout')
+  if (fileError) {
+    console.error('Photo file removal failed after delete.')
+    return { error: "It's gone from every story and from Photos, but the file itself couldn't be removed from storage just now. It stays private. Tell Claude if this keeps happening." }
+  }
+  return { ok: true as const }
 }
 
 export async function attachMediaToContent(formData: FormData) {

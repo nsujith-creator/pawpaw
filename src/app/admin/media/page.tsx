@@ -36,7 +36,7 @@ export default async function PhotosPage({ searchParams }: { searchParams: Promi
   if (page > pages) redirect(pages === 1 ? '/admin/media' : `/admin/media?page=${pages}`)
   const rows = (data ?? []) as unknown as Row[]
 
-  // A photo that has ever been on her page stays, so older versions of a story never lose it.
+  // Photos that are, or were, on her page get a stronger warning before they're deleted.
   const ids = rows.map(row => row.id)
   const kept = ids.length
     ? await db.from('content_revision_media').select('media_id').in('media_id', ids)
@@ -50,7 +50,7 @@ export default async function PhotosPage({ searchParams }: { searchParams: Promi
     altText: row.alt_text?.trim() || 'Family photograph',
     caption: row.caption,
     usedIn: row.content_media.flatMap(use => use.content_items ? [{ id: use.content_items.id, title: use.content_items.type === 'home' ? 'Home' : use.content_items.title, home: use.content_items.type === 'home' }] : []),
-    deletable: row.content_media.length === 0 && !everPublished.has(row.id),
+    onHerPage: everPublished.has(row.id),
   })))
 
   return (

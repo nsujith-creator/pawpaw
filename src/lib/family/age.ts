@@ -1,4 +1,4 @@
-// Her age at the time of a story, the way the family says it: "day 0", "day 2", "6 weeks",
+// Her age at the time of a story, the way the family says it: "day 0", "2 days", "28 days", "6 weeks",
 // "1 month", "5 months", "2 years". Worked out from the story's date and her birthday.
 
 export const BIRTHDAY = '2026-05-29'
@@ -21,7 +21,9 @@ export function ageAt(date: string | null | undefined, precision: 'day' | 'month
   }
   const days = daysBetween(BIRTHDAY, date)
   if (!Number.isFinite(days) || days < 0) return null
-  if (days < 14) return `day ${days}`
+  // The first four weeks are counted in days, the way the family counts them (her noolukettu is 28 days).
+  if (days === 0) return 'day 0'
+  if (days <= 28) return `${days} day${days === 1 ? '' : 's'}`
   const months = Math.round(days / 30.44)
   const nearMonth = Math.abs(days - months * 30.44) <= 1.5
   if (days < 120) {

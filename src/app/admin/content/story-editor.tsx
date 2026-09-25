@@ -462,13 +462,20 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
   }
 
   async function remove() {
+    // Save first, so a just-typed title matches the one being confirmed. If the save finds the
+    // story was changed somewhere else, stop: never delete a version you haven't seen.
+    // save() already shows why it stopped (changed elsewhere, signed out, no connection).
+    if (!(await save())) return
     const form = new FormData()
     form.set('id', story.id)
     form.set('confirmed_title', deleteTitle)
+    form.set('expected_fingerprint', fingerprint.current)
     const result = await deleteChapter(form).catch((): ContentActionResult => ({ error: "Couldn't reach the server. Nothing was deleted." }))
     if (result.ok) {
       try { window.localStorage.removeItem(storageKey) } catch { /* nothing kept */ }
       savedSnapshot.current = latest.current.snapshot
+      // Only a partly finished delete has something to say before leaving.
+      if (result.message && !result.message.startsWith('Deleted.')) window.alert(result.message)
       router.push('/admin')
     } else setNotice(result.error ?? "Couldn't delete it.")
   }
@@ -732,23 +739,24 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
 
       <StoryVideos contentId={story.id} onChange={afterMediaChange} />
 
-      <section className={styles.endZone} aria-label="Take down or delete">
+      <section className={styles.endZone} aria-label="Take it down or delete it">
         {live && <button type="button" className={styles.ghost} onClick={() => void takeDown()}>Take it off her page</button>}
-        {!live && story.revisionNumber === null && story.slug !== 'first-days' && (
-          deleteOpen ? (
-            <div className={styles.confirm}>
-              <label>
-                <span>Type the title to delete this draft for good. Its photos stay in Photos.</span>
-                <input value={deleteTitle} onChange={event => setDeleteTitle(event.target.value)} placeholder={title} />
-              </label>
-              <div>
-                <button type="button" className={styles.danger} disabled={deleteTitle !== title} onClick={() => void remove()}>Delete it</button>
-                <button type="button" className={styles.ghost} onClick={() => { setDeleteOpen(false); setDeleteTitle('') }}>Keep it</button>
-              </div>
+        {deleteOpen ? (
+          <div className={styles.confirm}>
+            <label>
+              <span>
+                {live ? 'This takes it off her page and deletes it for good, with every earlier version. ' : 'This deletes it for good. '}
+                Its photos stay in Photos. Type the title to confirm.
+              </span>
+              <input value={deleteTitle} onChange={event => setDeleteTitle(event.target.value)} placeholder={title} aria-label="Type the title to confirm" />
+            </label>
+            <div>
+              <button type="button" className={styles.danger} disabled={deleteTitle.trim() !== title.trim()} onClick={() => void remove()}>Delete it for good</button>
+              <button type="button" className={styles.ghost} onClick={() => { setDeleteOpen(false); setDeleteTitle('') }}>Keep it</button>
             </div>
-          ) : (
-            <button type="button" className={styles.quiet} onClick={() => setDeleteOpen(true)}>Delete this draft</button>
-          )
+          </div>
+        ) : (
+          <button type="button" className={styles.quiet} onClick={() => setDeleteOpen(true)}>Delete this story</button>
         )}
       </section>
 
