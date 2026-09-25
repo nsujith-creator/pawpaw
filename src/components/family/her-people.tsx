@@ -53,8 +53,9 @@ export default function HerPeople({ people }: { people: HerPerson[] }) {
 
   if (people.length === 0) return null
   const person = order[index % order.length]
+  // One wrapper, so the name and the Pause button share the section's column on wide screens.
   return (
-    <>
+    <div>
       <ul className="visually-hidden">
         {people.map(item => <li key={`${item.malayalam}-${item.said}`}><span lang="ml">{item.malayalam}</span> {item.said}</li>)}
       </ul>
@@ -67,6 +68,6 @@ export default function HerPeople({ people }: { people: HerPerson[] }) {
           {paused ? 'Play' : 'Pause'}
         </button>
       )}
-    </>
+    </div>
   )
 }
