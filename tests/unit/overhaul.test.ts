@@ -129,11 +129,19 @@ describe('private photos', () => {
     expect(nearestPhotoWidth(null)).toBe(1600)
   })
 
-  it('checks family or admin access on every photo and never lets it be cached', () => {
+  it('gives each photo one steady address, different for different photos', () => {
+    expect(encodeMediaToken('admin/a.jpg', secret)).toBe(encodeMediaToken('admin/a.jpg', secret))
+    expect(encodeMediaToken('admin/a.jpg', secret)).not.toBe(encodeMediaToken('admin/b.jpg', secret))
+  })
+
+  it('checks family or admin access and lets only the viewer’s own browser keep the photo', () => {
     const route = read('src/app/p/[token]/route.ts')
     expect(route).toContain('verifyViewerCookie')
     expect(route).toContain('requireActiveAdmin')
-    expect(route).toContain('private, no-store')
+    expect(route).toContain("'private, max-age=2592000, immutable'")
+    expect(route).not.toMatch(/public, max-age|s-maxage/)
+    // Refusals are never cached.
+    expect(route).toContain("status: 401, headers: PRIVATE")
   })
 
   it('never hands a storage path to the Photos page in the browser', () => {

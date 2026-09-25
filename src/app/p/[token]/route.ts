@@ -23,6 +23,13 @@ const PRIVATE = {
   'X-Robots-Tag': 'noindex, nofollow, noarchive',
 }
 
+// A photo at an address never changes (a replaced photo gets a new address), so the family
+// member's own browser may keep it for 30 days. "private" means no shared cache or CDN ever holds it.
+const PHOTO = {
+  'Cache-Control': 'private, max-age=2592000, immutable',
+  'X-Robots-Tag': 'noindex, nofollow, noarchive',
+}
+
 async function hasFamilyAccess(): Promise<boolean> {
   const cookieStore = await cookies()
   const access = await verifyFamilyAccess({
@@ -49,7 +56,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
 
   const cached = await bucket.download(derivedPath)
   if (cached.data) {
-    return new Response(await cached.data.arrayBuffer(), { headers: { ...PRIVATE, 'Content-Type': 'image/webp' } })
+    return new Response(await cached.data.arrayBuffer(), { headers: { ...PHOTO, 'Content-Type': 'image/webp' } })
   }
 
   const original = await bucket.download(path)
@@ -63,7 +70,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
       .toBuffer()
     // Keep the copy for next time. If storing fails, this visitor still gets the photo.
     await bucket.upload(derivedPath, resized, { contentType: 'image/webp', upsert: true }).catch(() => null)
-    return new Response(new Uint8Array(resized), { headers: { ...PRIVATE, 'Content-Type': 'image/webp' } })
+    return new Response(new Uint8Array(resized), { headers: { ...PHOTO, 'Content-Type': 'image/webp' } })
   } catch {
     // An image sharp cannot read is still shown, just unresized.
     return new Response(await original.data.arrayBuffer(), {
