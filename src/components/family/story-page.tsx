@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import type { ChapterContent, ChapterMedia } from '@/lib/content/chapters'
 import type { PublishedVideo } from '@/lib/video/published-videos'
-import { ageAt, familyDate } from '@/lib/family/age'
+import { ageAt, knownDate } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
 import FamilyVideo from './family-video'
 import Photo from './photo'
@@ -84,7 +84,7 @@ function metaLine(content: ChapterContent, photoCount: number) {
     const from = content.authorDisplayName ? ` from ${content.authorDisplayName}` : ''
     const to = content.recipientDisplayName ? ` to ${content.recipientDisplayName}` : ''
     parts.push(`a letter${from}${to}`)
-    const written = content.authoredDatePrecision === 'day' ? familyDate(content.authoredDate) : null
+    const written = knownDate(content.authoredDate, content.authoredDatePrecision)
     if (written) parts.push(`written ${written}`)
   } else if (content.authorDisplayName) parts.push(`by ${content.authorDisplayName}`)
   else if (content.type === 'gallery' || content.bodyBlocks.length === 0) parts.push(`${photoCount} photograph${photoCount === 1 ? '' : 's'}`)

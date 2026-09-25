@@ -5,7 +5,7 @@ import { addressFor, cleanBlocks, passageToBlock, splitPassages } from '@/lib/ad
 import { chartOrder, nextOnChart } from '@/lib/family/chart-order'
 import { contentFingerprint } from '@/lib/content/fingerprint'
 import { storyColour } from '@/lib/family/story-colour'
-import { ageAt } from '@/lib/family/age'
+import { ageAt, knownDate } from '@/lib/family/age'
 import { decodeMediaToken, encodeMediaToken, nearestPhotoWidth } from '@/lib/media/media-token'
 
 const root = join(__dirname, '../..')
@@ -72,6 +72,13 @@ describe('her chart', () => {
     expect(ageAt('2026-09-01', 'month')).toBe('about 4 months')
     expect(ageAt('2026-05-01', 'month')).toBe('her first month')
     expect(ageAt('2026-09-01', 'year')).toBeNull()
+  })
+
+  it('writes a date as precisely as it is known', () => {
+    expect(knownDate('2026-09-25', 'day')).toBe('25 September 2026')
+    expect(knownDate('2026-09-01', 'month')).toBe('September 2026')
+    expect(knownDate('2026-01-01', 'year')).toBe('2026')
+    expect(knownDate(null, 'day')).toBeNull()
   })
 
   it('keeps a chosen colour and otherwise picks the same one every time', () => {
