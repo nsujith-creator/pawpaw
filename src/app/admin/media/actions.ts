@@ -224,9 +224,17 @@ export async function deleteMediaForever(formData: FormData) {
   }
   const path = deleted.data
   const hash = createHash('sha256').update(path).digest('hex').slice(0, 40)
-  const { error: fileError } = await db.storage.from('media').remove([path, ...PHOTO_WIDTHS.map(width => `derived/${hash}-${width}.webp`)])
-  if (fileError) console.error('Photo file cleanup failed after delete; the tidy-up will retry.')
+  const files = [path, ...PHOTO_WIDTHS.map(width => `derived/${hash}-${width}.webp`)]
+  let fileError: unknown = null
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    fileError = (await db.storage.from('media').remove(files)).error
+    if (!fileError) break
+  }
   revalidatePath('/', 'layout')
+  if (fileError) {
+    console.error('Photo file removal failed after delete.')
+    return { error: "It's gone from every story and from Photos, but the file itself couldn't be removed from storage just now. It stays private. Tell Claude if this keeps happening." }
+  }
   return { ok: true as const }
 }
 

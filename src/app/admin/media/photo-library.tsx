@@ -53,7 +53,8 @@ export default function PhotoLibrary({ items }: { items: LibraryItem[] }) {
     const result = await action(form).catch(() => ({ error: failure })) as { error?: string }
     setBusy(false)
     setProblems(result?.error ? [result.error] : [])
-    if (!result?.error) router.refresh()
+    // A delete can finish most of the way and still report a problem; the list must show what's left.
+    if (!result?.error || action === deleteMediaForever) router.refresh()
   }
 
   function saveCaption(item: LibraryItem, value: string) {

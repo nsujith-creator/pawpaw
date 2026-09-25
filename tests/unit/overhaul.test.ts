@@ -115,6 +115,16 @@ describe('saving never overwrites words changed elsewhere', () => {
     expect(actions).toContain(".eq('updated_at', readAt!)")
   })
 
+  it('never deletes a version the author has not seen, and never saves over lists changed elsewhere', () => {
+    const actions = read('src/app/admin/content/actions.ts')
+    expect(actions.indexOf("text(formData, 'expected_fingerprint')", actions.indexOf('export async function deleteChapter')))
+      .toBeLessThan(actions.indexOf("rpc('delete_story_everywhere'"))
+    expect(read('src/app/admin/content/story-editor.tsx')).toContain('if (!(await save())) return')
+    const names = read('src/app/admin/names/actions.ts')
+    expect(names).toContain(".eq('updated_at', loadedAt)")
+    expect(read('src/app/admin/names/page.tsx')).toContain('if (lists.fallback)')
+  })
+
   it('keeps unsaved words in the browser and warns before leaving', () => {
     const editor = read('src/app/admin/content/story-editor.tsx')
     expect(editor).toContain('window.localStorage.setItem(storageKey')
@@ -216,6 +226,8 @@ describe('picture-book design', () => {
     // Her names and her people keep changing on every device; reduced motion only drops the fade.
     expect(read('src/components/family/also-called.tsx')).not.toContain('prefers-reduced-motion')
     expect(read('src/components/family/her-people.tsx')).toContain('Math.random()')
+    // Anyone can hold a person on screen.
+    expect(read('src/components/family/her-people.tsx')).toContain("aria-pressed={paused}")
   })
 
   it('has no painted characters left anywhere', () => {

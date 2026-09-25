@@ -462,14 +462,20 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
   }
 
   async function remove() {
-    await save() // so a just-typed title matches the one being confirmed
+    // Save first, so a just-typed title matches the one being confirmed. If the save finds the
+    // story was changed somewhere else, stop: never delete a version you haven't seen.
+    // save() already shows why it stopped (changed elsewhere, signed out, no connection).
+    if (!(await save())) return
     const form = new FormData()
     form.set('id', story.id)
     form.set('confirmed_title', deleteTitle)
+    form.set('expected_fingerprint', fingerprint.current)
     const result = await deleteChapter(form).catch((): ContentActionResult => ({ error: "Couldn't reach the server. Nothing was deleted." }))
     if (result.ok) {
       try { window.localStorage.removeItem(storageKey) } catch { /* nothing kept */ }
       savedSnapshot.current = latest.current.snapshot
+      // Only a partly finished delete has something to say before leaving.
+      if (result.message && !result.message.startsWith('Deleted.')) window.alert(result.message)
       router.push('/admin')
     } else setNotice(result.error ?? "Couldn't delete it.")
   }

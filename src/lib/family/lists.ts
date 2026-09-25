@@ -26,16 +26,31 @@ export function cleanPeople(items: unknown): HerPerson[] {
   }).slice(0, 40)
 }
 
-export async function getFamilyLists(): Promise<{ names: HerName[]; people: HerPerson[] }> {
+export interface FamilyLists {
+  names: HerName[]
+  people: HerPerson[]
+  // When they're the starting lists because the saved ones couldn't be read. The desk refuses
+  // to edit these, so a stale copy can never overwrite the real lists.
+  fallback: boolean
+  // When each list was last saved, so two editors can't silently overwrite each other.
+  savedAt: { names: string | null; people: string | null }
+}
+
+export async function getFamilyLists(): Promise<FamilyLists> {
+  const fallback: FamilyLists = { names: HER_NAMES, people: HER_PEOPLE, fallback: true, savedAt: { names: null, people: null } }
   try {
-    const { data, error } = await createAdminClient().from('family_lists').select('key, items')
-    if (error || !data) return { names: HER_NAMES, people: HER_PEOPLE }
-    const byKey = new Map(data.map(row => [row.key as string, row.items as unknown]))
+    const { data, error } = await createAdminClient().from('family_lists').select('key, items, updated_at')
+    if (error || !data) return fallback
+    const byKey = new Map(data.map(row => [row.key as string, row as { items: unknown; updated_at: string }]))
+    const names = byKey.get('her-names')
+    const people = byKey.get('her-people')
     return {
-      names: byKey.has('her-names') ? cleanNames(byKey.get('her-names')) : HER_NAMES,
-      people: byKey.has('her-people') ? cleanPeople(byKey.get('her-people')) : HER_PEOPLE,
+      names: names ? cleanNames(names.items) : HER_NAMES,
+      people: people ? cleanPeople(people.items) : HER_PEOPLE,
+      fallback: false,
+      savedAt: { names: names?.updated_at ?? null, people: people?.updated_at ?? null },
     }
   } catch {
-    return { names: HER_NAMES, people: HER_PEOPLE }
+    return fallback
   }
 }

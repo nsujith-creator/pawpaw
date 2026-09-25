@@ -177,25 +177,39 @@ export async function deleteChapter(formData: FormData): Promise<ContentActionRe
   const confirmedTitle = (formData.get('confirmed_title') as string | null) ?? ''
   if (!isValidId(id)) return { error: "This story isn't there any more." }
   const db = createAdminClient()
-  const item = await db.from('content_items').select('id, type, slug, title').eq('id', id).maybeSingle()
+  const item = await db.from('content_items').select(`id, type, slug, ${FINGERPRINT_SELECT}`).eq('id', id).maybeSingle()
   if (item.error || !item.data) return { error: "This story isn't there any more." }
   if (item.data.type === 'home') return { error: "Home can't be deleted. Change it from Home instead." }
+  // Never delete a version the author hasn't seen.
+  const expected = text(formData, 'expected_fingerprint')
+  if (!expected || contentFingerprint(item.data as unknown as FingerprintFields) !== expected) {
+    return { conflict: true, error: 'Not deleted. This story was changed somewhere else; reload to see it first.' }
+  }
   if (confirmedTitle.trim() !== item.data.title.trim()) return { error: 'Type the title exactly to delete it.' }
   const deleted = await db.rpc('delete_story_everywhere', { p_admin_id: admin.id, p_content_id: item.data.id })
   if (deleted.error) {
     console.error('delete_story_everywhere failed:', deleted.error.message)
     return { error: "Couldn't delete it just now. Nothing was changed." }
   }
-  // Its videos belong to nothing now: remove them from the video service too.
+  // Its videos belong to nothing now: remove them from the video service too, trying each twice.
+  let videosLeft = 0
   for (const video of (deleted.data ?? []) as { id: string; cloudflare_uid: string }[]) {
-    try {
-      await deletePrivateVideo(video.cloudflare_uid)
-      await db.from('video_assets').delete().eq('id', video.id)
-    } catch (error) {
-      console.error('Video cleanup after story delete failed:', error instanceof Error ? error.message.slice(0, 200) : 'unknown')
+    let removed = false
+    for (let attempt = 0; attempt < 2 && !removed; attempt += 1) {
+      try {
+        await deletePrivateVideo(video.cloudflare_uid)
+        const gone = await db.from('video_assets').delete().eq('id', video.id)
+        removed = !gone.error
+      } catch (error) {
+        console.error('Video cleanup after story delete failed:', error instanceof Error ? error.message.slice(0, 200) : 'unknown')
+      }
     }
+    if (!removed) videosLeft += 1
   }
   revalidatePath('/'); revalidatePath('/admin'); revalidatePath('/admin/media'); revalidatePath('/chapters')
   revalidatePath(item.data.slug === 'first-days' ? '/first-days' : `/chapters/${item.data.slug}`)
+  if (videosLeft) {
+    return { ok: true, id: item.data.id, message: `Deleted from her page and the desk. ${videosLeft === 1 ? 'Its video' : `${videosLeft} videos`} couldn't be removed from the video service; ${videosLeft === 1 ? 'it stays' : 'they stay'} private, and nobody can open ${videosLeft === 1 ? 'it' : 'them'}.` }
+  }
   return { ok: true, id: item.data.id, message: 'Deleted. Its photos are still in Photos.' }
 }

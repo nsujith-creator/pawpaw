@@ -10,6 +10,7 @@ import editor from '../content/editor.module.css'
 interface Props {
   names: HerName[]
   people: HerPerson[]
+  savedAt: { names: string | null; people: string | null }
   stories: { href: string; title: string }[]
 }
 
@@ -32,7 +33,7 @@ function SaveRow({ changed, state, onSave }: { changed: boolean; state: string; 
   )
 }
 
-export default function NamesEditor({ names: savedNames, people: savedPeople, stories }: Props) {
+export default function NamesEditor({ names: savedNames, people: savedPeople, savedAt, stories }: Props) {
   const router = useRouter()
   const [names, setNames] = useState(savedNames)
   const [people, setPeople] = useState(savedPeople)
@@ -40,14 +41,22 @@ export default function NamesEditor({ names: savedNames, people: savedPeople, st
   const [peopleState, setPeopleState] = useState('')
   const [namesBase, setNamesBase] = useState(JSON.stringify(savedNames))
   const [peopleBase, setPeopleBase] = useState(JSON.stringify(savedPeople))
+  const [namesAt, setNamesAt] = useState(savedAt.names)
+  const [peopleAt, setPeopleAt] = useState(savedAt.people)
 
   async function save(key: 'her-names' | 'her-people') {
-    const setState = key === 'her-names' ? setNamesState : setPeopleState
-    const items = key === 'her-names' ? names : people
+    const isNames = key === 'her-names'
+    const setState = isNames ? setNamesState : setPeopleState
     setState('saving')
-    const result = await saveFamilyList(key, items).catch(() => ({ error: "Couldn't reach the server. Try again." }))
+    const result = await saveFamilyList(key, isNames ? names : people, isNames ? namesAt : peopleAt)
+      .catch(() => ({ error: "Couldn't reach the server. Try again." }))
     if ('error' in result) { setState(result.error); return }
-    if (key === 'her-names') setNamesBase(JSON.stringify(names)); else setPeopleBase(JSON.stringify(people))
+    // Show exactly what was saved: empty rows are dropped.
+    if (isNames) {
+      setNames(result.items as HerName[]); setNamesBase(JSON.stringify(result.items)); setNamesAt(result.savedAt)
+    } else {
+      setPeople(result.items as HerPerson[]); setPeopleBase(JSON.stringify(result.items)); setPeopleAt(result.savedAt)
+    }
     setState('Saved. Home shows it now.')
     router.refresh()
   }
