@@ -15,7 +15,7 @@ export interface LibraryItem {
   altText: string
   caption: string | null
   usedIn: { id: string; title: string; home: boolean }[]
-  deletable: boolean
+  onHerPage: boolean
 }
 
 export default function PhotoLibrary({ items }: { items: LibraryItem[] }) {
@@ -85,11 +85,21 @@ export default function PhotoLibrary({ items }: { items: LibraryItem[] }) {
                   <span key={use.id}>{index > 0 && ', '}<Link href={use.home ? '/admin/home' : `/admin/content/${use.id}`}>{use.title}</Link></span>
                 ))}</>}
               </p>
-              {item.deletable && (
-                <div className={editor.trayTools}>
-                  <button type="button" disabled={busy} className={editor.toolQuiet} onClick={() => { if (window.confirm('Delete this photo for good? This can’t be undone.')) void act(deleteMediaForever, { media_id: item.id }, "Couldn't delete it.") }}>Delete</button>
-                </div>
-              )}
+              <div className={editor.trayTools}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  className={editor.toolQuiet}
+                  onClick={() => {
+                    const warning = item.usedIn.length || item.onHerPage
+                      ? 'Delete this photo for good? It comes out of every story it’s in, including her page. This can’t be undone.'
+                      : 'Delete this photo for good? This can’t be undone.'
+                    if (window.confirm(warning)) void act(deleteMediaForever, { media_id: item.id }, "Couldn't delete it.")
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

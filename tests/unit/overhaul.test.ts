@@ -63,7 +63,11 @@ describe('her chart', () => {
   })
 
   it('says her age the way the family does', () => {
-    expect(ageAt('2026-05-31', 'day')).toBe('day 2')
+    expect(ageAt('2026-05-29', 'day')).toBe('day 0')
+    expect(ageAt('2026-05-31', 'day')).toBe('2 days')
+    expect(ageAt('2026-06-26', 'day')).toBe('28 days')
+    expect(ageAt('2026-06-27', 'day')).toBe('1 month')
+    expect(ageAt('2026-07-03', 'day')).toBe('5 weeks')
     expect(ageAt('2026-07-15', 'day')).toBe('6 weeks')
     expect(ageAt('2026-09-18', 'day')).toBe('16 weeks')
   })
@@ -209,7 +213,9 @@ describe('picture-book design', () => {
 
   it('stills motion for anyone who asks', () => {
     expect(globals).toContain('@media (prefers-reduced-motion: reduce)')
-    expect(read('src/components/family/also-called.tsx')).toContain('prefers-reduced-motion: reduce')
+    // Her names and her people keep changing on every device; reduced motion only drops the fade.
+    expect(read('src/components/family/also-called.tsx')).not.toContain('prefers-reduced-motion')
+    expect(read('src/components/family/her-people.tsx')).toContain('Math.random()')
   })
 
   it('has no painted characters left anywhere', () => {
