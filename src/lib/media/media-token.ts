@@ -2,9 +2,9 @@
 // A page never receives a storage path or a signed storage link. It receives /p/<token>,
 // where the token is the storage path encrypted with AES-GCM under a key derived from the
 // viewer cookie secret. Tokens cannot be forged or edited, and they do not expire: access
-// is decided on every request by the /p route, which checks the family or admin session.
+// is decided by the /p route, which checks the family or admin session.
 
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto'
+import { createCipheriv, createDecipheriv, createHash, createHmac } from 'node:crypto'
 import { serverEnv } from '@/lib/env'
 
 const IV_BYTES = 12
@@ -14,8 +14,11 @@ function key(secret: string): Buffer {
   return createHash('sha256').update(`${secret}:pawpaw-media-v1`).digest()
 }
 
+// The same photo always gets the same address, so a family member's browser can keep a photo
+// it has already downloaded instead of fetching it again on every visit. The IV comes from the
+// path itself (an HMAC), so it only ever repeats for the identical path.
 export function encodeMediaToken(storagePath: string, secret: string = serverEnv.viewerCookieSecret): string {
-  const iv = randomBytes(IV_BYTES)
+  const iv = createHmac('sha256', key(secret)).update(storagePath).digest().subarray(0, IV_BYTES)
   const cipher = createCipheriv('aes-256-gcm', key(secret), iv)
   const body = Buffer.concat([cipher.update(storagePath, 'utf8'), cipher.final()])
   return Buffer.concat([iv, cipher.getAuthTag(), body]).toString('base64url')

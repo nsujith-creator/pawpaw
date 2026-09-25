@@ -7,6 +7,7 @@ import { ageAt, familyDate } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
 import { chartOrder } from '@/lib/family/chart-order'
 import Photo from './photo'
+import { Star } from './motifs'
 import styles from './family.module.css'
 
 export function storyHref(slug: string) {
@@ -52,7 +53,7 @@ export default function StoryChart({ items }: { items: ChapterIndexItem[] }) {
                 {item.cover ? (
                   <Photo url={item.cover.signedUrl} alt="" className={styles.bookCover} sizes="(min-width: 900px) 22rem, 90vw" />
                 ) : (
-                  <div className={styles.bookBlank} aria-hidden="true"><span>{item.title.slice(0, 1)}</span></div>
+                  <div className={styles.bookBlank} aria-hidden="true"><Star style={{ position: 'static', width: '22%', maxWidth: 72 }} /></div>
                 )}
                 <div className={styles.bookBand}>
                   <p className={styles.bookTitle}>{item.title}</p>
