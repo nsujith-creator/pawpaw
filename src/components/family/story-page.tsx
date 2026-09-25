@@ -101,7 +101,7 @@ export default function StoryPage({ content, videos = [], mediaState = 'complete
     if (block.type === 'paragraph') return <p key={index}>{block.text}</p>
     if (block.type === 'quote') {
       return (
-        <blockquote key={index} className={styles.said}>
+        <blockquote key={index} className={styles.said} data-long={block.text.length > 40 ? '' : undefined}>
           <p lang={MALAYALAM.test(block.text) ? 'ml' : undefined}>{block.text}</p>
           {block.attribution && <cite>{block.attribution}</cite>}
         </blockquote>

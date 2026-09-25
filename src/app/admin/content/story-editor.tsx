@@ -79,7 +79,8 @@ export default function StoryEditor({ story, videos, fingerprint: loadedFingerpr
   const [author, setAuthor] = useState(initial.author)
   const [recipient, setRecipient] = useState(initial.recipient)
   const [authoredDate, setAuthoredDate] = useState(initial.authoredDate)
-  const [items, setItems] = useState<Item[]>(() => toItems(initial.blocks))
+  // A new story opens with a place to start writing.
+  const [items, setItems] = useState<Item[]>(() => toItems(initial.blocks.length ? initial.blocks : [{ type: 'paragraph', text: '' }]))
   const [activeKey, setActiveKey] = useState<string | null>(null)
 
   const [saveState, setSaveState] = useState<SaveState>('saved')
