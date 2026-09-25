@@ -9,7 +9,7 @@ const pwaControls = read('components/pwa/pwa-controls.tsx')
 const rootLayout = read('app/layout.tsx')
 const archiveLayout = read('app/(archive)/layout.tsx')
 const globals = read('app/globals.css')
-const chaptersCss = read('app/(archive)/chapters/chapters.module.css')
+const storyChart = read('components/family/story-chart.tsx')
 
 describe('contextual Pawpaw PWA controls', () => {
   it('renders no normal-state online strip', () => {
@@ -34,8 +34,7 @@ describe('contextual Pawpaw PWA controls', () => {
     expect(archiveLayout).toContain('<PwaControls />')
   })
 
-  it('makes the First Days route visibly distinct in the Chapters empty state', () => {
-    expect(chaptersCss).toContain('.empty a')
-    expect(chaptersCss).toContain('text-decoration: underline')
+  it('hangs First Days on her chart at its own address', () => {
+    expect(storyChart).toContain("slug === 'first-days' ? '/first-days'")
   })
 })

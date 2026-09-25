@@ -11,6 +11,7 @@ import { buildUploadPath } from '@/lib/media/upload-path'
 import { finalizeUploadCore } from '@/lib/media/finalize-upload'
 import { sweepOrphans } from '@/lib/media/orphan-sweep'
 import { isValidId } from '@/lib/content/manage-content'
+import { generateSignedUrl } from '@/lib/media/private-url'
 import {
   attachMediaCore,
   updateMediaDetailsCore,
@@ -20,6 +21,8 @@ import {
   replaceAttachmentCore,
   setCoverMediaCore,
 } from '@/lib/media/manage-media'
+
+let lastSweep = 0
 
 async function requireAdminWithOrigin() {
   checkOrigin(await headers())
@@ -74,7 +77,12 @@ export async function authorizeUpload(formData: FormData) {
   if (!path) return { error: 'Unsupported file type. Use JPEG, PNG, or WebP.' }
 
   const db = createAdminClient()
-  await sweepOrphans(db, admin.id)
+  // Tidying abandoned uploads once every ten minutes is plenty; a batch of 500 photos
+  // shouldn't pay for it 500 times.
+  if (Date.now() - lastSweep > 10 * 60 * 1000) {
+    lastSweep = Date.now()
+    await sweepOrphans(db, admin.id)
+  }
   const { data, error } = await db.storage.from('media').createSignedUploadUrl(path)
   if (error || !data?.token) {
     console.error('authorizeUpload createSignedUploadUrl failed')
@@ -254,4 +262,25 @@ export async function attachMediaToHome(formData: FormData) {
   if ('error' in result) return result
   await revalidateTarget(homes[0].id)
   return { ok: true as const }
+}
+
+export interface LibraryPhoto { id: string; url: string; caption: string | null; altText: string }
+
+// A page of photos for the "Choose from Photos" picker, newest first.
+export async function listLibraryPhotos(formData: FormData): Promise<{ photos: LibraryPhoto[]; more: boolean } | { error: string }> {
+  try { await requireAdminWithOrigin() } catch { return { error: "You've been signed out. Sign in again in another tab." } }
+  const offset = Math.max(0, Number(formData.get('offset') ?? 0) || 0)
+  const pageSize = 48
+  const { data, error } = await createAdminClient().from('media_assets')
+    .select('id, storage_path, alt_text, caption')
+    .eq('processing_status', 'ready')
+    .order('created_at', { ascending: false }).order('id', { ascending: true })
+    .range(offset, offset + pageSize)
+  if (error) return { error: "Photos didn't load. Try again." }
+  const rows = data ?? []
+  const photos = await Promise.all(rows.slice(0, pageSize).map(async row => ({
+    id: row.id, url: await generateSignedUrl(row.storage_path),
+    caption: row.caption, altText: row.alt_text?.trim() || 'Family photograph',
+  })))
+  return { photos, more: rows.length > pageSize }
 }

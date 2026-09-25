@@ -1,22 +1,17 @@
-// Admin shell layout. No auth check here — the proxy handles optimistic redirection
-// and each page calls requireActiveAdmin() for the full allowlist check.
+// The admin shell: one quiet bar across the top. Each page checks the admin sign-in itself.
 
 import AdminNav from '@/components/admin/admin-nav'
 import PrivateHistoryGuard from '@/components/auth/private-history-guard'
 import styles from './admin.module.css'
 
+export const metadata = { title: { default: 'Desk', template: '%s · pawpaw desk' } }
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={styles.adminRoot}>
+    <div className={styles.root}>
       <PrivateHistoryGuard />
-      <header className={styles.brandHeader}>
-        <span className={styles.brand}>pawpaw</span>
-        <span className={styles.brandContext}>author&apos;s studio</span>
-      </header>
-      <div className={styles.studioLayout}>
-        <AdminNav />
-        <main className={styles.main}>{children}</main>
-      </div>
+      <AdminNav />
+      {children}
     </div>
   )
 }

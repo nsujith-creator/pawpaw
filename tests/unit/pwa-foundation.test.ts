@@ -141,7 +141,7 @@ describe('web-app manifest foundation', () => {
     expect(worker).toContain("url.pathname.startsWith('/_next/static/')")
     expect(worker).toContain("request.mode === 'navigate'")
     expect(worker).not.toMatch(/supabase|cookie|token|video|media|\/admin/i)
-    expect(offline).toContain('Nothing was changed while the connection was away.')
+    expect(offline).toContain('No connection.')
     expect(offline).toContain('Try again')
   })
 })

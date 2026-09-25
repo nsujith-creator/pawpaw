@@ -1,3 +1,4 @@
+// Shell v2: the picture-book offline page.
 const SHELL_CACHE = 'pawpaw-safe-shell'
 const PRELOAD = ['/offline.html', '/icons/pawpaw-192.png', '/icons/pawpaw-512.png', '/icons/pawpaw-maskable-512.png']
 

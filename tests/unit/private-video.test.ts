@@ -6,8 +6,9 @@ const root = join(__dirname, '../..')
 const read = (file: string) => readFileSync(join(root, file), 'utf8')
 const stream = read('src/lib/video/cloudflare.ts')
 const actions = read('src/app/admin/content/video-actions.ts')
-const uploader = read('src/app/admin/content/video-upload-form.tsx')
-const player = read('src/components/content/chapter-renderer.tsx')
+const uploader = read('src/app/admin/content/story-videos.tsx')
+const player = read('src/components/family/family-video.tsx')
+const playRoute = read('src/app/v/[token]/route.ts')
 const migration = read('supabase/migrations/20260814210307_private_family_videos.sql')
 
 describe('private family video', () => {
@@ -24,14 +25,16 @@ describe('private family video', () => {
     expect(stream).toContain('response.status !== 404')
     expect(actions).toContain('Array.isArray(row.video_assets)')
     expect(actions).toContain('content_revision_videos')
-    expect(uploader).toContain('Check status')
-    expect(uploader).toContain('Remove private video')
+    expect(uploader).toContain('Check again')
+    expect(uploader).toContain('deleteAttachedVideo')
   })
 
-  it('requires signed URLs and disables downloads for short-lived family playback', () => {
+  it('requires signed URLs, disables downloads, and makes the playback link only when play is pressed', () => {
     expect(stream).toContain("'requiresignedurls'")
     expect(stream).toContain('downloadable: false')
-    expect(stream).toContain('+ 300')
+    expect(stream).toContain('lifetimeSeconds = 4 * 60 * 60')
+    expect(player).toContain("fetch(`/v/${playToken}`, { method: 'POST'")
+    expect(playRoute).toContain("startsWith('video:')")
     expect(stream).toContain('thumbnail')
     expect(stream).not.toContain('/embed')
   })
@@ -45,6 +48,7 @@ describe('private family video', () => {
   it('does not grant browser database access to private video tables or autoplay family playback', () => {
     expect(migration).toContain('from anon, authenticated')
     expect(player).not.toContain('autoPlay')
-    expect(player).not.toContain('autoplay;')
+    // The player frame exists only after someone presses play.
+    expect(player).toContain("state === 'playing' && url ? (")
   })
 })

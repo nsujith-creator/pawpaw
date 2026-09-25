@@ -1,38 +1,38 @@
 import type { Metadata } from 'next'
-import { Fraunces, Manrope, Noto_Sans_Malayalam } from 'next/font/google'
+import { Baloo_Chettan_2, Bricolage_Grotesque, Literata } from 'next/font/google'
 import './globals.css'
 
-const fraunces = Fraunces({
-  weight: '500',
-  style: 'normal',
+// Names, titles and interface: a friendly grotesk that looks drawn rather than corporate.
+const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
   display: 'swap',
   variable: '--font-display',
+  fallback: ['system-ui', 'Arial'],
+})
+
+// Reading: a serif built for long text on screens.
+const literata = Literata({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-reading',
   fallback: ['Georgia', 'Times New Roman'],
 })
 
-const manrope = Manrope({
-  weight: ['400', '600', '700'],
-  style: 'normal',
-  subsets: ['latin'],
+// Malayalam: rounded, the shape of her names.
+const balooChettan = Baloo_Chettan_2({
+  subsets: ['malayalam', 'latin'],
+  weight: ['600', '700', '800'],
   display: 'swap',
-  variable: '--font-body',
-  fallback: ['Arial'],
-})
-
-const notoSansMalayalam = Noto_Sans_Malayalam({
-  weight: ['400', '500'],
-  style: 'normal',
-  subsets: ['malayalam'],
-  display: 'swap',
-  preload: false,
   variable: '--font-malayalam',
-  fallback: ['Arial'],
+  fallback: ['system-ui', 'Arial'],
 })
 
 export const metadata: Metadata = {
-  title:  "Varada's World",
-  description: 'A private family archive.',
+  title:  { default: 'pawpaw', template: '%s · pawpaw' },
+  description: "Varada's family pages.",
   robots: { index: false, follow: false },
 }
 
@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${manrope.variable} ${notoSansMalayalam.variable}`}
+      className={`${bricolage.variable} ${literata.variable} ${balooChettan.variable}`}
     >
       <body>{children}</body>
     </html>

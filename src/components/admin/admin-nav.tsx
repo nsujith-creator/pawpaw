@@ -2,43 +2,31 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import styles from './admin-nav.module.css'
+import styles from '@/app/admin/admin.module.css'
 
-const links = [
-  { href: '/admin',         label: 'Today',        exact: true  },
-  { href: '/admin/content', label: 'Memories',     exact: false },
-  { href: '/admin/media',   label: 'Photo shelf',  exact: false },
-  { href: '/admin/home',    label: 'Welcome page', exact: false },
-] as const
+const LINKS = [
+  { href: '/admin', label: 'Stories', current: (path: string) => path === '/admin' || path.startsWith('/admin/content') },
+  { href: '/admin/home', label: 'Home', current: (path: string) => path.startsWith('/admin/home') },
+  { href: '/admin/media', label: 'Photos', current: (path: string) => path.startsWith('/admin/media') },
+]
 
 export default function AdminNav() {
   const pathname = usePathname()
-
   if (pathname === '/admin/login') return null
-
   return (
-    <nav className={styles.nav} aria-label="Admin navigation">
-      <p className={styles.navLabel}>Write</p>
-      <div className={styles.destinationList}>
-        {links.map(({ href, label, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href)
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={active ? `${styles.link} ${styles.active}` : styles.link}
-              aria-current={active ? 'page' : undefined}
-            >
-              <span>{label}</span>
-              {active && <span className={styles.currentCue}>Current</span>}
-            </Link>
-          )
-        })}
+    <header className={styles.top}>
+      <Link href="/admin" className={styles.word}>pawpaw <span>desk</span></Link>
+      <nav className={styles.nav} aria-label="Desk">
+        {LINKS.map(link => (
+          <Link key={link.href} href={link.href} aria-current={link.current(pathname) ? 'page' : undefined}>{link.label}</Link>
+        ))}
+      </nav>
+      <div className={styles.topEnd}>
+        <a href="/" target="_blank" rel="noreferrer" className={styles.herPage}>Her page ↗</a>
+        <form action="/logout/admin" method="post">
+          <button type="submit" className={styles.signOut}>Sign out</button>
+        </form>
       </div>
-      <form action="/logout/admin" method="post" className={styles.signOutForm}>
-        <button type="submit" className={styles.signOut}>Sign out</button>
-      </form>
-      <p className={styles.privacyNote}>Your desk is ready.</p>
-    </nav>
+    </header>
   )
 }

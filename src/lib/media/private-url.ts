@@ -1,20 +1,13 @@
-// Generates short-lived signed URLs for private Storage objects.
-// Only called from server-side code after session validation.
-// Signed URLs have a 5-minute expiry — copied links work until expiry (accepted limitation).
+// Private photo addresses for pages.
+// Returns /p/<token>, an app route that checks the family or admin session on every request
+// and serves a right-sized copy. Unlike the old 5-minute signed storage links, these never
+// expire while someone is reading, and they reveal nothing about where the file is stored.
+// The name is kept so existing callers need no change.
 
-import { createAdminClient } from '@/lib/supabase/admin'
-
-const SIGNED_URL_EXPIRY_SECONDS = 300  // 5 minutes
+import { encodeMediaToken } from './media-token'
 
 export async function generateSignedUrl(storagePath: string): Promise<string> {
-  const db = createAdminClient()
-  const { data, error } = await db.storage
-    .from('media')
-    .createSignedUrl(storagePath, SIGNED_URL_EXPIRY_SECONDS)
-
-  if (error || !data?.signedUrl) {
-    throw new Error(`Failed to generate signed URL for ${storagePath}: ${error?.message}`)
-  }
-
-  return data.signedUrl
+  return `/p/${encodeMediaToken(storagePath)}`
 }
+
+export { photoSrcSet } from './photo-srcset'

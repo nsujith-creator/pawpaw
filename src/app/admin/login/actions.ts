@@ -21,19 +21,19 @@ export async function loginAdmin(
   const password = (formData.get('password') as string | null) ?? ''
 
   if (!email || !password) {
-    return { error: 'Add your email and password to open the studio.' }
+    return { error: 'Type your email and password.' }
   }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) return { error: 'Those details did not open the studio. Check them and try again.' }
+  if (error) return { error: "That email and password don't match. Try again." }
 
   try {
     await requireActiveAdmin(supabase)
   } catch {
     await supabase.auth.signOut()
-    return { error: 'This account does not have a writing desk in Pawpaw.' }
+    return { error: "This account can't write here." }
   }
 
   redirect('/admin')

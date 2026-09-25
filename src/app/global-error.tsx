@@ -1,13 +1,13 @@
 'use client'
 
-import JourneyState from '@/components/journey/journey-state'
+import StatePage from '@/components/family/state-page'
 import './globals.css'
 
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <html lang="en">
       <body>
-        <JourneyState eyebrow="A small wobble" title="Pawpaw tripped over its own shoelaces." message="Your memories are still safe. Try this page once more, or step back into the archive." scene="gardener" onRetry={reset} primaryHref="/" primaryLabel="Go Home" />
+        <StatePage colour="rose" title="Something broke." body="It's on our side, and nothing is lost. Try again in a minute." onRetry={reset} action={{ href: '/', label: 'Home' }} />
       </body>
     </html>
   )

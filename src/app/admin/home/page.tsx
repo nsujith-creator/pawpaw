@@ -1,127 +1,56 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { requireActiveAdmin } from '@/lib/auth/admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
-import HomeEditor from './home-editor'
-import UploadForm from '../media/upload-form'
-import AttachmentList, { type AttachmentItem } from '../media/attachment-list'
 import { loadCanonicalAdminHome } from '@/lib/content/manage-home'
+import { blocksToPlainText } from '@/lib/content/plain-text'
+import { requireAdminPage } from '@/lib/admin/require-admin-page'
+import AdminState from '../admin-state'
+import HomeEditor, { type HomePhoto } from './home-editor'
 import styles from '../admin.module.css'
 
-interface AttachmentRow {
-  sort_order:   number
-  media_assets: {
-    id:           string
-    storage_path: string
-    alt_text:     string | null
-    caption:      string | null
-    mime_type:    string | null
-    byte_size:    number | null
-  }
-}
+export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Home' }
 
-interface AdminHomeItem {
+interface HomeRow {
   id: string
   title: string
   body_blocks: unknown[]
   status: 'draft' | 'published'
-  content_media: AttachmentRow[]
+  updated_at: string
+  content_media: { sort_order: number; media_assets: { id: string; storage_path: string; alt_text: string | null; caption: string | null } | null }[]
 }
 
 export default async function AdminHomePage() {
-  const supabase = await createClient()
-
-  try {
-    await requireActiveAdmin(supabase)
-  } catch {
-    redirect('/admin/login')
-  }
-
+  await requireAdminPage()
   const db = createAdminClient()
-
-  const homeResult = await loadCanonicalAdminHome<AdminHomeItem>(async () => {
-    const { data, error } = await db
-      .from('content_items')
-      .select('id, title, body_blocks, status, content_media(sort_order, media_assets(id, storage_path, alt_text, caption, mime_type, byte_size))')
-      .eq('type', 'home')
-      .eq('slug', 'home')
-      .limit(2)
-    return { rows: data as unknown as AdminHomeItem[] | null, error }
+  const home = await loadCanonicalAdminHome<HomeRow>(async () => {
+    const { data, error } = await db.from('content_items')
+      .select('id, title, body_blocks, status, updated_at, content_media(sort_order, media_assets(id, storage_path, alt_text, caption))')
+      .eq('type', 'home').eq('slug', 'home').limit(2)
+    return { rows: data as unknown as HomeRow[] | null, error }
   })
-
-  if (homeResult.state === 'error') {
-    return (
-      <div className={styles.pageNarrow}>
-        <p className={styles.eyebrow}>Home page editor</p>
-        <h1 className={styles.pageTitle}>Home</h1>
-        <p role="alert" className={styles.errorNotice}>
-          Home could not be loaded. Nothing has been changed; please try again later.
-        </p>
-      </div>
-    )
-  }
-
-  const item = homeResult.state === 'ready' ? homeResult.item : null
-
-  const attachmentRows = ((item?.content_media ?? []) as unknown as AttachmentRow[])
-    .sort((a, b) => a.sort_order - b.sort_order || a.media_assets.id.localeCompare(b.media_assets.id))
-
-  const attachments: AttachmentItem[] = await Promise.all(
-    attachmentRows.map(async (row) => {
-      let signedUrl: string | null = null
-      try {
-        signedUrl = await generateSignedUrl(row.media_assets.storage_path)
-      } catch {
-        // Thumbnail unavailable — the row still renders with its controls.
-      }
-      return {
-        mediaId:   row.media_assets.id,
-        signedUrl,
-        altText:   row.media_assets.alt_text ?? '',
-        caption:   row.media_assets.caption,
-        mimeType:  row.media_assets.mime_type,
-        byteSize:  row.media_assets.byte_size,
-        sortOrder: row.sort_order,
-      }
-    }),
-  )
+  if (home.state === 'error') return <AdminState title="Home didn't load." body="Nothing was changed. Reload in a minute." />
+  const item = home.state === 'ready' ? home.item : null
+  const photos: HomePhoto[] = await Promise.all([...(item?.content_media ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .flatMap(row => row.media_assets ? [row.media_assets] : [])
+    .map(async asset => ({
+      id: asset.id, url: await generateSignedUrl(asset.storage_path),
+      altText: asset.alt_text?.trim() || 'Varada', caption: asset.caption,
+    })))
 
   return (
-    <div className={styles.pageNarrow}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.eyebrow}>Home page editor</p>
-          <h1 className={styles.pageTitle}>Home</h1>
-          <p className={styles.lede}>
-        Changes appear on the family page after it is refreshed — an already-open
-        page will not update by itself.
-          </p>
-        </div>
-      </header>
-      <section className={styles.editorSection} aria-label="Home words and publication">
-        <HomeEditor existing={item ?? null} />
-      </section>
-
-      <hr className={styles.sectionDivider} />
-      <h2 className={styles.sectionTitle}>Attached photos</h2>
-      <p className={styles.lede}>
-        Uploading or attaching a photo saves it in Admin immediately.
-        The family sees photos only after the Home page is published — use the Publish button above.
-      </p>
-      {item?.id ? (
-        <AttachmentList contentId={item.id} items={attachments} />
-      ) : (
-        <p className={styles.emptyState}>
-          Save Home content first — photos attach to the saved content.
-        </p>
-      )}
-
-      <hr className={styles.sectionDivider} />
-      <section className={styles.editorSection} aria-labelledby="upload-photo-title">
-        <h2 id="upload-photo-title" className={styles.sectionTitle}>Upload a photo</h2>
-        <UploadForm contentItemId={item?.id ?? null} />
-      </section>
-    </div>
+    <main className={styles.page}>
+      <div className={styles.pageHead}>
+        <h1 className={styles.pageTitle}>Home</h1>
+      </div>
+      <p className={styles.lede}>The first page the family sees. Changes go up when you press Update Home.</p>
+      <HomeEditor
+        id={item?.id ?? null}
+        title={item?.title || 'Varada'}
+        note={blocksToPlainText(item?.body_blocks ?? [])}
+        live={item?.status === 'published'}
+        photos={photos}
+      />
+    </main>
   )
 }

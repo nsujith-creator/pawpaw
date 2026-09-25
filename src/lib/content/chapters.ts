@@ -340,8 +340,14 @@ async function getSelectedRevisionForSlug(slug: string): Promise<{ data: Revisio
 }
 
 export async function getPublishedChapter(slug: string): Promise<ChapterLoadResult> {
+  if (slug === 'first-days') return { state: 'empty' }
+  return getPublishedStory(slug)
+}
+
+// Any published story by slug, First Days included. First Days keeps its own /first-days address,
+// so /chapters/first-days stays a 404 through getPublishedChapter above.
+export async function getPublishedStory(slug: string): Promise<ChapterLoadResult> {
   return loadAuthorizedFamilyData(async () => {
-    if (slug === 'first-days') return { state: 'empty' } as const
     const db = createAdminClient()
     return loadPublishedChapterContent({
       findRevision: () => getSelectedRevisionForSlug(slug),
@@ -370,7 +376,7 @@ export async function listPublishedChapters(): Promise<ChapterIndexResult> {
   return loadAuthorizedFamilyData(async () => {
     const db = createAdminClient()
     const itemsResult = await db.from('content_items').select('id, active_published_revision_id')
-      .not('active_published_revision_id', 'is', null).neq('type', 'home').neq('slug', 'first-days')
+      .not('active_published_revision_id', 'is', null).neq('type', 'home')
     if (itemsResult.error) return { state: 'error' }
     const pointers = new Map((itemsResult.data ?? []).map(item => [item.active_published_revision_id as string, item.id]))
     if (pointers.size === 0) return { state: 'ready', items: [] }
@@ -386,9 +392,19 @@ export async function listPublishedChapters(): Promise<ChapterIndexResult> {
       if (coverRows.error) return { state: 'error' }
       for (const cover of (coverRows.data ?? []) as RevisionMediaRow[]) covers.set(`${cover.revision_id}:${cover.media_id}`, cover)
     }
+    // A story without a chosen cover shows its first photograph instead.
+    const firstPhotos = new Map<string, RevisionMediaRow>()
+    const withoutCover = rows.filter(row => !row.cover_media_id).map(row => row.id)
+    if (withoutCover.length) {
+      const firstRows = await db.from('content_revision_media').select(REVISION_MEDIA_SELECT)
+        .in('revision_id', withoutCover).order('sort_order', { ascending: true })
+      for (const media of (firstRows.data ?? []) as RevisionMediaRow[]) {
+        if (media.revision_id && !firstPhotos.has(media.revision_id)) firstPhotos.set(media.revision_id, media)
+      }
+    }
     const items = await Promise.all(rows.map(async row => {
       let cover: ChapterIndexItem['cover'] = null
-      const asset = row.cover_media_id ? covers.get(`${row.id}:${row.cover_media_id}`) : null
+      const asset = row.cover_media_id ? covers.get(`${row.id}:${row.cover_media_id}`) : firstPhotos.get(row.id)
       if (asset) {
         try { cover = { signedUrl: await generateSignedUrl(asset.storage_path), altText: asset.alt_text?.trim() || 'Family photograph' } } catch { cover = null }
       }
