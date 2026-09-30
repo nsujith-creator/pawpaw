@@ -1,5 +1,5 @@
-// Shell v2: the picture-book offline page.
-const SHELL_CACHE = 'pawpaw-safe-shell'
+// Shell v3: the picture-book offline page. Bump the cache name whenever a preloaded file changes.
+const SHELL_CACHE = 'pawpaw-safe-shell-v3'
 const PRELOAD = ['/offline.html', '/icons/pawpaw-192.png', '/icons/pawpaw-512.png', '/icons/pawpaw-maskable-512.png']
 
 function isSafeStaticAsset(url) {
@@ -11,7 +11,11 @@ self.addEventListener('install', event => {
 })
 
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim())
+  event.waitUntil(
+    caches.keys()
+      .then(names => Promise.all(names.filter(name => name.startsWith('pawpaw-safe-shell') && name !== SHELL_CACHE).map(name => caches.delete(name))))
+      .then(() => self.clients.claim()),
+  )
 })
 
 self.addEventListener('message', event => {

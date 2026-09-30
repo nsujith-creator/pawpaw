@@ -14,8 +14,8 @@ const expectedManifest = {
   start_url: '/',
   scope: '/',
   display: 'standalone',
-  background_color: '#FFF8EE',
-  theme_color: '#FFF8EE',
+  background_color: '#FFC93C',
+  theme_color: '#FFC93C',
   icons: [
     { src: '/icons/pawpaw-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
     { src: '/icons/pawpaw-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

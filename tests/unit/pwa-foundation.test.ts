@@ -27,7 +27,7 @@ describe('Pawpaw icon source and generated assets', () => {
     const svg = read('src/app/icon.svg').toString('utf8')
     const colours = [...svg.matchAll(/#[0-9a-f]{6}/gi)].map(match => match[0].toUpperCase())
 
-    expect(new Set(colours)).toEqual(new Set(['#FFF8EE', '#2A1F14', '#E8526A']))
+    expect(new Set(colours)).toEqual(new Set(['#FFC93C', '#22163A', '#C8325A']))
     expect(svg).not.toMatch(/<text|font-family|@font-face|<image|<foreignObject|\bhref=|url\(/i)
   })
 
@@ -60,7 +60,7 @@ describe('Pawpaw icon source and generated assets', () => {
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true })
-    const background = [0xff, 0xf8, 0xee]
+    const background = [0xff, 0xc9, 0x3c]
     const bounds = { left: info.width, top: info.height, right: -1, bottom: -1 }
     let maximumRadius = 0
 
@@ -108,8 +108,8 @@ describe('web-app manifest foundation', () => {
       start_url: '/',
       scope: '/',
       display: 'standalone',
-      background_color: '#FFF8EE',
-      theme_color: '#FFF8EE',
+      background_color: '#FFC93C',
+      theme_color: '#FFC93C',
       icons: [
         { src: '/icons/pawpaw-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
         { src: '/icons/pawpaw-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
