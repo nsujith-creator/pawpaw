@@ -27,7 +27,7 @@ describe('Pawpaw icon source and generated assets', () => {
     const svg = read('src/app/icon.svg').toString('utf8')
     const colours = [...svg.matchAll(/#[0-9a-f]{6}/gi)].map(match => match[0].toUpperCase())
 
-    expect(new Set(colours)).toEqual(new Set(['#FFF8EE', '#2A1F14', '#E8526A']))
+    expect(new Set(colours)).toEqual(new Set(['#FFC93C', '#22163A', '#C8325A']))
     expect(svg).not.toMatch(/<text|font-family|@font-face|<image|<foreignObject|\bhref=|url\(/i)
   })
 
