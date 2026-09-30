@@ -60,7 +60,7 @@ describe('Pawpaw icon source and generated assets', () => {
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true })
-    const background = [0xff, 0xf8, 0xee]
+    const background = [0xff, 0xc9, 0x3c]
     const bounds = { left: info.width, top: info.height, right: -1, bottom: -1 }
     let maximumRadius = 0
 
