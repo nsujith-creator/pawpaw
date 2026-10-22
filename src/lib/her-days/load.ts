@@ -15,6 +15,7 @@ export interface DayMedia {
   day: number
   takenAt: string
   url: string
+  caption: string | null
   width: number | null
   height: number | null
   playToken: string | null
@@ -31,7 +32,7 @@ interface Row {
   taken_at: string
   width: number | null
   height: number | null
-  media_assets: { storage_path: string } | null
+  media_assets: { storage_path: string; caption: string | null } | null
   video_assets: { cloudflare_uid: string; status: string } | null
 }
 
@@ -42,7 +43,7 @@ export async function loadHerDays(now = Date.now()): Promise<HerDaysResult> {
     // Pages of 1,000 so a few years of photos still load in full.
     for (let from = 0; from < 50_000; from += 1000) {
       const { data, error } = await db.from('timeline_media')
-        .select('id, kind, taken_at, width, height, media_assets(storage_path), video_assets(cloudflare_uid, status)')
+        .select('id, kind, taken_at, width, height, media_assets(storage_path, caption), video_assets(cloudflare_uid, status)')
         .eq('visibility', 'shown').not('taken_at', 'is', null)
         .order('taken_at', { ascending: true }).order('id', { ascending: true })
         .range(from, from + 999)
@@ -74,7 +75,7 @@ export async function loadHerDays(now = Date.now()): Promise<HerDaysResult> {
       let playToken: string | null = null
       if (video) { try { playToken = encodeMediaToken(`video:${video}`) } catch { playToken = null } }
       return {
-        id: row.id, kind: row.kind, day, takenAt: row.taken_at, width: row.width, height: row.height,
+        id: row.id, kind: row.kind, day, takenAt: row.taken_at, caption: row.media_assets.caption?.trim() || null, width: row.width, height: row.height,
         url: await generateSignedUrl(row.media_assets.storage_path), playToken,
         videoFailed: row.kind === 'video' && row.video_assets?.status === 'errored',
       } satisfies DayMedia

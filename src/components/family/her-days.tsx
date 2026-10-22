@@ -200,7 +200,7 @@ function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) 
                       : item.authorDisplayName && <span>by {item.authorDisplayName}</span>}
                   </Link>
                 ))}
-                {photos.length > 0 && <DayStrip photos={photos.map(photo => ({ id: photo.id, url: photo.url, width: photo.width, height: photo.height, playToken: photo.playToken, kind: photo.kind, videoFailed: photo.videoFailed }))} label={fullDate(day.date)} />}
+                {photos.length > 0 && <DayStrip photos={photos.map(photo => ({ id: photo.id, url: photo.url, caption: photo.caption, width: photo.width, height: photo.height, playToken: photo.playToken, kind: photo.kind, videoFailed: photo.videoFailed }))} label={fullDate(day.date)} />}
               </div>
             )
           })}

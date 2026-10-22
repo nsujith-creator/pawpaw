@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import FamilyVideo from './family-video'
 import styles from './family.module.css'
 
-export interface StripPhoto { id: string; url: string; width: number | null; height: number | null; playToken: string | null; kind: 'photo' | 'video'; videoFailed?: boolean }
+export interface StripPhoto { id: string; url: string; caption?: string | null; width: number | null; height: number | null; playToken: string | null; kind: 'photo' | 'video'; videoFailed?: boolean }
 
 export default function DayStrip({ photos, label }: { photos: StripPhoto[]; label: string }) {
   const [open, setOpen] = useState<number | null>(null)
@@ -35,6 +35,7 @@ export default function DayStrip({ photos, label }: { photos: StripPhoto[]; labe
                 alt="" width={photo.width ?? undefined} height={photo.height ?? undefined} loading="lazy" decoding="async" />
               {photo.kind === 'video' && <span className={styles.stripPlay} aria-hidden="true" />}
             </button>
+            {photo.caption && <p className={styles.stripLine}>{photo.caption}</p>}
           </li>
         ))}
       </ul>
@@ -56,15 +57,19 @@ export default function DayStrip({ photos, label }: { photos: StripPhoto[]; labe
               }}>
               {current.kind === 'video' ? (
                 current.playToken
-                  ? <FamilyVideo key={current.id} playToken={current.playToken} caption={null} />
+                  ? <FamilyVideo key={current.id} playToken={current.playToken} caption={current.caption ?? null} />
                   : <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`${current.url}?w=1600`} alt={`A video from ${label}`} />
+                      {current.caption && <p className={styles.viewerLine}>{current.caption}</p>}
                       <p className={styles.viewerNote}>{current.videoFailed ? 'This video didn’t come through. Here’s a still from it.' : 'This video isn’t ready yet. Have another look in a little while.'}</p>
                     </>
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={`${current.url}?w=1600`} srcSet={`${current.url}?w=960 960w, ${current.url}?w=1600 1600w`} sizes="100vw" alt={`A photo from ${label}`} />
+                <figure>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`${current.url}?w=1600`} srcSet={`${current.url}?w=960 960w, ${current.url}?w=1600 1600w`} sizes="100vw" alt={`A photo from ${label}`} />
+                  {current.caption && <figcaption className={styles.viewerLine}>{current.caption}</figcaption>}
+                </figure>
               )}
             </div>
             <div className={styles.viewerBar}>
