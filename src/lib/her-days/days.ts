@@ -63,6 +63,13 @@ export function quiltWeeks<T extends { day: number }>(items: T[], today: string)
   return weeks
 }
 
+// The months she turns on this date ("1" on 29 June), or null on any other day.
+export function monthsTurned(date: string): number | null {
+  const day = dayNumber(date)
+  if (day <= 0) return null
+  return monthDay(date, Number(BIRTHDAY.slice(8, 10))) ? monthsOld(date) : null
+}
+
 // The day each month she turns a month older. A 31st birthday falls on the last day of shorter months.
 function monthDay(date: string, birthDayOfMonth: number): boolean {
   const [y, m, d] = date.split('-').map(Number)

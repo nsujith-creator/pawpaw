@@ -5,11 +5,10 @@
 import Link from 'next/link'
 import { ageAt } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
-import { dateOfDay, monthLabel, quiltWeeks, weekLabel, type QuiltWeek } from '@/lib/her-days/days'
+import { dateOfDay, monthLabel, monthsTurned, quiltWeeks, weekLabel, type QuiltWeek } from '@/lib/her-days/days'
 import type { DayMedia, DayStory } from '@/lib/her-days/load'
 import { BIRTHDAY } from '@/lib/family/age'
 import { storyHref } from './story-chart'
-import { Star } from './motifs'
 import DayStrip from './day-strip'
 import styles from './family.module.css'
 
@@ -73,37 +72,101 @@ export default function HerDays({ media, stories, today, requestedWeek }: { medi
             </details>
           )
         })}
+        <Legend />
       </div>
       <WeekView week={selectedWeek} newest={weeks[0]?.week ?? 0} />
     </div>
   )
 }
 
+type Sticker = { kind: 'born' | 'cake' | 'days' | 'star' | 'letter'; text?: string; colour?: string; label: string }
+
+// What makes a day special, from facts alone: the day she was born, the days she turned another
+// month (or year) older, her 28th and 100th days, and stories or letters about that day.
+function stickersFor(day: QuiltWeek<Entry>['days'][number]): Sticker[] {
+  const stickers: Sticker[] = []
+  if (day.day === 0) stickers.push({ kind: 'born', label: 'the day she was born' })
+  const months = monthsTurned(day.date)
+  if (months !== null) stickers.push({ kind: 'cake', text: months % 12 === 0 ? `${months / 12}` : `${months}`, colour: months % 12 === 0 ? 'rose' : 'duck', label: `she turned ${monthLabel(months)}` })
+  if (day.day === 28 || day.day === 100) stickers.push({ kind: 'days', text: `${day.day}`, label: `${day.day} days old` })
+  for (const { item } of day.items.filter(entry => entry.story).map(entry => entry.story!)) {
+    stickers.push({ kind: item.type === 'letter' ? 'letter' : 'star', colour: storyColour(item.visualScene, item.slug), label: item.title })
+  }
+  return stickers
+}
+
+function StickerIcon({ sticker }: { sticker: Sticker }) {
+  const shape = {
+    born: <path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z" fill="#fff" />,
+    star: <path d="M12 2.5l2.7 6 6.5.6-4.9 4.3 1.5 6.4L12 16.5l-5.8 3.3 1.5-6.4L2.8 9.1l6.5-.6z" fill="#fff" />,
+    letter: <><rect x="3" y="6" width="18" height="12.5" rx="1.5" fill="#fff" /><path d="M3.5 7l8.5 6.5L20.5 7" stroke="currentColor" strokeWidth="1.8" fill="none" /></>,
+    cake: <><rect x="4" y="11" width="16" height="9" rx="1.5" fill="#fff" /><path d="M4 14.5q2 1.6 4 0t4 0 4 0 4 0" stroke="currentColor" strokeWidth="1.5" fill="none" /><rect x="11" y="5.5" width="2" height="5" fill="#fff" /><path d="M12 2.5q1.6 1.7 0 3q-1.6-1.3 0-3z" fill="#ffc93c" /></>,
+    days: null,
+  }[sticker.kind]
+  return (
+    <span className={styles.sticker} data-kind={sticker.kind} data-colour={sticker.colour} title={sticker.label}>
+      {shape ? <svg viewBox="0 0 24 24" aria-hidden="true">{shape}</svg> : null}
+      {sticker.text && <b>{sticker.text}</b>}
+    </span>
+  )
+}
+
 function Square({ day, week, today }: { day: QuiltWeek<Entry>['days'][number]; week: number; today: string }) {
   if (day.date > today) return <span className={styles.square} data-future="" aria-hidden="true" />
   const photos = day.items.filter(item => item.media).map(item => item.media!)
-  const dayStories = day.items.filter(item => item.story).map(item => item.story!)
-  const story = dayStories[0]
-  const label = `${fullDate(day.date)}${photos.length ? `, ${photos.length} photo${photos.length === 1 ? '' : 's'}` : ''}${dayStories.map(entry => `, ${entry.item.title}`).join('')}`
+  const videos = photos.filter(photo => photo.kind === 'video').length
+  const stickers = stickersFor(day)
+  const isToday = day.date === today
+  const dayOfMonth = Number(day.date.slice(8, 10))
+  const label = [fullDate(day.date), isToday ? 'today' : null,
+    photos.length ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : null,
+    ...stickers.map(sticker => sticker.label)].filter(Boolean).join(', ')
   const href = `/days?week=${week}#day-${day.day}`
-  if (photos.length) {
-    return (
-      <Link href={href} className={styles.square} aria-label={label}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+  // Busy days get a bolder count: a few photos, a good handful, or a whole album's worth.
+  const busy = photos.length >= 10 ? 'lots' : photos.length >= 5 ? 'many' : 'some'
+  const lead = stickers.find(sticker => sticker.kind === 'star' || sticker.kind === 'letter')
+  return (
+    <Link href={href} className={styles.square} aria-label={label}
+      data-photo={photos.length ? '' : undefined}
+      data-story={!photos.length && lead ? '' : undefined}
+      data-colour={!photos.length && lead ? lead.colour : undefined}
+      data-empty={!photos.length && !lead ? '' : undefined}
+      data-today={isToday ? '' : undefined}
+      data-birthday={monthsTurned(day.date) !== null ? '' : undefined}>
+      {photos.length > 0 && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img src={`${photos[0].url}?w=480`} alt="" loading="lazy" decoding="async" />
-        {story && <span className={styles.squareStory} data-colour={storyColour(story.item.visualScene, story.item.slug)} aria-hidden="true"><Star style={{ position: 'static', width: '70%' }} /></span>}
-        {photos.length > 1 && <i aria-hidden="true">{photos.length}</i>}
-      </Link>
-    )
-  }
-  if (story) {
-    return (
-      <Link href={href} className={styles.square} data-story="" data-colour={storyColour(story.item.visualScene, story.item.slug)} aria-label={label}>
-        <Star style={{ position: 'static', width: '56%' }} />
-      </Link>
-    )
-  }
-  return <Link href={href} className={styles.square} data-empty="" aria-label={fullDate(day.date)}>{Number(day.date.slice(8, 10))}</Link>
+      )}
+      {!photos.length && !lead && (
+        <span className={styles.squareDate}>{dayOfMonth}{dayOfMonth === 1 && <small>{shortMonth(day.date)}</small>}</span>
+      )}
+      {stickers.length > 0 && (
+        <span className={styles.stickers} aria-hidden="true">
+          {stickers.filter(sticker => photos.length || sticker !== lead).slice(0, 2).map((sticker, index) => <StickerIcon key={index} sticker={sticker} />)}
+        </span>
+      )}
+      {!photos.length && lead && <span className={styles.squareStar} aria-hidden="true"><StickerIcon sticker={{ ...lead, colour: undefined }} /></span>}
+      {videos > 0 && <span className={styles.squarePlay} aria-hidden="true" />}
+      {photos.length > 1 && <i aria-hidden="true" data-busy={busy}>{photos.length}</i>}
+      {isToday && <span className={styles.squareToday} aria-hidden="true">today</span>}
+    </Link>
+  )
+}
+
+function shortMonth(date: string) {
+  return new Intl.DateTimeFormat('en-IN', { month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
+}
+
+function Legend() {
+  return (
+    <ul className={styles.legend} aria-label="What the marks mean">
+      <li><StickerIcon sticker={{ kind: 'cake', text: '1', colour: 'duck', label: '' }} /> turned a month older</li>
+      <li><StickerIcon sticker={{ kind: 'star', colour: 'sky', label: '' }} /> a story</li>
+      <li><StickerIcon sticker={{ kind: 'letter', colour: 'rose', label: '' }} /> a letter</li>
+      <li><span className={styles.legendPlay} aria-hidden="true" /> a video</li>
+      <li><i className={styles.legendCount} data-busy="lots">12</i> photos that day</li>
+    </ul>
+  )
 }
 
 function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) {

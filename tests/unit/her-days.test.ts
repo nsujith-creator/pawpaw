@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import sharp from 'sharp'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { dateOfDay, dayNumber, indiaDate, monthLabel, quiltWeeks, reviewReason, weekLabel } from '@/lib/her-days/days'
+import { dateOfDay, dayNumber, indiaDate, monthLabel, monthsTurned, quiltWeeks, reviewReason, weekLabel } from '@/lib/her-days/days'
 import { createSession, listPicked, toPickedItem, type PickedItem } from '@/lib/her-days/google-picker'
 
 vi.mock('@/lib/video/cloudflare', () => ({
@@ -61,6 +61,14 @@ describe('her days: the quilt', () => {
     expect(weekLabel(0)).toBe('born')
     expect(weekLabel(1)).toBe('1 week')
     expect(weekLabel(16)).toBe('16 weeks')
+  })
+
+  it('knows the days she turned another month older', () => {
+    expect(monthsTurned('2026-05-29')).toBeNull()
+    expect(monthsTurned('2026-06-28')).toBeNull()
+    expect(monthsTurned('2026-06-29')).toBe(1)
+    expect(monthsTurned('2026-09-29')).toBe(4)
+    expect(monthsTurned('2027-05-29')).toBe(12)
   })
 })
 
