@@ -92,3 +92,14 @@ For Pawpaw, the family and author journey is the product. A technical decision i
 - An older brief, status declaration, design rule, or implementation note that blocks the approved journey is historical context, not authority; update or retire it.
 - Remove visible privacy ceremony that adds no meaningful protection. Never make private family photographs or writing public merely to reduce friction.
 - Do not defend implemented UI because it matches code or a document. If it causes even small repeated friction, treat the journey as unfinished.
+
+## Pawpaw words — a human speaking to a human (Sujith, 2026-10-22, locked)
+
+Every word on the family pages and the desk is one person talking to another. This applies to every label, button, heading, hint, error and empty state, and to replies written to Sujith.
+
+- Say what someone can see or do, in the words a parent would use out loud. Never explain how it works.
+- No architecture on screen or in replies to Sujith: no imports, sessions, pickers, links expiring, queues, sync, processing, storage, rows, records or "this page carries on by itself".
+- Count her life the way the family does: "16 weeks", "4 months", "born", not "week 17".
+- Short. One line beats two. Don't narrate the layout ("each row is…", "tap here to…") when the screen already shows it.
+- Errors say what happened and what to do next, in plain words, with no blame and no jargon.
+- Before shipping any screen, read every visible word aloud. If it sounds like software talking, rewrite it.

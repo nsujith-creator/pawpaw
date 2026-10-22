@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireActiveAdmin } from '@/lib/auth/admin'
+import { deletePrivateVideo } from '@/lib/video/cloudflare'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkOrigin } from '@/lib/auth/origin'
 import { validateUploadFile } from '@/lib/media/validate-upload'
@@ -217,6 +218,11 @@ export async function deleteMediaForever(formData: FormData) {
   const mediaId = (formData.get('media_id') as string | null) ?? ''
   if (!isValidId(mediaId)) return { error: "That photo isn't there any more." }
   const db = createAdminClient()
+  // A video brought in to her days keeps its still here. Note the video now, because deleting the
+  // still also removes its place on her days.
+  const { data: timelineVideos, error: videoLookupError } = await db.from('timeline_media')
+    .select('video_asset_id, video_assets(cloudflare_uid)').eq('media_asset_id', mediaId).not('video_asset_id', 'is', null)
+  if (videoLookupError) return { error: "Couldn't delete it just now. Nothing was changed." }
   const deleted = await db.rpc('delete_photo_everywhere', { p_admin_id: admin.id, p_media_id: mediaId })
   if (deleted.error || typeof deleted.data !== 'string') {
     console.error('delete_photo_everywhere failed:', deleted.error?.message)
@@ -230,7 +236,23 @@ export async function deleteMediaForever(formData: FormData) {
     fileError = (await db.storage.from('media').remove(files)).error
     if (!fileError) break
   }
+  let videoLeft = false
+  for (const row of (timelineVideos ?? []) as unknown as { video_asset_id: string; video_assets: { cloudflare_uid: string } | null }[]) {
+    const uid = row.video_assets?.cloudflare_uid
+    const { count } = await db.from('content_videos').select('video_id', { count: 'exact', head: true }).eq('video_id', row.video_asset_id)
+    if (count) continue // still used by a story; that story keeps it
+    let gone = !uid
+    for (let attempt = 0; attempt < 2 && !gone; attempt += 1) {
+      try { await deletePrivateVideo(uid!); gone = true } catch { gone = false }
+    }
+    if (gone) await db.from('video_assets').delete().eq('id', row.video_asset_id)
+    else videoLeft = true
+  }
   revalidatePath('/', 'layout')
+  if (videoLeft) {
+    console.error('Video removal failed after deleting its still.')
+    return { error: "It's gone from her days and Photos, but its video couldn't be removed from the video service just now. It stays private. Tell Claude if this keeps happening." }
+  }
   if (fileError) {
     console.error('Photo file removal failed after delete.')
     return { error: "It's gone from every story and from Photos, but the file itself couldn't be removed from storage just now. It stays private. Tell Claude if this keeps happening." }

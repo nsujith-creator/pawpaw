@@ -45,6 +45,12 @@ Each story has one of the five page colours (duck, teal, rose, sky, night). It a
   - the words on white beside the story colour. Said lines are large display type in the story colour, and lines over 40 characters are smaller;
   - photos placed in the words where they belong; the rest follow, paced wide, pair, inset and small;
   - it ends with "Next on her chart".
+- **Her days:**
+  - a teal cover, then a quilt: a square for every day of her life and a row for every week, newest at the top;
+  - each square shows that day's first photo, a story's colour with a star, or the date;
+  - months she turns are marked on their week in crayon, and each year of her age folds into its own section (her first year, age 1, …);
+  - tapping a day opens its week as her height chart (beside the quilt on wide screens): each day hung at her age, with its stories and its photos;
+  - photos open large on a night page, with Previous and Next or a swipe.
 - **States** (not found, error, empty): one whole colour page with a plain sentence and one or two pills.
 - **Sign in:** a duck cover with വരദ; one field.
 
@@ -66,3 +72,5 @@ Both keep cycling under reduced motion; that setting only drops the fade. The fu
 ## Words on screen
 
 Sujith's voice: plain, warm, a little wry, lower-case where he writes lower-case. Say what happened and what to do next. No system whimsy, no revision numbers, addresses or storage words on screen.
+
+A human speaking to a human, always (locked by Sujith, 22 October 2026; see AGENTS.md). Never explain how the site works. No architecture words: no import, session, sync, processing, queue or link. Count her life the family's way ("16 weeks", "born"). Read every visible word aloud before shipping.

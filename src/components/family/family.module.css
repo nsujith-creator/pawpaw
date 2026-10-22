@@ -19,6 +19,13 @@
 }
 .leave:hover, .leave:focus-visible { background: var(--ink); color: var(--paper); }
 .leave:disabled { opacity: 0.6; cursor: default; }
+/* Phones: the word pawpaw is the way Home, so the menu fits on one line. */
+@media (max-width: 479px) {
+  .top { gap: 0.5rem; }
+  .nav a { padding: 0 0.6rem; }
+  .nav a[href="/"] { display: none; }
+  .leave { padding: 0 0.75rem; }
+}
 
 /* ---------- Cut-paper shapes ---------- */
 .motif { position: absolute; pointer-events: none; filter: drop-shadow(2px 3px 0 rgba(34, 22, 58, 0.22)); }
@@ -242,3 +249,105 @@
 .loading { min-height: 60dvh; display: grid; place-items: center; }
 .loading p { font: 600 1rem/1 var(--display); color: var(--ink-2); animation: breathe 1.6s ease-in-out infinite; }
 @keyframes breathe { 50% { opacity: 0.35; } }
+
+/* ---------- Her days: the quilt, and a week as her height chart ---------- */
+.daysCover { background: var(--teal); color: #fff; padding: 26px 16px 28px; }
+.daysCover h1 { font: 800 clamp(2.7rem, 12vw, 5.6rem)/0.95 var(--display); letter-spacing: -0.045em; margin: 6px 0 10px; }
+.daysCover > p:last-child { font: 500 1.05rem/1.45 var(--display); max-width: 34rem; }
+.daysWrap { padding: 22px 16px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 34px; }
+.daysWrap > * { min-width: 0; }
+.year { margin-bottom: 18px; }
+.year > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; min-height: 44px; font: 800 1.35rem/1.1 var(--display); letter-spacing: -0.02em; }
+.year > summary::-webkit-details-marker { display: none; }
+.year > summary::before { content: "▸"; font-size: 0.9rem; transition: transform 0.2s var(--ease); }
+.year[open] > summary::before { transform: rotate(90deg); }
+.yearTitle small { font: 600 0.9rem/1 var(--display); color: var(--ink-2); letter-spacing: 0; }
+.quilt { --sq: calc((min(100vw, 100%) - 32px - 64px - 6 * 4px) / 7); margin-top: 8px; }
+.quiltRow { display: grid; grid-template-columns: 64px repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 4px; align-items: center; border-radius: 4px; }
+.quiltRow[data-selected] .quiltWeek { color: var(--ink); }
+.quiltRow[data-selected] .quiltWeek::after { content: ""; display: block; width: 26px; border-top: 3px solid var(--crayon); margin-top: 4px; }
+.quiltWeek { font: 700 0.72rem/1.15 var(--display); color: var(--ink-3); }
+.quiltWeek b { display: block; color: var(--crayon); font-size: 0.78rem; }
+.square { position: relative; display: block; aspect-ratio: 1; container-type: inline-size; border-radius: 6px; overflow: hidden; background: var(--paper); transition: transform 0.15s var(--ease); }
+a.square:hover { transform: scale(1.06); z-index: 1; }
+.square img { width: 100%; height: 100%; object-fit: cover; }
+.square[data-photo] { box-shadow: 0 6px 14px -8px rgba(34, 22, 58, 0.55); }
+.square[data-empty] { background: var(--paper-2); display: grid; place-items: center; }
+.square[data-future] { background: transparent; }
+.square[data-story] { background: var(--pc); display: grid; place-items: center; }
+.square[data-today] { outline: 3px dashed var(--crayon); outline-offset: 2px; }
+.square[data-birthday] { box-shadow: 0 0 0 3px var(--duck), 0 6px 14px -8px rgba(34, 22, 58, 0.55); }
+.square[data-empty]:has(.stickers) .squareDate { align-self: end; justify-self: end; padding: 0 5px 4px 0; }
+.squareDate { display: grid; place-items: center; font: 600 0.72rem/1 var(--display); color: var(--ink-3); }
+.squareDate small { margin-top: 2px; font: 800 0.58rem/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; color: var(--crayon); }
+.squareToday { position: absolute; right: 3px; top: 3px; padding: 2px 5px; border-radius: 999px; background: var(--crayon); color: #fff; font: 800 0.5rem/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; }
+.square i { position: absolute; right: 3px; bottom: 3px; min-width: 1.3em; padding: 3px 5px; border-radius: 999px; background: #fff; color: var(--ink); font: 800 clamp(0.58rem, 16cqw, 0.75rem)/1 var(--display); font-style: normal; text-align: center; box-shadow: 0 1px 3px rgba(34, 22, 58, 0.3); }
+.square i[data-busy="many"], .legendCount[data-busy="many"] { background: var(--duck); }
+.square i[data-busy="lots"], .legendCount[data-busy="lots"] { background: var(--rose); color: #fff; }
+.squarePlay { position: absolute; left: 3px; bottom: 3px; width: clamp(15px, 30cqw, 22px); height: clamp(15px, 30cqw, 22px); border-radius: 50%; background: var(--night); }
+.squarePlay::after, .legendPlay::after { content: ""; position: absolute; left: 40%; top: 50%; transform: translateY(-50%); border-left: 6px solid #fff; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.stickers { position: absolute; left: 3px; top: 3px; display: flex; gap: 2px; }
+.sticker { position: relative; display: inline-grid; place-items: center; width: 20px; height: 20px; --size: clamp(15px, 36cqw, 26px); border-radius: 50%; background: var(--pc, var(--night)); color: var(--pc, var(--night)); box-shadow: 0 1px 3px rgba(34, 22, 58, 0.35); }
+.stickers .sticker { width: var(--size); height: var(--size); }
+.sticker svg { width: 70%; height: 70%; }
+.sticker b { position: absolute; right: -4px; top: -5px; min-width: 13px; padding: 1px 3px; border-radius: 999px; background: var(--ink); color: #fff; font: 800 clamp(0.5rem, 14cqw, 0.66rem)/1.2 var(--display); text-align: center; }
+.sticker[data-kind="born"] { background: var(--rose); color: var(--rose); }
+.stickers .sticker[data-kind="days"], .sticker[data-kind="days"] { width: auto; min-width: var(--size); padding: 0 4px; border-radius: 999px; background: var(--teal); }
+.sticker[data-kind="days"] b { position: static; padding: 0; background: none; font-size: clamp(0.52rem, 15cqw, 0.72rem); }
+.sticker[data-kind="cake"] { background: var(--pc, var(--duck)); color: var(--pc, var(--duck)); }
+.squareStar { display: grid; place-items: center; width: 100%; height: 100%; }
+.squareStar .sticker { width: 62%; height: 62%; background: transparent; box-shadow: none; }
+.squareStar .sticker svg { width: 100%; height: 100%; }
+.legend { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 10px 0 0; font: 600 0.85rem/1.2 var(--display); color: var(--ink-2); }
+.legend li { display: inline-flex; align-items: center; gap: 7px; }
+.legend .sticker { flex: none; }
+.legendPlay { position: relative; display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: var(--night); }
+.legendCount { display: inline-block; min-width: 22px; padding: 3px 5px; border-radius: 999px; background: #fff; color: var(--ink); font: 800 0.65rem/1 var(--display); font-style: normal; text-align: center; box-shadow: 0 1px 3px rgba(34, 22, 58, 0.3); }
+a.square:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { a.square:hover { transform: none; } }
+.weekView { scroll-margin-top: 72px; }
+.weekHead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+.weekHead h2 { font: 800 clamp(2rem, 9vw, 3rem)/1 var(--display); letter-spacing: -0.035em; }
+.weekHead h2 small { display: block; margin-top: 6px; font: 600 0.95rem/1.3 var(--display); letter-spacing: 0; color: var(--ink-2); }
+.weekPager { display: flex; gap: 8px; }
+.weekPager a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 2px solid var(--ink); border-radius: 999px; font: 700 0.95rem/1 var(--display); }
+.weekEmpty { margin-top: 18px; font: 400 1.1rem/1.6 var(--reading); color: var(--ink-2); }
+.dayChart { position: relative; padding-left: 84px; margin-top: 22px; }
+.dayChart::before { content: ""; position: absolute; left: 70px; top: 6px; bottom: 0; border-left: 3px solid var(--graphite); }
+.dayMark { position: relative; margin-bottom: 30px; scroll-margin-top: 72px; }
+.dayMark::before { content: ""; position: absolute; left: -16px; top: 13px; width: 22px; border-top: 3px solid var(--crayon); transform: rotate(-4deg); }
+.dayAge { position: absolute; left: -84px; width: 62px; top: 5px; text-align: right; font: 700 0.95rem/1.15 var(--display); color: var(--crayon); }
+.dayAge small { display: block; margin-top: 3px; font: 500 0.76rem/1.25 var(--display); color: var(--ink-2); }
+.dayBook { display: block; max-width: 26rem; margin-bottom: 12px; padding: 13px 15px; border-radius: var(--radius); background: var(--pc); color: var(--pf); box-shadow: var(--shadow-card); }
+.dayBook b { display: block; font: 800 1.35rem/1.05 var(--display); letter-spacing: -0.03em; }
+.dayBook span { display: block; margin-top: 5px; font: 500 0.92rem/1.3 var(--display); }
+.dayStrip { list-style: none; display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 16px 12px 2px; margin-right: -16px; }
+.dayStrip li { flex: none; scroll-snap-align: start; }
+.dayStrip button { position: relative; display: block; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: var(--radius); }
+.dayStrip img { display: block; height: 176px; width: auto; max-width: 70vw; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-photo); background: var(--paper-2); }
+.dayStrip button:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+.stripPlay { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(255, 255, 255, 0.92); }
+.stripPlay::after { content: ""; position: absolute; left: 18px; top: 14px; border-left: 15px solid var(--ink); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+.viewer { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: var(--night); color: #fff; }
+.viewer::backdrop { background: var(--night); }
+.viewer[open] { display: grid; grid-template-rows: 1fr auto; }
+.viewerStage { min-height: 0; display: grid; place-items: center; padding: 12px; }
+.viewerStage img { max-width: 100%; max-height: calc(100dvh - 110px); object-fit: contain; border-radius: var(--radius); }
+.viewerStage figure { width: min(100%, 60rem); }
+.viewerNote { margin-top: 10px; font: 600 0.95rem/1.4 var(--display); text-align: center; }
+.viewerBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); font: 600 0.95rem/1.3 var(--display); }
+.viewerBar div { display: flex; gap: 8px; }
+.viewerBar button { min-height: 44px; padding: 0 1rem; border: 2px solid #fff; border-radius: 999px; background: none; color: #fff; font: 700 0.95rem/1 var(--display); cursor: pointer; }
+.viewerBar button:focus-visible { outline: 3px solid var(--duck); outline-offset: 2px; }
+@media (min-width: 900px) {
+  .daysCover { padding: 52px max(40px, calc((100% - 1200px) / 2)) 46px; }
+  .daysWrap { width: min(1200px, 100% - 80px); margin: 0 auto; padding: 40px 0 72px; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 48px; align-items: start; }
+  .quiltRow { grid-template-columns: 84px repeat(7, minmax(0, 1fr)); gap: 5px; margin-bottom: 5px; }
+  .quiltWeek { font-size: 0.85rem; }
+  .weekView { position: sticky; top: 84px; max-height: calc(100dvh - 100px); overflow-y: auto; padding-right: 4px; }
+  .dayChart { padding-left: 120px; }
+  .dayChart::before { left: 104px; }
+  .dayAge { left: -120px; width: 96px; font-size: 1.05rem; }
+  .dayStrip { flex-wrap: wrap; overflow: visible; margin-right: 0; padding-right: 0; }
+  .dayStrip img { height: 190px; max-width: 22rem; }
+}

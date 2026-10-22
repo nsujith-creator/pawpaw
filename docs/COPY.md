@@ -8,6 +8,7 @@ Most things you'll want to change are in the desk at heyvarada.in/admin:
 | The note on Home and the Home photos | Home |
 | Her names and her people | Names |
 | Photos (captions, delete) | Photos |
+| Add photos from Google Photos; hide them, put them back or change their date | Her days |
 
 Everything else is fixed text in the code. To change one of those, use the table below.
 
@@ -27,10 +28,13 @@ Everything else is fixed text in the code. To change one of those, use the table
 | Words | File |
 |---|---|
 | Home: "Varada's family pages", വരദ, "Varada", "Her stories", "A note from acchan", "Her names", "Her people", the "…4 things…" line, the footer "pawpaw · kept for Varada, by acchan and amma" | `src/app/(archive)/page.tsx` |
+| Her days: "146 days of her, so far" and "Her photos go here, day by day." | `src/app/(archive)/days/page.tsx` |
+| Her days: "Nothing from this week yet.", Earlier, Later, "Her first year", "16 weeks old" | `src/components/family/her-days.tsx` |
+| Desk → Her days wording | `src/app/admin/her-days/page.tsx` and `her-days-desk.tsx` |
 | "Nothing written yet…" (empty chart) | `src/components/family/story-chart.tsx` |
 | Story pages: "Next on her chart", "← Home", "All her stories", "A few photos didn't load…" | `src/components/family/story-page.tsx` |
 | "Hung on her height chart…" (top of Her stories) | `src/app/(archive)/chapters/page.tsx` |
-| Top menu: Home, Stories, Leave | `src/components/family/family-header.tsx` and `src/components/family/leave-button.tsx` |
+| Top menu: Home, Stories, Her days, Leave | `src/components/family/family-header.tsx` and `src/components/family/leave-button.tsx` |
 | Sign-in page: "Family passphrase", "Come in", "For family. If you don't have the passphrase…" | `src/app/family-login/page.tsx` |
 | Sign-in errors: "That's not it. Try again." and others | `src/app/family-login/actions.ts` |
 | "Nothing here." (wrong address) | `src/app/not-found.tsx` |

@@ -2,6 +2,37 @@
 
 Newest first. Each production fix records its cause, the fix, how it was verified, the data check, and what it still cannot do. No private family content, photo addresses, identifiers or credentials here.
 
+## 2026-10-22 · Her days: every photo on her chart, brought in from Google Photos
+
+**Asked by Sujith:** carry the growth timeline into heyvarada.in so new photos keep appearing as she grows, without scripts or rebuilds.
+
+**Decisions (approved by Sujith):**
+- **Source:** Google Photos through Google's Photos Picker.
+  - Since 31 March 2025, Google lets apps read only photos the person picks (or photos the app uploaded itself), so fully automatic detection of new photos isn't possible.
+  - What's automatic: copying, India-time dating, de-duplication, placing on her days, video preparation.
+  - What stays manual: one tap and a pick in Google Photos, as often as wanted.
+  - History comes in the same way, from the album. The Takeout archives stay untouched as a backup.
+- **Publishing:** picking a photo is the approval; it goes straight on, and any photo can be hidden from the desk.
+  - Waiting for review instead: photos with no date, a date before her birth or in the future, WhatsApp copies (their date may be when they arrived), and screenshots.
+- **Design:** a quilt of her days (mockup C) on top; a tapped week opens as her height chart (mockup A).
+- **Storage:** imported photos are kept at 1600 pixels (about 0.3 MB plus resized copies), to stay inside Supabase's free 1 GB for roughly the next 1,800 photos. Pawpaw is not the photo backup; Google Photos is.
+
+**Data:** three new tables (`timeline_media`, `import_runs`, `import_items`) and one function, `claim_import_items`, which is service-role only. Additive; nothing existing changed.
+
+**Recovery:**
+- Every picked item is written down before it's copied.
+- Items stuck mid-copy are handed out again after 10 minutes.
+- Failures keep a plain-language reason and can be retried while Google's links last (about an hour).
+- Picking the same photos again is always harmless.
+
+**Limits:**
+- Nothing arrives until someone picks it.
+- Google's sign-in client must be set up once.
+- Videos over 500 MB are skipped with a reason.
+- Photos dated before her birth stay off the quilt.
+- Family quotes aren't pulled out of stories automatically.
+- Claude, ChatGPT and Instagram writing need one-time exports first; not built yet.
+
 ## 2026-09-25 (evening) · Everything deletable and editable (PRs #16–#20)
 
 **Asked by Sujith:**
