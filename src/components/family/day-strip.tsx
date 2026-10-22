@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import FamilyVideo from './family-video'
 import styles from './family.module.css'
 
-export interface StripPhoto { id: string; url: string; width: number | null; height: number | null; playToken: string | null; kind: 'photo' | 'video' }
+export interface StripPhoto { id: string; url: string; width: number | null; height: number | null; playToken: string | null; kind: 'photo' | 'video'; videoFailed?: boolean }
 
 export default function DayStrip({ photos, label }: { photos: StripPhoto[]; label: string }) {
   const [open, setOpen] = useState<number | null>(null)
@@ -60,7 +60,7 @@ export default function DayStrip({ photos, label }: { photos: StripPhoto[]; labe
                   : <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`${current.url}?w=1600`} alt={`A video from ${label}`} />
-                      <p className={styles.viewerNote}>This video is still being prepared. It plays here soon.</p>
+                      <p className={styles.viewerNote}>{current.videoFailed ? 'This video didn’t come through. Here’s a still from it.' : 'This video isn’t ready yet. Have another look in a little while.'}</p>
                     </>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element

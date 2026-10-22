@@ -31,6 +31,10 @@ export interface ImportItemRow {
 
 export interface Progress { total: number; pending: number; added: number; duplicate: number; failed: number }
 
+// claimed: how many this call took on. 0 while some are still pending means another call (an
+// earlier tab, or one that ran out of time) holds them, so the caller should stop and come back.
+export interface BatchResult { progress: Progress; claimed: number }
+
 // Decides, before anything is downloaded, which picked items are already on her days.
 export function planListing(items: PickedItem[], existingIds: ReadonlySet<string>) {
   const seen = new Set<string>()
@@ -94,9 +98,9 @@ export async function preparePhoto(bytes: Buffer) {
 
 async function readLimited(response: Response, limit: number): Promise<Buffer> {
   const length = Number(response.headers.get('content-length') ?? 0)
-  if (length > limit) throw new FriendlyError('This photo is too large to bring in.')
+  if (length > limit) throw new FriendlyError('This photo is too big to add.')
   const buffer = Buffer.from(await response.arrayBuffer())
-  if (buffer.length > limit) throw new FriendlyError('This photo is too large to bring in.')
+  if (buffer.length > limit) throw new FriendlyError('This photo is too big to add.')
   return buffer
 }
 
@@ -107,7 +111,7 @@ async function storePhoto(db: SupabaseClient, adminId: string, bytes: Buffer, al
   const path = buildUploadPath(adminId, 'image/jpeg')
   if (!path) throw new Error('No storage path')
   const upload = await db.storage.from('media').upload(path, photo.data, { contentType: 'image/jpeg', upsert: false })
-  if (upload.error) throw new FriendlyError('Pawpaw could not save this photo just now.')
+  if (upload.error) throw new FriendlyError('This one didn’t save. Try again.')
   let palette: string[] | null = null
   try { palette = await extractPalette(photo.data) } catch { palette = null }
   const { data, error } = await db.from('media_assets').insert({
@@ -116,7 +120,7 @@ async function storePhoto(db: SupabaseClient, adminId: string, bytes: Buffer, al
   }).select('id').single()
   if (error || !data) {
     await db.storage.from('media').remove([path])
-    throw new FriendlyError('Pawpaw could not save this photo just now.')
+    throw new FriendlyError('This one didn’t save. Try again.')
   }
   return { mediaId: data.id as string, path, width: photo.width, height: photo.height }
 }
@@ -128,11 +132,11 @@ async function removePhoto(db: SupabaseClient, stored: { mediaId: string; path: 
 
 // Streams a Google video into Cloudflare Stream in 50 MB pieces, without holding it all in memory.
 async function storeVideo(fetcher: Fetcher, token: string, item: ImportItemRow): Promise<string> {
-  if (!item.video_ready) throw new FriendlyError('Google is still preparing this video. Try again later.')
+  if (!item.video_ready) throw new FriendlyError('Google is still getting this video ready. Try again later.')
   const response = await download(fetcher, token, videoUrl(item.google_base_url!))
   const size = Number(response.headers.get('content-length') ?? 0)
-  if (!size) throw new FriendlyError('Google did not say how big this video is, so it could not come in.')
-  if (size > MAX_VIDEO_BYTES) throw new FriendlyError('This video is longer than Pawpaw brings in from Google Photos. Add it from a story instead.')
+  if (!size) throw new FriendlyError('This video didn’t come through. Try again.')
+  if (size > MAX_VIDEO_BYTES) throw new FriendlyError('This video is too long to add here. You can add it to a story instead.')
   const { uploadUrl, cloudflareUid } = await createPrivateTusUpload(size, item.filename ?? 'video.mp4')
   try {
     const reader = response.body!.getReader()
@@ -143,11 +147,11 @@ async function storeVideo(fetcher: Fetcher, token: string, item: ImportItemRow):
       if (!pendingBytes) return
       const chunk = Buffer.concat(pending, pendingBytes)
       const sent = await fetch(uploadUrl, { method: 'PATCH', headers: { 'Tus-Resumable': '1.0.0', 'Upload-Offset': String(offset), 'Content-Type': 'application/offset+octet-stream' }, body: chunk })
-      if (!sent.ok) throw new FriendlyError('The video service did not accept this video.')
+      if (!sent.ok) throw new FriendlyError('This video didn’t come through. Try again.')
       offset += chunk.length
       pending = []
       pendingBytes = 0
-      if (final && offset !== size) throw new FriendlyError('The video arrived incomplete.')
+      if (final && offset !== size) throw new FriendlyError('This video didn’t come through. Try again.')
     }
     for (;;) {
       const { done, value } = await reader.read()
@@ -179,7 +183,7 @@ function altFor(item: ImportItemRow) {
 }
 
 export async function importOne(db: SupabaseClient, fetcher: Fetcher, token: string, adminId: string, item: ImportItemRow): Promise<'added' | 'duplicate'> {
-  if (!item.google_base_url) throw new FriendlyError('Google’s link for this one has expired. Pick it again; anything already in is skipped.')
+  if (!item.google_base_url) throw new FriendlyError('Pick this one again in Google Photos.')
   const still = await readLimited(await download(fetcher, token, photoUrl(item.google_base_url, LONG_EDGE)), MAX_PHOTO_BYTES)
   const stored = await storePhoto(db, adminId, still, altFor(item))
   let videoId: string | null = null
@@ -188,7 +192,7 @@ export async function importOne(db: SupabaseClient, fetcher: Fetcher, token: str
     if (item.kind === 'video') {
       cloudflareUid = await storeVideo(fetcher, token, item)
       const { data, error } = await db.from('video_assets').insert({ cloudflare_uid: cloudflareUid, caption: null, created_by: adminId, status: 'processing' }).select('id').single()
-      if (error || !data) throw new FriendlyError('Pawpaw could not save this video just now.')
+      if (error || !data) throw new FriendlyError('This one didn’t save. Try again.')
       videoId = data.id as string
     }
     const reason = reviewReason({ takenAt: item.taken_at, filename: item.filename })
@@ -207,7 +211,7 @@ export async function importOne(db: SupabaseClient, fetcher: Fetcher, token: str
       await markItem(db, item.id, { status: 'duplicate' })
       return 'duplicate'
     }
-    if (error || !data) throw new FriendlyError('Pawpaw could not place this on her days just now.')
+    if (error || !data) throw new FriendlyError('This one didn’t save. Try again.')
     await markItem(db, item.id, { status: 'added', timeline_media_id: data.id })
     return 'added'
   } catch (error) {
@@ -222,7 +226,7 @@ async function markItem(db: SupabaseClient, id: string, fields: Record<string, u
   await db.from('import_items').update({ ...fields, error: null, google_base_url: null, updated_at: new Date().toISOString() }).eq('id', id)
 }
 
-export async function importBatch(db: SupabaseClient, fetcher: Fetcher, token: string, adminId: string, runId: string, limit: number): Promise<Progress> {
+export async function importBatch(db: SupabaseClient, fetcher: Fetcher, token: string, adminId: string, runId: string, limit: number): Promise<BatchResult> {
   const { data, error } = await db.rpc('claim_import_items', { p_run_id: runId, p_limit: limit })
   if (error) throw new Error('Could not continue the import')
   const claimed = (data ?? []) as ImportItemRow[]
@@ -231,13 +235,33 @@ export async function importBatch(db: SupabaseClient, fetcher: Fetcher, token: s
       await importOne(db, fetcher, token, adminId, item)
     } catch (failure) {
       const message = failure instanceof FriendlyError ? failure.message
-        : failure instanceof Error && /answered (401|403)/.test(failure.message) ? 'Google signed Pawpaw out. Bring them in again; anything already in is skipped.'
-        : 'This one didn’t come in. Try again.'
+        : failure instanceof Error && /answered (401|403)/.test(failure.message) ? 'Google wants you to sign in again. Then try again.'
+        : 'This one didn’t come through. Try again.'
       // Only plain-language reasons are kept: never a photo address or a Google link.
       await db.from('import_items').update({ status: 'failed', error: message, updated_at: new Date().toISOString() }).eq('id', item.id)
     }
   }))
   const progress = await runProgress(db, runId)
   if (progress.pending === 0) await db.from('import_runs').update({ status: 'done', finished_at: new Date().toISOString() }).eq('id', runId).eq('status', 'importing')
-  return progress
+  return { progress, claimed: claimed.length }
+}
+
+// Before trying failed items again, ask Google for fresh download addresses and whether each
+// video is ready now. If the picker session has ended, only items whose old address may still
+// work are put back in the queue.
+export async function refreshFailed(db: SupabaseClient, runId: string, picked: PickedItem[] | null): Promise<number> {
+  const { data, error } = await db.from('import_items').select('id, source_item_id, google_base_url').eq('run_id', runId).eq('status', 'failed')
+  if (error) throw new Error('Could not read the import')
+  const fresh = new Map((picked ?? []).map(item => [item.id, item]))
+  let count = 0
+  for (const row of data ?? []) {
+    const item = fresh.get(row.source_item_id as string)
+    if (!item && !row.google_base_url) continue
+    const fields: Record<string, unknown> = { status: 'pending', error: null, updated_at: new Date().toISOString() }
+    if (item) { fields.google_base_url = item.baseUrl; fields.video_ready = item.videoReady }
+    const { error: updateError } = await db.from('import_items').update(fields).eq('id', row.id)
+    if (!updateError) count++
+  }
+  if (count) await db.from('import_runs').update({ status: 'importing', finished_at: null }).eq('id', runId)
+  return count
 }

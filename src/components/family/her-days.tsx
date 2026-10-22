@@ -1,4 +1,4 @@
-// Her days: a square for every day of her life, a row for every week, newest at the top.
+// Her days: a square for every day of her life, a row for every week of her age, newest at the top.
 // Tapping a day opens its week below (on wide screens, beside) as her height chart:
 // each day hung at her age, with its stories and its photos.
 
@@ -29,7 +29,9 @@ function yearsOld(date: string) {
   return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0)
 }
 
-function yearTitle(years: number) { return years === 0 ? 'Her first year' : `Age ${years}` }
+const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth']
+function yearTitle(years: number) { return ORDINALS[years] ? `Her ${ORDINALS[years]} year` : `When she was ${years}` }
+function weekTitle(week: number) { return week === 0 ? 'The week she was born' : `${weekLabel(week)} old` }
 
 export function pickWeek(weeks: QuiltWeek<Entry>[], requested: number | null): number {
   if (requested !== null && weeks.some(week => week.week === requested)) return requested
@@ -59,11 +61,11 @@ export default function HerDays({ media, stories, today, requestedWeek }: { medi
           const count = yearWeeks.reduce((sum, week) => sum + week.days.reduce((n, day) => n + day.items.filter(item => item.media).length, 0), 0)
           return (
             <details key={age} className={styles.year} open={age === newestYear || age === selectedYear}>
-              <summary className={styles.yearTitle}>{yearTitle(age)}<small>{count} photo{count === 1 ? '' : 's'}</small></summary>
+              <summary className={styles.yearTitle}>{yearTitle(age)}{count > 0 && <small>{count.toLocaleString('en-IN')} photo{count === 1 ? '' : 's'}</small>}</summary>
               <div className={styles.quilt} role="list">
                 {yearWeeks.map(week => (
                   <div key={week.week} className={styles.quiltRow} role="listitem" data-selected={week.week === selected ? '' : undefined}>
-                    <p className={styles.quiltWeek}>{weekLabel(week.week)}{week.week === 0 ? <b>born</b> : week.month !== null && <b>{monthLabel(week.month)}</b>}</p>
+                    <p className={styles.quiltWeek}>{week.month !== null ? <b>{monthLabel(week.month)}</b> : week.week === 0 ? <b>born</b> : weekLabel(week.week)}</p>
                     {week.days.map(day => <Square key={day.day} day={day} week={week.week} today={today} />)}
                   </div>
                 ))}
@@ -101,7 +103,7 @@ function Square({ day, week, today }: { day: QuiltWeek<Entry>['days'][number]; w
       </Link>
     )
   }
-  return <span className={styles.square} data-empty="" aria-label={fullDate(day.date)}>{Number(day.date.slice(8, 10))}</span>
+  return <Link href={href} className={styles.square} data-empty="" aria-label={fullDate(day.date)}>{Number(day.date.slice(8, 10))}</Link>
 }
 
 function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) {
@@ -111,14 +113,14 @@ function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) 
   return (
     <section className={styles.weekView} id="week" aria-labelledby="week-title">
       <div className={styles.weekHead}>
-        <h2 id="week-title">{weekLabel(week.week)}<small>{shortDate(first)} – {shortDate(last)}</small></h2>
+        <h2 id="week-title">{weekTitle(week.week)}<small>{shortDate(first)} – {shortDate(last)}</small></h2>
         <nav className={styles.weekPager} aria-label="Other weeks">
-          {week.week < newest ? <Link href={`/days?week=${week.week + 1}#week`} scroll={false}>Newer</Link> : <span />}
-          {week.week > 0 ? <Link href={`/days?week=${week.week - 1}#week`} scroll={false}>Older</Link> : <span />}
+          {week.week > 0 ? <Link href={`/days?week=${week.week - 1}#week`} scroll={false}>Earlier</Link> : <span />}
+          {week.week < newest ? <Link href={`/days?week=${week.week + 1}#week`} scroll={false}>Later</Link> : <span />}
         </nav>
       </div>
       {days.length === 0 ? (
-        <p className={styles.weekEmpty}>No photos from this week yet.</p>
+        <p className={styles.weekEmpty}>Nothing from this week yet.</p>
       ) : (
         <div className={styles.dayChart}>
           {days.map(day => {
@@ -135,7 +137,7 @@ function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) 
                       : item.authorDisplayName && <span>by {item.authorDisplayName}</span>}
                   </Link>
                 ))}
-                {photos.length > 0 && <DayStrip photos={photos.map(photo => ({ id: photo.id, url: photo.url, width: photo.width, height: photo.height, playToken: photo.playToken, kind: photo.kind }))} label={fullDate(day.date)} />}
+                {photos.length > 0 && <DayStrip photos={photos.map(photo => ({ id: photo.id, url: photo.url, width: photo.width, height: photo.height, playToken: photo.playToken, kind: photo.kind, videoFailed: photo.videoFailed }))} label={fullDate(day.date)} />}
               </div>
             )
           })}

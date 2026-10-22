@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import sharp from 'sharp'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { dateOfDay, dayNumber, indiaDate, monthLabel, quiltWeeks, reviewReason } from '@/lib/her-days/days'
+import { dateOfDay, dayNumber, indiaDate, monthLabel, quiltWeeks, reviewReason, weekLabel } from '@/lib/her-days/days'
 import { createSession, listPicked, toPickedItem, type PickedItem } from '@/lib/her-days/google-picker'
 
 vi.mock('@/lib/video/cloudflare', () => ({
@@ -11,7 +11,7 @@ vi.mock('@/lib/video/cloudflare', () => ({
   getVideoState: vi.fn(),
 }))
 
-const { importBatch, planListing, recordPicked, runProgress, preparePhoto } = await import('@/lib/her-days/importer')
+const { importBatch, planListing, recordPicked, refreshFailed, runProgress, preparePhoto } = await import('@/lib/her-days/importer')
 
 const root = join(__dirname, '../..')
 const read = (file: string) => readFileSync(join(root, file), 'utf8')
@@ -32,9 +32,9 @@ describe('her days: dates are India dates, counted from her birthday', () => {
   it('sends only mechanically uncertain photos for review', () => {
     const now = Date.parse('2026-10-22T10:00:00Z')
     expect(reviewReason({ takenAt: '2026-06-12T05:00:00Z', filename: 'PXL_20260612_053000.jpg' }, now)).toBeNull()
-    expect(reviewReason({ takenAt: null, filename: 'x.jpg' }, now)).toMatch(/no date/)
+    expect(reviewReason({ takenAt: null, filename: 'x.jpg' }, now)).toMatch(/No date/)
     expect(reviewReason({ takenAt: '2026-05-20T05:00:00Z', filename: 'x.jpg' }, now)).toMatch(/before she was born/)
-    expect(reviewReason({ takenAt: '2026-12-01T05:00:00Z', filename: 'x.jpg' }, now)).toMatch(/future/)
+    expect(reviewReason({ takenAt: '2026-12-01T05:00:00Z', filename: 'x.jpg' }, now)).toMatch(/hasn’t come yet/)
     expect(reviewReason({ takenAt: '2026-07-01T05:00:00Z', filename: 'IMG-20260701-WA0003.jpg' }, now)).toMatch(/WhatsApp/)
     expect(reviewReason({ takenAt: '2026-07-01T05:00:00Z', filename: 'Screenshot_20260701.png' }, now)).toMatch(/screenshot/)
   })
@@ -58,6 +58,9 @@ describe('her days: the quilt', () => {
     expect(monthLabel(5)).toBe('5 months')
     expect(monthLabel(12)).toBe('1 year')
     expect(monthLabel(24)).toBe('2 years')
+    expect(weekLabel(0)).toBe('born')
+    expect(weekLabel(1)).toBe('1 week')
+    expect(weekLabel(16)).toBe('16 weeks')
   })
 })
 
@@ -183,7 +186,7 @@ describe('her days: bringing photos in', () => {
     const google = vi.fn(async () => new Response(new Uint8Array(jpeg), { headers: { 'content-length': String(jpeg.length) } })) as unknown as typeof fetch
     tables.import_runs.push({ id: 'run-1', status: 'picking' })
     await recordPicked(db as never, 'run-1', [picked('a'), picked('b', { filename: 'IMG-20260612-WA0001.jpg' })])
-    const progress = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
+    const { progress } = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
     expect(progress).toMatchObject({ total: 2, added: 2, pending: 0, failed: 0 })
     expect(tables.timeline_media.map(row => [row.source_item_id, row.visibility]).sort()).toEqual([['a', 'shown'], ['b', 'review']])
     expect(tables.timeline_media.find(row => row.source_item_id === 'a')).toMatchObject({ taken_at: '2026-06-12T05:00:00.000Z', taken_at_source: 'camera', source: 'google_photos', width: 1600, height: 1067 })
@@ -194,7 +197,7 @@ describe('her days: bringing photos in', () => {
     // The next week, the same two are picked again with one new one.
     tables.import_runs.push({ id: 'run-2', status: 'picking' })
     await recordPicked(db as never, 'run-2', [picked('a'), picked('b'), picked('c')])
-    const again = await importBatch(db as never, google, 'token', 'admin-1', 'run-2', 3)
+    const { progress: again } = await importBatch(db as never, google, 'token', 'admin-1', 'run-2', 3)
     expect(again).toMatchObject({ total: 3, added: 1, duplicate: 2 })
     expect(tables.timeline_media).toHaveLength(3)
     expect(storage.size).toBe(3)
@@ -208,9 +211,9 @@ describe('her days: bringing photos in', () => {
       : new Response(new Uint8Array(jpeg))) as unknown as typeof fetch
     tables.import_runs.push({ id: 'run-1', status: 'picking' })
     await recordPicked(db as never, 'run-1', [picked('a')])
-    const first = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
+    const { progress: first } = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
     expect(first).toMatchObject({ failed: 1, added: 0 })
-    expect(tables.import_items[0].error).toBe('This one didn’t come in. Try again.')
+    expect(tables.import_items[0].error).toBe('This one didn’t come through. Try again.')
     expect(String(tables.import_items[0].error)).not.toContain('lh3.example')
     expect(storage.size).toBe(0)
     expect(tables.media_assets).toHaveLength(0)
@@ -219,7 +222,7 @@ describe('her days: bringing photos in', () => {
     broken = false
     tables.import_items[0].status = 'pending'
     tables.import_runs[0].status = 'importing'
-    const second = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
+    const { progress: second } = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
     expect(second).toMatchObject({ failed: 0, added: 1 })
     expect(await runProgress(db as never, 'run-1')).toMatchObject({ total: 1, added: 1 })
   })
@@ -229,9 +232,9 @@ describe('her days: bringing photos in', () => {
     const google = vi.fn(async () => new Response(new Uint8Array(jpeg))) as unknown as typeof fetch
     tables.import_runs.push({ id: 'run-1', status: 'picking' })
     await recordPicked(db as never, 'run-1', [picked('v', { kind: 'video', videoReady: false, mimeType: 'video/mp4' })])
-    const progress = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
+    const { progress } = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
     expect(progress.failed).toBe(1)
-    expect(tables.import_items[0].error).toMatch(/still preparing/)
+    expect(tables.import_items[0].error).toMatch(/still getting this video ready/)
     expect(storage.size).toBe(0)
     expect(tables.media_assets).toHaveLength(0)
   })
@@ -242,10 +245,47 @@ describe('her days: bringing photos in', () => {
     tables.import_runs.push({ id: 'run-1', status: 'picking' })
     await recordPicked(db as never, 'run-1', [picked('a')])
     tables.timeline_media.push({ id: 'other', source: 'google_photos', source_item_id: 'a' })
-    const progress = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
+    const { progress } = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
     expect(progress).toMatchObject({ duplicate: 1, added: 0 })
     expect(tables.timeline_media).toHaveLength(1)
     expect(storage.size).toBe(0)
+  })
+})
+
+describe('her days: getting unstuck', () => {
+  it('says when nothing could be taken because an earlier try still holds the rest', async () => {
+    const { db, tables } = fakeDb()
+    tables.import_runs.push({ id: 'run-1', status: 'importing' })
+    tables.import_items.push({ id: 'i1', run_id: 'run-1', source_item_id: 'a', status: 'working', attempts: 1 })
+    const google = vi.fn() as unknown as typeof fetch
+    const result = await importBatch(db as never, google, 'token', 'admin-1', 'run-1', 3)
+    expect(result).toMatchObject({ claimed: 0, progress: { pending: 1 } })
+    expect(google).not.toHaveBeenCalled()
+  })
+
+  it('tries a failed video again with fresh word from Google that it is ready', async () => {
+    const { db, tables } = fakeDb()
+    tables.import_runs.push({ id: 'run-1', status: 'done' })
+    tables.import_items.push({ id: 'i1', run_id: 'run-1', source_item_id: 'v', status: 'failed', video_ready: false, google_base_url: 'old' })
+    tables.import_items.push({ id: 'i2', run_id: 'run-1', source_item_id: 'gone', status: 'failed', google_base_url: null })
+    const count = await refreshFailed(db as never, 'run-1', [picked('v', { kind: 'video', videoReady: true, baseUrl: 'new' })])
+    expect(count).toBe(1)
+    expect(tables.import_items[0]).toMatchObject({ status: 'pending', video_ready: true, google_base_url: 'new' })
+    expect(tables.import_items[1].status).toBe('failed')
+    expect(tables.import_runs[0].status).toBe('importing')
+  })
+})
+
+describe('her days: words on screen', () => {
+  const files = ['src/app/(archive)/days/page.tsx', 'src/components/family/her-days.tsx', 'src/components/family/day-strip.tsx', 'src/app/admin/her-days/page.tsx', 'src/app/admin/her-days/her-days-desk.tsx', 'src/app/admin/her-days/actions.ts', 'src/lib/her-days/importer.ts', 'src/lib/her-days/days.ts']
+  // Only the quoted sentences people read (they have spaces), not import paths or code around them.
+  const source = files.map(read).join('\n').split('\n').filter(line => !/^\s*(import|\/\/|\*)/.test(line) && !/new Error\(|\.select\(/.test(line)).join('\n')
+  const visible = (source.match(/(['`"])(?:(?!\1).)*\1|>[^<>{}]+</g) ?? []).filter(text => /\s/.test(text.trim().slice(1, -1))).join(' ')
+
+  it('speaks like a person, not like software', () => {
+    for (const word of [/\bimport(ed|ing)?\b/i, /\bsession\b/i, /\bqueue\b/i, /\bsync/i, /\bprocessing\b/i, /carries on by itself/i, /Each row is/i, /Bring in from/i, /week \d/]) {
+      expect(visible).not.toMatch(word)
+    }
   })
 })
 

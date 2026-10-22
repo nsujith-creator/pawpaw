@@ -72,3 +72,5 @@ Both keep cycling under reduced motion; that setting only drops the fade. The fu
 ## Words on screen
 
 Sujith's voice: plain, warm, a little wry, lower-case where he writes lower-case. Say what happened and what to do next. No system whimsy, no revision numbers, addresses or storage words on screen.
+
+A human speaking to a human, always (locked by Sujith, 22 October 2026; see AGENTS.md). Never explain how the site works. No architecture words: no import, session, sync, processing, queue or link. Count her life the family's way ("16 weeks", "born"). Read every visible word aloud before shipping.

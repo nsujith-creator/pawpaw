@@ -1,5 +1,6 @@
 import { loadHerDays } from '@/lib/her-days/load'
 import HerDays from '@/components/family/her-days'
+import { dayNumber } from '@/lib/her-days/days'
 import StatePage from '@/components/family/state-page'
 import styles from '@/components/family/family.module.css'
 
@@ -13,16 +14,13 @@ export default async function HerDaysRoute({ searchParams }: { searchParams: Pro
   }
   const raw = (await searchParams).week
   const requested = raw !== undefined && /^\d{1,4}$/.test(raw) ? Number(raw) : null
-  const photos = result.media.length
+  const days = dayNumber(result.today)
   return (
     <main>
       <section className={styles.daysCover}>
         <p className={styles.kicker}>Her days</p>
-        <h1>A square for every day</h1>
-        <p>
-          {photos ? `${photos} photo${photos === 1 ? '' : 's'} of her, each on the day it was taken. ` : 'Photos fill these squares as they come in. '}
-          Each row is one week, newest at the top. Tap a day to open its week.
-        </p>
+        <h1>{days.toLocaleString('en-IN')} day{days === 1 ? '' : 's'} of her, so far</h1>
+        {result.media.length === 0 && <p>Her photos go here, day by day.</p>}
       </section>
       <HerDays media={result.media} stories={result.stories} today={result.today} requestedWeek={requested} />
     </main>

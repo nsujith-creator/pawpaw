@@ -18,6 +18,7 @@ export interface DayMedia {
   width: number | null
   height: number | null
   playToken: string | null
+  videoFailed: boolean
 }
 
 export interface DayStory { day: number; item: ChapterIndexItem }
@@ -75,6 +76,7 @@ export async function loadHerDays(now = Date.now()): Promise<HerDaysResult> {
       return {
         id: row.id, kind: row.kind, day, takenAt: row.taken_at, width: row.width, height: row.height,
         url: await generateSignedUrl(row.media_assets.storage_path), playToken,
+        videoFailed: row.kind === 'video' && row.video_assets?.status === 'errored',
       } satisfies DayMedia
     }))).filter((item): item is DayMedia => item !== null)
 

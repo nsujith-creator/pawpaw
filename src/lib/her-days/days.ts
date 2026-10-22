@@ -22,13 +22,13 @@ export function dateOfDay(day: number): string {
 // Why a picked photo should wait for a person instead of going straight onto her days.
 // Only mechanical facts: Pawpaw never guesses who is in a photo or what it means.
 export function reviewReason(item: { takenAt: string | null; filename: string | null }, now = Date.now()): string | null {
-  if (!item.takenAt) return 'It has no date. When was it taken?'
+  if (!item.takenAt) return 'No date on this one. When was it taken?'
   const day = dayNumber(indiaDate(item.takenAt))
-  if (day < 0) return 'Its date is before she was born.'
-  if (Date.parse(item.takenAt) > now + 86_400_000) return 'Its date is in the future.'
+  if (day < 0) return 'This says it was taken before she was born.'
+  if (Date.parse(item.takenAt) > now + 86_400_000) return 'This says it was taken on a day that hasn’t come yet.'
   const name = item.filename ?? ''
-  if (/^IMG-\d{8}-WA\d+/i.test(name) || /whatsapp/i.test(name)) return 'It came through WhatsApp, so its date may be when it arrived, not when it was taken.'
-  if (/^screenshot/i.test(name) || /^screen[ _-]?shot/i.test(name)) return 'It is a screenshot.'
+  if (/^IMG-\d{8}-WA\d+/i.test(name) || /whatsapp/i.test(name)) return 'This came on WhatsApp, so the date may be when it was sent.'
+  if (/^screenshot/i.test(name) || /^screen[ _-]?shot/i.test(name)) return 'This is a screenshot.'
   return null
 }
 
@@ -76,7 +76,8 @@ function monthsOld(date: string): number {
   return (y - by) * 12 + (m - bm)
 }
 
-export function weekLabel(week: number) { return `week ${week + 1}` }
+// Her age in a row of the quilt, the way the family says it: "born", "1 week", "16 weeks".
+export function weekLabel(week: number) { return week === 0 ? 'born' : `${week} week${week === 1 ? '' : 's'}` }
 
 export function monthLabel(months: number) {
   if (months % 12 === 0) return months === 12 ? '1 year' : `${months / 12} years`
