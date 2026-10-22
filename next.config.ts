@@ -14,6 +14,8 @@ const protectedRoutes = [
   '/admin/content',
   '/admin/home',
   '/admin/media',
+  '/admin/her-days',
+  '/days',
 ]
 
 const nextConfig: NextConfig = {

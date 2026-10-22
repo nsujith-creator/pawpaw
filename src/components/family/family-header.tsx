@@ -10,6 +10,7 @@ export default function FamilyHeader() {
   const pathname = usePathname()
   const onHome = pathname === '/'
   const inStories = pathname.startsWith('/chapters') || pathname === '/first-days'
+  const inDays = pathname.startsWith('/days')
 
   // If someone presses Leave in another tab, this one goes back to the front door too.
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function FamilyHeader() {
       <nav className={styles.nav} aria-label="Family pages">
         <Link href="/" aria-current={onHome ? 'page' : undefined}>Home</Link>
         <Link href="/chapters" aria-current={inStories ? 'page' : undefined}>Stories</Link>
+        <Link href="/days" aria-current={inDays ? 'page' : undefined}>Her days</Link>
         <LeaveButton />
       </nav>
     </header>

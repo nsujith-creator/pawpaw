@@ -9,9 +9,10 @@
 }
 .word { font: 800 1.45rem/1 var(--display); letter-spacing: -0.03em; display: inline-flex; align-items: baseline; gap: 6px; min-height: 44px; align-items: center; }
 .word span { font: 600 0.95rem/1 var(--display); letter-spacing: 0; color: var(--ink-2); }
-.nav { display: flex; gap: 2px; font: 600 0.98rem/1 var(--display); }
+.nav { display: flex; flex-wrap: wrap; gap: 2px; font: 600 0.98rem/1 var(--display); }
 .nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.85rem; border-radius: 999px; }
 .nav a[aria-current] { background: var(--ink); color: var(--paper); }
+@media (max-width: 479px) { .nav a { padding: 0 0.6rem; } }
 .topEnd { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .herPage, .signOut { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.7rem; font: 600 0.92rem/1 var(--display); color: var(--ink-2); }
 .herPage:hover, .signOut:hover { color: var(--ink); text-decoration: underline; }
@@ -141,3 +142,26 @@
   .listRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: end; }
   .listRows[data-kind="people"] .listRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; }
 }
+
+/* ---------- Her days ---------- */
+.dayStep { display: grid; gap: 10px; margin-top: 16px; font: 600 1rem/1.45 var(--display); }
+.dayStep .ghost { justify-self: start; }
+.dayCount { font: 800 1.6rem/1.1 var(--display); letter-spacing: -0.02em; }
+.dayBar { width: 100%; max-width: 28rem; height: 12px; accent-color: var(--teal); }
+.dayGrid { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-top: 12px; }
+.dayTile { position: relative; display: grid; gap: 6px; align-content: start; }
+.dayTile img, .dayMissing { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); background: var(--paper-2); }
+.dayMissing { display: grid; place-items: center; font: 600 0.85rem/1 var(--display); color: var(--ink-2); }
+.dayVideo { position: absolute; top: 8px; left: 8px; padding: 5px 8px; border-radius: 999px; background: var(--ink); color: var(--paper); font: 700 0.72rem/1 var(--display); }
+.dayTileText { font: 700 0.9rem/1.2 var(--display); }
+.dayReason { font: 500 0.85rem/1.35 var(--display); color: var(--ink-2); }
+.dayDate { display: grid; gap: 4px; }
+.dayDate span { font: 700 0.72rem/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.dayDate input { min-height: 44px; padding: 0 10px; border: 2px solid var(--ink); border-radius: var(--radius); font: 500 0.95rem/1 var(--display); background: var(--paper); min-width: 0; }
+.linkish { justify-self: start; min-height: 44px; padding: 0; border: 0; background: none; font: 700 0.95rem/1.2 var(--display); color: var(--ink); text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; }
+.linkish:disabled { color: var(--ink-2); cursor: default; }
+.runList { list-style: none; display: grid; gap: 12px; }
+.runList li { display: grid; gap: 4px; padding: 14px; border-radius: var(--radius); background: var(--paper-2); }
+.runList strong { font: 800 1rem/1.2 var(--display); }
+.runList span { font: 500 0.95rem/1.4 var(--display); }
+.runList small { font: 500 0.88rem/1.4 var(--display); color: var(--crayon); }
