@@ -1,204 +1,127 @@
 'use client'
 
-// Add photos from Google Photos: sign in to Google, pick there, and Pawpaw copies what was picked,
-// a few at a time, showing how far it has got. Below: what needs a look, the latest (or a chosen
-// month), what is hidden, and earlier adds.
+// Her days on the desk: how the folder is doing, lines waiting for a yes, photos that need a look,
+// the latest (or any month), what is hidden, and anything that didn't come through.
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PICKER_SCOPE } from '@/lib/her-days/google-config'
 import type { Progress } from '@/lib/her-days/importer'
-import { checkPick, importMore, retryFailed, startPick, updateTimelineItem } from './actions'
+import { checkNow, decideLine, updateTimelineItem } from './actions'
 import styles from '../admin.module.css'
 
-export interface DeskRun {
-  id: string; status: string; startedAt: string
-  total: number; added: number; duplicate: number; failed: number; pending: number; retryable: number
-  reasons: string[]
-}
 export interface DeskPhoto { id: string; kind: 'photo' | 'video'; date: string | null; reason: string | null; url: string | null }
-
-interface TokenClient { requestAccessToken(options?: { prompt?: string }): void }
-declare global {
-  interface Window {
-    google?: { accounts: { oauth2: { initTokenClient(config: { client_id: string; scope: string; callback: (response: { access_token?: string; error?: string }) => void; error_callback?: (error: { type?: string }) => void }): TokenClient } } }
-  }
-}
-
-type Stage =
-  | { kind: 'idle' }
-  | { kind: 'signing-in' }
-  | { kind: 'picking'; runId: string; pickerUri: string; pollIntervalMs: number }
-  | { kind: 'importing'; runId: string; progress: Progress | null }
-  | { kind: 'done'; progress: Progress }
-  | { kind: 'error'; message: string }
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-function when(iso: string) {
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(iso))
-}
+export interface DeskMonth { key: string; label: string; count: number }
+export interface DeskLine { id: string; draft: string; was: string | null; url: string }
 
 function dayLabel(date: string) {
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
 }
 
-function summary(p: Progress) {
-  const parts = [`${p.added} added`]
-  if (p.duplicate) parts.push(`${p.duplicate} ${p.duplicate === 1 ? 'was' : 'were'} already here`)
-  if (p.failed) parts.push(`${p.failed} didn’t come through`)
-  return parts.join(', ')
+function sinceWords(iso: string | null) {
+  if (!iso) return null
+  const minutes = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000))
+  if (minutes < 2) return 'just now'
+  if (minutes < 60) return `${minutes} minutes ago`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  const days = Math.round(hours / 24)
+  return `${days} day${days === 1 ? '' : 's'} ago`
 }
 
-export interface DeskMonth { key: string; label: string; count: number }
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-export default function HerDaysDesk({ clientId, shownCount, runs, review, recent, hidden, months, month }: {
-  clientId: string; shownCount: number; runs: DeskRun[]; review: DeskPhoto[]; recent: DeskPhoto[]; hidden: DeskPhoto[]; months: DeskMonth[]; month: string | null
+export default function HerDaysDesk({ linked, drafting, checkedAt, progress, lines, notIn, shownCount, review, recent, hidden, months, month }: {
+  linked: boolean; drafting: boolean; checkedAt: string | null; progress: Progress | null
+  lines: DeskLine[]; notIn: { name: string | null; reason: string | null }[]; shownCount: number
+  review: DeskPhoto[]; recent: DeskPhoto[]; hidden: DeskPhoto[]; months: DeskMonth[]; month: string | null
 }) {
   const router = useRouter()
-  const [stage, setStage] = useState<Stage>({ kind: 'idle' })
-  const [ready, setReady] = useState(false)
-  const tokenClient = useRef<TokenClient | null>(null)
-  const token = useRef<string | null>(null)
-  const pendingAfterSignIn = useRef<((token: string) => void) | null>(null)
+  const [now, setNow] = useState<Progress | null>(progress)
+  const [checking, setChecking] = useState(false)
+  const [note, setNote] = useState<string | null>(null)
+  const [checked, setChecked] = useState(checkedAt)
   const alive = useRef(true)
-  const cancelled = useRef(false)
+  useEffect(() => () => { alive.current = false }, [])
 
-  useEffect(() => {
-    alive.current = true
-    if (!clientId) return
-    const init = () => {
-      if (!window.google) return
-      tokenClient.current = window.google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: PICKER_SCOPE,
-        callback: response => {
-          const next = pendingAfterSignIn.current
-          pendingAfterSignIn.current = null
-          if (!response.access_token) { setStage({ kind: 'error', message: 'Google sign-in didn’t finish. Press the button to try again.' }); return }
-          token.current = response.access_token
-          next?.(response.access_token)
-        },
-        error_callback: () => {
-          pendingAfterSignIn.current = null
-          setStage({ kind: 'error', message: 'Google sign-in was closed. Press the button to try again.' })
-        },
-      })
-      setReady(true)
-    }
-    if (window.google) { init(); return }
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.onload = init
-    script.onerror = () => setStage({ kind: 'error', message: 'Google didn’t open. Check your internet and reload the page.' })
-    document.head.appendChild(script)
-    return () => { alive.current = false }
-  }, [clientId])
-
-  // Every Google step starts from a tap, so the sign-in window is allowed to open.
-  function withGoogle(then: (token: string) => void) {
-    if (!tokenClient.current) return
-    setStage({ kind: 'signing-in' })
-    pendingAfterSignIn.current = then
-    tokenClient.current.requestAccessToken({ prompt: token.current ? '' : 'consent' })
-  }
-
-  async function bringIn(runId: string, accessToken: string) {
-    setStage({ kind: 'importing', runId, progress: null })
-    for (let round = 0; round < 2000 && alive.current; round++) {
-      const result = await importMore(runId, accessToken)
-      if ('error' in result) { setStage({ kind: 'error', message: result.error }); router.refresh(); return }
-      setStage({ kind: 'importing', runId, progress: result.progress })
-      if (result.progress.pending === 0) { setStage({ kind: 'done', progress: result.progress }); router.refresh(); return }
-      // Nothing was free to take: an earlier try still holds the rest. Stop instead of spinning.
-      if (result.claimed === 0) {
-        setStage({ kind: 'error', message: `${result.progress.pending} are still finishing from before. Give it ten minutes, then press ‘Finish adding them’.` })
+  // Keeps checking while there are photos still coming in, then refreshes the page. If a round
+  // brings nothing new in (an earlier look may still be holding some), it waits before trying again.
+  const check = useCallback(async () => {
+    setChecking(true)
+    setNote(null)
+    let before: Progress | null = null
+    let stuck = 0
+    try {
+      for (let round = 0; round < 200 && alive.current; round++) {
+        const report = await checkNow()
+        if ('error' in report) { setNote(report.error); break }
+        setNow(report.progress)
+        setChecked(report.checkedAt)
+        if (report.state === 'not_linked') break
+        if (report.state === 'error') { setNote('The folder didn’t answer just now. It will try again by itself.'); break }
         router.refresh()
-        return
+        if (report.state === 'busy') { await sleep(20_000); continue }
+        const after = report.progress
+        if (!after || after.pending === 0) break
+        const moved = !before || after.pending !== before.pending || after.added !== before.added
+        before = after
+        stuck = moved ? 0 : stuck + 1
+        if (stuck >= 3) break
+        if (stuck > 0) await sleep(20_000)
       }
+    } catch {
+      setNote('The folder didn’t answer just now. It will try again by itself.')
+    } finally {
+      setChecking(false)
     }
-  }
+  }, [router])
 
-  async function waitForPick(runId: string, accessToken: string, pollIntervalMs: number) {
-    // Give up after about half an hour of nothing being picked.
-    const rounds = Math.ceil((30 * 60 * 1000) / pollIntervalMs)
-    cancelled.current = false
-    for (let round = 0; round < rounds && alive.current; round++) {
-      await sleep(pollIntervalMs)
-      if (cancelled.current) { setStage({ kind: 'idle' }); return }
-      const result = await checkPick(runId, accessToken)
-      if ('error' in result) { setStage({ kind: 'error', message: result.error }); return }
-      if ('progress' in result) {
-        if (result.progress.total === 0) { setStage({ kind: 'done', progress: result.progress }); return }
-        return bringIn(runId, accessToken)
-      }
-    }
-    if (alive.current) setStage({ kind: 'error', message: 'Nothing was picked in time. Press the button to start again.' })
-  }
+  // Opening the desk starts a check when it's been a while, or when photos are still coming in.
+  const started = useRef(false)
+  useEffect(() => {
+    if (!linked) return
+    const timer = setTimeout(() => {
+      if (started.current) return
+      started.current = true
+      const stale = !checkedAt || Date.now() - Date.parse(checkedAt) > 10 * 60_000
+      if (stale || (progress?.pending ?? 0) > 0) void check()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [check, checkedAt, linked, progress])
 
-  function start() {
-    withGoogle(async accessToken => {
-      const result = await startPick(accessToken)
-      if ('error' in result) { setStage({ kind: 'error', message: result.error }); return }
-      setStage({ kind: 'picking', ...result })
-      void waitForPick(result.runId, accessToken, result.pollIntervalMs)
-    })
-  }
-
-  function carryOn(runId: string) { withGoogle(accessToken => void bringIn(runId, accessToken)) }
-
-  function tryAgain(runId: string) {
-    withGoogle(async accessToken => {
-      const result = await retryFailed(runId, accessToken)
-      if ('error' in result) { setStage({ kind: 'error', message: result.error }); return }
-      void bringIn(runId, accessToken)
-    })
-  }
-
-  const busy = stage.kind === 'signing-in' || stage.kind === 'picking' || stage.kind === 'importing'
-  const stopped = runs.find(run => run.status === 'importing' && run.pending > 0)
+  const coming = now ? now.pending + now.waiting : 0
 
   return (
     <>
       <section className={styles.group} aria-live="polite">
-        {!clientId ? (
-          <p className={styles.quietNote}>Google Photos isn&apos;t linked yet. Once it is, you can add her photos from here.</p>
+        {!linked ? (
+          <p className={styles.quietNote}>Pawpaw can&apos;t see the Her days folder yet. Once you share it, her photos come in from there.</p>
         ) : (
           <>
             <div className={styles.actionRow}>
-              <button type="button" className={styles.primary} onClick={start} disabled={!ready || busy}>
-                {stage.kind === 'signing-in' ? 'Opening Google…' : 'Add photos from Google Photos'}
+              <button type="button" className={styles.ghost} onClick={() => void check()} disabled={checking}>
+                {checking ? 'Looking in the folder…' : 'Look in the folder now'}
               </button>
-              <span className={styles.quietNote}>{shownCount.toLocaleString('en-IN')} photo{shownCount === 1 ? '' : 's'} on her days</span>
+              <span className={styles.quietNote}>
+                {shownCount.toLocaleString('en-IN')} photo{shownCount === 1 ? '' : 's'} on her days
+                {checked && !checking ? ` · looked ${sinceWords(checked)}` : ''}
+              </span>
             </div>
-            {stage.kind === 'picking' && (
+            {coming > 0 && now && (
               <div className={styles.dayStep}>
-                <a className={styles.ghost} href={`${stage.pickerUri}/autoclose`} target="_blank" rel="noreferrer">Open Google Photos ↗</a>
-                <p className={styles.quietNote}>Pick her photos and press Done, then come back here.</p>
-                <button type="button" className={styles.linkish} onClick={() => { cancelled.current = true }}>Cancel</button>
+                <p className={styles.dayCount}>{`${(now.total - coming).toLocaleString('en-IN')} of ${now.total.toLocaleString('en-IN')} in`}</p>
+                <progress className={styles.dayBar} max={now.total} value={now.total - coming} />
+                <p className={styles.quietNote}>{checking ? 'Keep this open and they come in faster. They keep coming in on their own too.' : 'The rest keep coming in on their own.'}</p>
               </div>
             )}
-            {stage.kind === 'importing' && (
-              <div className={styles.dayStep}>
-                <p className={styles.dayCount}>{stage.progress ? `Adding ${stage.progress.total - stage.progress.pending} of ${stage.progress.total}` : 'Adding…'}</p>
-                {stage.progress && <progress className={styles.dayBar} max={stage.progress.total} value={stage.progress.total - stage.progress.pending} />}
-                <p className={styles.quietNote}>Keep this open till it&apos;s finished.</p>
-              </div>
-            )}
-            {stage.kind === 'done' && (
-              <p className={styles.dayStep}>{stage.progress.total === 0 ? 'Nothing was picked.' : `Done. ${summary(stage.progress)}.`}</p>
-            )}
-            {stage.kind === 'error' && <p className={styles.error} role="alert">{stage.message}</p>}
-            {stopped && !busy && (
-              <div className={styles.actionRow}>
-                <span className={styles.quietNote}>{stopped.pending === 1 ? 'One photo from last time didn’t finish.' : `${stopped.pending} photos from last time didn’t finish.`}</span>
-                <button type="button" className={styles.ghost} onClick={() => carryOn(stopped.id)} disabled={!ready}>Finish adding them</button>
-              </div>
-            )}
+            {note && <p className={styles.error} role="alert">{note}</p>}
           </>
         )}
       </section>
+
+      {lines.length > 0 && <LineQueue lines={lines} onDone={() => router.refresh()} />}
+      {lines.length === 0 && linked && !drafting && (
+        <p className={styles.quietNote}>Suggested lines are switched off. Add your Claude key in Vercel to switch them on.</p>
+      )}
 
       {review.length > 0 && (
         <section className={styles.group}>
@@ -246,24 +169,72 @@ export default function HerDaysDesk({ clientId, shownCount, runs, review, recent
         </section>
       )}
 
-      {runs.length > 0 && (
+      {notIn.length > 0 && (
         <section className={styles.group}>
-          <h2 className={styles.groupTitle}>Added before</h2>
+          <h2 className={styles.groupTitle}>Didn&apos;t come through</h2>
+          <p className={styles.quietNote}>These were tried three times. Put them in the folder again to have another go.</p>
           <ul className={styles.runList}>
-            {runs.map(run => (
-              <li key={run.id}>
-                <strong>{when(run.startedAt)}</strong>
-                <span>{run.status === 'picking' ? 'Waiting for you to pick' : run.total === 0 ? 'Nothing was picked' : `${run.total} picked. ${summary(run)}${run.pending ? `, ${run.pending} still to finish` : ''}.`}</span>
-                {run.reasons.filter(reason => reason !== 'This one didn’t come through. Try again.').map(reason => <small key={reason}>{reason}</small>)}
-                {run.retryable > 0 && !busy && clientId && (
-                  <button type="button" className={styles.linkish} onClick={() => tryAgain(run.id)} disabled={!ready}>Try again</button>
-                )}
-              </li>
+            {notIn.map((item, index) => (
+              <li key={index}><strong>{item.name ?? 'A photo'}</strong>{item.reason && <span>{item.reason}</span>}</li>
             ))}
           </ul>
         </section>
       )}
     </>
+  )
+}
+
+// One line at a time, big, so a hundred can be sorted over a cup of tea. Lines already sorted are
+// skipped, even when the list behind them is refreshed.
+function LineQueue({ lines, onDone }: { lines: DeskLine[]; onDone: () => void }) {
+  const [sorted, setSorted] = useState<string[]>([])
+  const left = lines.filter(line => !sorted.includes(line.id))
+  const line = left[0]
+  if (!line) return null
+  return (
+    <section className={styles.group}>
+      <h2 className={styles.groupTitle}>Lines for you · {left.length} to go</h2>
+      <LineCard key={line.id} line={line} onSorted={() => {
+        setSorted(done => [...done, line.id])
+        if (left.length === 1) onDone()
+      }} />
+    </section>
+  )
+}
+
+function LineCard({ line, onSorted }: { line: DeskLine; onSorted: () => void }) {
+  const [text, setText] = useState(line.draft)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const edited = text.trim() !== line.draft
+
+  async function decide(kind: 'keep' | 'mine' | 'none' | 'again') {
+    setBusy(true); setError(null)
+    const result = await decideLine(line.id, kind === 'mine' ? { kind, text } : { kind })
+    setBusy(false)
+    if ('error' in result) { setError(result.error); return }
+    onSorted()
+  }
+
+  return (
+    <div className={styles.lineCard}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`${line.url}?w=960`} alt="The photo this line is for" className={styles.linePhoto} />
+      <div className={styles.lineSide}>
+        <label className={styles.lineField}>
+          <span>The line under it</span>
+          <textarea value={text} rows={2} maxLength={200} onChange={event => setText(event.target.value)}
+            onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void decide(edited ? 'mine' : 'keep') } }} />
+        </label>
+        {line.was && <p className={styles.lineWas}>Before: {line.was}</p>}
+        <div className={styles.actionRow}>
+          <button type="button" className={styles.primary} disabled={busy} onClick={() => void decide(edited ? 'mine' : 'keep')}>{edited ? 'Use mine' : 'Keep this'}</button>
+          <button type="button" className={styles.ghost} disabled={busy} onClick={() => void decide('again')}>Another line</button>
+          <button type="button" className={styles.linkish} disabled={busy} onClick={() => void decide('none')}>No line</button>
+        </div>
+        {error && <p className={styles.error} role="alert">{error}</p>}
+      </div>
+    </div>
   )
 }
 
@@ -273,7 +244,7 @@ function Tile({ photo, children }: { photo: DeskPhoto; children: React.ReactNode
       {photo.url
         // eslint-disable-next-line @next/next/no-img-element
         ? <img src={`${photo.url}?w=480`} alt={photo.date ? `From ${dayLabel(photo.date)}` : 'Undated'} loading="lazy" />
-        : <div className={styles.dayMissing}>No preview</div>}
+        : <div className={styles.dayMissing}>No picture yet</div>}
       {photo.kind === 'video' && <span className={styles.dayVideo}>video</span>}
       <div className={styles.dayTileText}>{photo.date ? dayLabel(photo.date) : 'No date'}</div>
       {children}

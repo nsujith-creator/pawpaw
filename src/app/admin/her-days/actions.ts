@@ -1,7 +1,7 @@
 'use server'
 
-// The desk side of "Bring in from Google Photos". The browser signs in to Google and passes its
-// short-lived Google token with each call; it is used for that call only and never stored.
+// The desk side of Her days: check the folder now, keep or rewrite drafted lines, and show, hide or
+// re-date a photo.
 
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -9,8 +9,7 @@ import { checkOrigin } from '@/lib/auth/origin'
 import { requireActiveAdmin } from '@/lib/auth/admin'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createSession, deleteSession, getSession, GoogleError, listPicked } from '@/lib/her-days/google-picker'
-import { importBatch, recordPicked, refreshFailed, runProgress, type Progress } from '@/lib/her-days/importer'
+import { syncHerDays, type SyncReport } from '@/lib/her-days/sync'
 import { dayNumber, indiaDate } from '@/lib/her-days/days'
 
 const SIGNED_OUT = 'You’ve been signed out. Sign in again, then try once more.'
@@ -20,91 +19,53 @@ async function admin() {
   return requireActiveAdmin(await createClient())
 }
 
-function googleTrouble(error: unknown) {
-  if (error instanceof GoogleError && (error.status === 401 || error.status === 403)) return 'Google wants you to sign in again. Press the button once more.'
-  return 'Google Photos isn’t answering right now. Try again in a minute.'
+// Looks in the folder and brings in what it can for about four minutes. The desk calls it again
+// while there's more to bring in.
+export async function checkNow(): Promise<SyncReport | { error: string }> {
+  try { await admin() } catch { return { error: SIGNED_OUT } }
+  const report = await syncHerDays(createAdminClient(), { deadline: Date.now() + 240_000, batch: 3 })
+  if (report.found || (report.progress?.added ?? 0) > 0) revalidatePath('/days')
+  return report
 }
 
-export async function startPick(token: string): Promise<{ runId: string; pickerUri: string; pollIntervalMs: number } | { error: string }> {
-  let user
-  try { user = await admin() } catch { return { error: SIGNED_OUT } }
-  if (!token) return { error: 'Sign in to Google first.' }
-  let session
-  try { session = await createSession(fetch, token) } catch (error) { return { error: googleTrouble(error) } }
-  const { data, error } = await createAdminClient().from('import_runs').insert({
-    source: 'google_photos', picker_session_id: session.id, picker_expires_at: session.expireTime, started_by: user.id,
-  }).select('id').single()
-  if (error || !data) return { error: 'Something went wrong. Try again.' }
-  return { runId: data.id, pickerUri: session.pickerUri, pollIntervalMs: session.pollIntervalMs }
-}
+export type LineDecision = { kind: 'keep' } | { kind: 'mine'; text: string } | { kind: 'none' } | { kind: 'again' }
 
-export type PickState = { waiting: true } | { progress: Progress } | { error: string; expired?: true }
-
-// Called every few seconds while the person is choosing in Google Photos.
-export async function checkPick(runId: string, token: string): Promise<PickState> {
+// Keep the drafted line, put his own instead, go without one, or ask for another.
+export async function decideLine(draftId: string, decision: LineDecision): Promise<{ ok: true } | { error: string }> {
   try { await admin() } catch { return { error: SIGNED_OUT } }
   const db = createAdminClient()
-  const { data: run } = await db.from('import_runs').select('id, status, picker_session_id, picker_expires_at').eq('id', runId).maybeSingle()
-  if (!run) return { error: 'Something went wrong. Start again.' }
-  if (run.status !== 'picking') return { progress: await runProgress(db, runId) }
-  if (run.picker_expires_at && Date.parse(run.picker_expires_at) < Date.now()) {
-    await db.from('import_runs').update({ status: 'expired', finished_at: new Date().toISOString() }).eq('id', runId).eq('status', 'picking')
-    return { error: 'Nothing was picked in time. Press the button to start again.', expired: true }
-  }
-  try {
-    const session = await getSession(fetch, token, run.picker_session_id)
-    if (!session.mediaItemsSet) return { waiting: true }
-    const items = await listPicked(fetch, token, run.picker_session_id)
-    // The session stays open: Google's download addresses belong to it. It is closed once
-    // everything is in (see importMore), or simply expires.
-    await recordPicked(db, runId, items)
-    return { progress: await runProgress(db, runId) }
-  } catch (error) {
-    if (error instanceof GoogleError) return { error: googleTrouble(error) }
-    return { error: 'Something went wrong while adding these. Try again; nothing gets added twice.' }
-  }
-}
+  const { data: draft } = await db.from('caption_drafts').select('id, media_asset_id, draft, status').eq('id', draftId).maybeSingle()
+  if (!draft || draft.status !== 'waiting') return { error: 'That line has already been sorted. Reload to see the next one.' }
+  const now = new Date().toISOString()
 
-// Brings the next few in. The browser keeps calling this until nothing is left.
-export async function importMore(runId: string, token: string): Promise<{ progress: Progress; claimed: number } | { error: string }> {
-  let user
-  try { user = await admin() } catch { return { error: SIGNED_OUT } }
-  const db = createAdminClient()
-  try {
-    const result = await importBatch(db, fetch, token, user.id, runId, 3)
-    if (result.progress.added) revalidatePath('/days')
-    if (result.progress.pending === 0 && result.progress.failed === 0) {
-      const { data: run } = await db.from('import_runs').select('picker_session_id').eq('id', runId).maybeSingle()
-      if (run?.picker_session_id) await deleteSession(fetch, token, run.picker_session_id)
-    }
-    return result
-  } catch {
-    return { error: 'Adding stopped part-way. Press ‘Finish adding them’ to carry on.' }
+  if (decision.kind === 'again') {
+    await db.from('caption_drafts').update({ status: 'redrafted', decided_at: now }).eq('id', draftId)
+    const { data } = await db.from('her_days_state').select('value').eq('key', 'redraft').maybeSingle()
+    const ids = new Set((data?.value as { media_ids?: string[] } | undefined)?.media_ids ?? [])
+    ids.add(draft.media_asset_id as string)
+    await db.from('her_days_state').upsert({ key: 'redraft', value: { media_ids: [...ids] }, updated_at: now })
+    return { ok: true }
   }
-}
 
-// Puts the ones that didn't come in back in the queue, with fresh links from Google when the
-// picker session is still open (Google keeps it for a while after picking).
-export async function retryFailed(runId: string, token: string): Promise<{ ok: true; count: number } | { error: string }> {
-  try { await admin() } catch { return { error: SIGNED_OUT } }
-  const db = createAdminClient()
-  const { data: run } = await db.from('import_runs').select('picker_session_id').eq('id', runId).maybeSingle()
-  if (!run) return { error: 'Something went wrong. Start again.' }
-  let picked = null
-  if (run.picker_session_id && token) {
-    try { picked = await listPicked(fetch, token, run.picker_session_id) } catch { picked = null }
+  let caption: string | null
+  let status: string
+  if (decision.kind === 'keep') { caption = draft.draft as string; status = 'kept' }
+  else if (decision.kind === 'none') { caption = null; status = 'no_line' }
+  else {
+    caption = decision.text.replace(/\s+/g, ' ').trim()
+    if (!caption) return { error: 'Write the line first, or choose No line.' }
+    if (caption.length > 200) return { error: 'That’s a bit long for under a photo. Keep it to a line.' }
+    status = 'rewritten'
   }
-  try {
-    const count = await refreshFailed(db, runId, picked)
-    if (!count) return { error: 'Pick these again in Google Photos. Anything already here is skipped.' }
-    return { ok: true, count }
-  } catch {
-    return { error: 'That didn’t work just now. Try again in a minute.' }
-  }
+  const saved = await db.from('media_assets').update({ caption }).eq('id', draft.media_asset_id)
+  if (saved.error) return { error: 'That didn’t save. Try again.' }
+  await db.from('caption_drafts').update({ status, final_text: caption, decided_at: now }).eq('id', draftId)
+  revalidatePath('/', 'layout')
+  return { ok: true }
 }
 
 // Show, hide, or fix the date of one photo on her days. A photo can only be shown on a day of
-// her life so far, so nothing ends up neither waiting for review nor on her days.
+// her life so far, so nothing ends up neither waiting for a look nor on her days.
 export async function updateTimelineItem(id: string, change: { visibility?: 'shown' | 'hidden'; date?: string }): Promise<{ ok: true } | { error: string }> {
   try { await admin() } catch { return { error: SIGNED_OUT } }
   const db = createAdminClient()

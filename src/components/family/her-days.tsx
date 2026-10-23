@@ -2,6 +2,7 @@
 // Tapping a day opens its week below (on wide screens, beside) as her height chart:
 // each day hung at her age, with its stories and its photos.
 
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { ageAt } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
@@ -10,6 +11,7 @@ import type { DayMedia, DayStory } from '@/lib/her-days/load'
 import { BIRTHDAY } from '@/lib/family/age'
 import { storyHref } from './story-chart'
 import DayStrip from './day-strip'
+import ShowDay from './show-day'
 import styles from './family.module.css'
 
 type Entry = { day: number; media?: DayMedia; story?: DayStory }
@@ -37,7 +39,7 @@ export function pickWeek(weeks: QuiltWeek<Entry>[], requested: number | null): n
   return weeks.find(week => week.days.some(day => day.items.length))?.week ?? weeks[0]?.week ?? 0
 }
 
-export default function HerDays({ media, stories, today, requestedWeek }: { media: DayMedia[]; stories: DayStory[]; today: string; requestedWeek: number | null }) {
+export default function HerDays({ media, stories, today, requestedWeek, requestedDay = null }: { media: DayMedia[]; stories: DayStory[]; today: string; requestedWeek: number | null; requestedDay?: number | null }) {
   const entries: Entry[] = [
     ...media.map(item => ({ day: item.day, media: item })),
     ...stories.map(story => ({ day: story.day, story })),
@@ -52,10 +54,13 @@ export default function HerDays({ media, stories, today, requestedWeek }: { medi
   }
   const newestYear = Math.max(...years.keys())
   const selectedYear = yearsOld(dateOfDay(selected * 7))
+  const picked = requestedDay !== null && Math.floor(requestedDay / 7) === selected ? requestedDay : null
 
   return (
     <div className={styles.daysWrap}>
-      <div>
+      <Suspense fallback={null}><ShowDay /></Suspense>
+      <div id="calendar">
+        <p className={styles.quiltHint}>Tap a day to see it.</p>
         {[...years.entries()].map(([age, yearWeeks]) => {
           const count = yearWeeks.reduce((sum, week) => sum + week.days.reduce((n, day) => n + day.items.filter(item => item.media).length, 0), 0)
           return (
@@ -65,7 +70,7 @@ export default function HerDays({ media, stories, today, requestedWeek }: { medi
                 {yearWeeks.map(week => (
                   <div key={week.week} className={styles.quiltRow} role="listitem" data-selected={week.week === selected ? '' : undefined}>
                     <p className={styles.quiltWeek}>{week.month !== null ? <b>{monthLabel(week.month)}</b> : week.week === 0 ? <b>born</b> : weekLabel(week.week)}</p>
-                    {week.days.map(day => <Square key={day.day} day={day} week={week.week} today={today} />)}
+                    {week.days.map(day => <Square key={day.day} day={day} week={week.week} today={today} picked={day.day === picked} />)}
                   </div>
                 ))}
               </div>
@@ -74,7 +79,7 @@ export default function HerDays({ media, stories, today, requestedWeek }: { medi
         })}
         <Legend />
       </div>
-      <WeekView week={selectedWeek} newest={weeks[0]?.week ?? 0} />
+      <WeekView week={selectedWeek} newest={weeks[0]?.week ?? 0} picked={picked} />
     </div>
   )
 }
@@ -111,7 +116,7 @@ function StickerIcon({ sticker }: { sticker: Sticker }) {
   )
 }
 
-function Square({ day, week, today }: { day: QuiltWeek<Entry>['days'][number]; week: number; today: string }) {
+function Square({ day, week, today, picked }: { day: QuiltWeek<Entry>['days'][number]; week: number; today: string; picked: boolean }) {
   if (day.date > today) return <span className={styles.square} data-future="" aria-hidden="true" />
   const photos = day.items.filter(item => item.media).map(item => item.media!)
   const videos = photos.filter(photo => photo.kind === 'video').length
@@ -121,12 +126,13 @@ function Square({ day, week, today }: { day: QuiltWeek<Entry>['days'][number]; w
   const label = [fullDate(day.date), isToday ? 'today' : null,
     photos.length ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : null,
     ...stickers.map(sticker => sticker.label)].filter(Boolean).join(', ')
-  const href = `/days?week=${week}#day-${day.day}`
+  const href = `/days?week=${week}&day=${day.day}`
   // Busy days get a bolder count: a few photos, a good handful, or a whole album's worth.
   const busy = photos.length >= 10 ? 'lots' : photos.length >= 5 ? 'many' : 'some'
   const lead = stickers.find(sticker => sticker.kind === 'star' || sticker.kind === 'letter')
   return (
-    <Link href={href} className={styles.square} aria-label={label}
+    <Link href={href} scroll={false} className={styles.square} aria-label={label} aria-current={picked ? 'date' : undefined}
+      data-picked={picked ? '' : undefined}
       data-photo={photos.length ? '' : undefined}
       data-story={!photos.length && lead ? '' : undefined}
       data-colour={!photos.length && lead ? lead.colour : undefined}
@@ -169,28 +175,32 @@ function Legend() {
   )
 }
 
-function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) {
+function WeekView({ week, newest, picked }: { week: QuiltWeek<Entry>; newest: number; picked: number | null }) {
   const first = week.days[0].date
   const last = week.days[6].date
   const days = [...week.days].reverse().filter(day => day.items.length)
+  const pickedDay = week.days.find(day => day.day === picked)
+  const pickedEmpty = pickedDay && pickedDay.items.length === 0
   return (
     <section className={styles.weekView} id="week" aria-labelledby="week-title">
       <div className={styles.weekHead}>
         <h2 id="week-title">{weekTitle(week.week)}<small>{shortDate(first)} – {shortDate(last)}</small></h2>
         <nav className={styles.weekPager} aria-label="Other weeks">
-          {week.week > 0 ? <Link href={`/days?week=${week.week - 1}#week`} scroll={false}>Earlier</Link> : <span />}
-          {week.week < newest ? <Link href={`/days?week=${week.week + 1}#week`} scroll={false}>Later</Link> : <span />}
+          <a href="#calendar" className={styles.weekBack}>Calendar</a>
+          {week.week > 0 ? <Link href={`/days?week=${week.week - 1}`} scroll={false}>Earlier</Link> : <span />}
+          {week.week < newest ? <Link href={`/days?week=${week.week + 1}`} scroll={false}>Later</Link> : <span />}
         </nav>
       </div>
+      {pickedEmpty && <p className={styles.weekEmpty} id={`day-${pickedDay.day}`}>Nothing from {fullDate(pickedDay.date)} yet.</p>}
       {days.length === 0 ? (
-        <p className={styles.weekEmpty}>Nothing from this week yet.</p>
+        !pickedEmpty && <p className={styles.weekEmpty}>Nothing from this week yet.</p>
       ) : (
         <div className={styles.dayChart}>
           {days.map(day => {
             const photos = day.items.filter(item => item.media).map(item => item.media!)
             const dayStories = day.items.filter(item => item.story).map(item => item.story!)
             return (
-              <div key={day.day} className={styles.dayMark} id={`day-${day.day}`}>
+              <div key={day.day} className={styles.dayMark} id={`day-${day.day}`} data-picked={day.day === picked ? '' : undefined}>
                 <p className={styles.dayAge}>{ageAt(day.date)}<small>{fullDate(day.date)}</small></p>
                 {dayStories.map(({ item }) => (
                   <Link key={item.id} href={storyHref(item.slug)} className={styles.dayBook} data-colour={storyColour(item.visualScene, item.slug)}>
@@ -200,7 +210,7 @@ function WeekView({ week, newest }: { week: QuiltWeek<Entry>; newest: number }) 
                       : item.authorDisplayName && <span>by {item.authorDisplayName}</span>}
                   </Link>
                 ))}
-                {photos.length > 0 && <DayStrip photos={photos.map(photo => ({ id: photo.id, url: photo.url, width: photo.width, height: photo.height, playToken: photo.playToken, kind: photo.kind, videoFailed: photo.videoFailed }))} label={fullDate(day.date)} />}
+                {photos.length > 0 && <DayStrip photos={photos.map(photo => ({ id: photo.id, url: photo.url, caption: photo.caption, width: photo.width, height: photo.height, playToken: photo.playToken, kind: photo.kind, videoFailed: photo.videoFailed }))} label={fullDate(day.date)} />}
               </div>
             )
           })}

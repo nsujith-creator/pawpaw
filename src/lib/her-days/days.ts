@@ -19,10 +19,43 @@ export function dateOfDay(day: number): string {
   return new Date(Date.parse(`${BIRTHDAY}T00:00:00Z`) + day * 86_400_000).toISOString().slice(0, 10)
 }
 
+// A camera's own clock, as photos record it ("2026:06:12 10:30:00", no time zone). The family's
+// phones are in India, so the time is read as India time.
+export function cameraTime(value: string | null | undefined): string | null {
+  const match = value ? /^(\d{4})[:-](\d{2})[:-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(value.trim()) : null
+  if (!match) return null
+  const [, y, mo, d, h, mi, s] = match
+  const time = Date.parse(`${y}-${mo}-${d}T${h}:${mi}:${s}+05:30`)
+  return Number.isNaN(time) || Number(y) < 2000 ? null : new Date(time).toISOString()
+}
+
+// Phones write the moment into the file name: IMG_20260612_103000.jpg, VID_20260612_103000.mp4,
+// 20260612_103000.jpg, Screenshot_20260612-103000.png in the phone's own (India) time, and Pixel's
+// PXL_20260612_050000123.jpg in UTC.
+export function fileNameTime(name: string | null | undefined): string | null {
+  const match = name ? /(?:^|[^0-9])(20\d{2})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})/.exec(name) : null
+  if (!match) return null
+  const [, y, mo, d, h, mi, s] = match
+  if (/^PXL_/i.test(name!)) {
+    const time = Date.parse(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`)
+    return Number.isNaN(time) ? null : new Date(time).toISOString()
+  }
+  return cameraTime(`${y}:${mo}:${d} ${h}:${mi}:${s}`)
+}
+
+// The camera's time, hidden in a photo's EXIF block (sharp hands it over as raw bytes).
+export function exifTime(exif: Buffer | undefined): string | null {
+  if (!exif) return null
+  const text = exif.toString('latin1')
+  const match = /(20\d{2}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})/.exec(text)
+  return match ? cameraTime(match[1]) : null
+}
+
 // Why a picked photo should wait for a person instead of going straight onto her days.
 // Only mechanical facts: Pawpaw never guesses who is in a photo or what it means.
-export function reviewReason(item: { takenAt: string | null; filename: string | null }, now = Date.now()): string | null {
+export function reviewReason(item: { takenAt: string | null; filename: string | null; takenAtSource?: string | null }, now = Date.now()): string | null {
   if (!item.takenAt) return 'No date on this one. When was it taken?'
+  if (item.takenAtSource === 'added') return 'This has no date of its own, so it sits on the day it was added. When was it taken?'
   const day = dayNumber(indiaDate(item.takenAt))
   if (day < 0) return 'This says it was taken before she was born.'
   if (Date.parse(item.takenAt) > now + 86_400_000) return 'This says it was taken on a day that hasn’t come yet.'

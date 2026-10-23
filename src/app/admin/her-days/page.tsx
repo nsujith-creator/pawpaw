@@ -1,14 +1,17 @@
 import { requireAdminPage } from '@/lib/admin/require-admin-page'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateSignedUrl } from '@/lib/media/private-url'
-import { GOOGLE_CLIENT_ID } from '@/lib/her-days/google-config'
+import { readServiceAccount } from '@/lib/her-days/google-drive'
+import { lastChecked } from '@/lib/her-days/sync'
+import { progressFor } from '@/lib/her-days/importer'
+import { canDraft } from '@/lib/her-days/captions'
 import { indiaDate } from '@/lib/her-days/days'
 import AdminState from '../admin-state'
-import HerDaysDesk, { type DeskMonth, type DeskPhoto, type DeskRun } from './her-days-desk'
+import HerDaysDesk, { type DeskLine, type DeskMonth, type DeskPhoto } from './her-days-desk'
 import styles from '../admin.module.css'
 
 export const dynamic = 'force-dynamic'
-// Bringing a video in streams it from Google to the video service inside one call.
+// A check brings photos in for up to four minutes inside one call.
 export const maxDuration = 300
 export const metadata = { title: 'Her days' }
 
@@ -57,8 +60,7 @@ export default async function HerDaysDeskPage({ searchParams }: { searchParams: 
   const month = raw && /^\d{4}-\d{2}$/.test(raw) ? raw : null
   const db = createAdminClient()
   const select = 'id, kind, taken_at, review_reason, media_assets(storage_path)'
-  const [runsResult, reviewResult, recentResult, hiddenResult, shownCount] = await Promise.all([
-    db.from('import_runs').select('id, status, started_at, finished_at').order('started_at', { ascending: false }).limit(8),
+  const [reviewResult, recentResult, hiddenResult, shownCount, linesResult, failedResult] = await Promise.all([
     db.from('timeline_media').select(select).eq('visibility', 'review').order('created_at', { ascending: true }).limit(60),
     month
       // A month at India time: from the 1st to the 1st of the next month.
@@ -68,39 +70,35 @@ export default async function HerDaysDeskPage({ searchParams }: { searchParams: 
       : db.from('timeline_media').select(select).eq('visibility', 'shown').order('created_at', { ascending: false }).limit(24),
     db.from('timeline_media').select(select).eq('visibility', 'hidden').order('updated_at', { ascending: false }).limit(24),
     db.from('timeline_media').select('id', { count: 'exact', head: true }).eq('visibility', 'shown'),
+    db.from('caption_drafts').select('id, draft, media_assets(storage_path, caption)').eq('status', 'waiting').order('created_at', { ascending: true }).limit(40),
+    db.from('import_items').select('filename, error').eq('status', 'failed').gte('attempts', 3).order('updated_at', { ascending: false }).limit(20),
   ])
   const months = await monthsOnHerDays(db)
-  if (runsResult.error || reviewResult.error || recentResult.error || hiddenResult.error || !months) {
+  if (reviewResult.error || recentResult.error || hiddenResult.error || linesResult.error || !months) {
     return <AdminState title="Her days didn't load." body="Nothing was changed. Reload in a minute." />
   }
+  const [progress, checkedAt] = await Promise.all([progressFor(db, {}).catch(() => null), lastChecked(db)])
 
-  const runIds = (runsResult.data ?? []).map(run => run.id)
-  const { data: itemRows } = runIds.length
-    ? await db.from('import_items').select('run_id, status, error, google_base_url').in('run_id', runIds)
-    : { data: [] }
-  const runs: DeskRun[] = (runsResult.data ?? []).map(run => {
-    const items = (itemRows ?? []).filter(item => item.run_id === run.id)
-    const count = (status: string) => items.filter(item => item.status === status).length
-    const reasons = [...new Set(items.filter(item => item.status === 'failed' && item.error).map(item => item.error as string))]
-    return {
-      id: run.id, status: run.status, startedAt: run.started_at,
-      total: items.length, added: count('added'), duplicate: count('duplicate'), failed: count('failed'),
-      pending: count('pending') + count('working'),
-      retryable: items.filter(item => item.status === 'failed' && item.google_base_url).length,
-      reasons,
-    }
-  })
+  type LineRow = { id: string; draft: string; media_assets: { storage_path: string; caption: string | null } | null }
+  const lines: DeskLine[] = await Promise.all(((linesResult.data ?? []) as unknown as LineRow[]).filter(row => row.media_assets).map(async row => ({
+    id: row.id, draft: row.draft, was: row.media_assets!.caption, url: await generateSignedUrl(row.media_assets!.storage_path),
+  })))
+  const notIn = (failedResult.data ?? []).map(row => ({ name: row.filename as string | null, reason: row.error as string | null }))
 
   return (
     <main className={styles.page}>
       <div className={styles.pageHead}>
         <h1 className={styles.pageTitle}>Her days</h1>
       </div>
-      <p className={styles.lede}>Add her photos from Google Photos.</p>
+      <p className={styles.lede}>Put photos in the Her days folder in Drive and they turn up here, and on her page.</p>
       <HerDaysDesk
-        clientId={GOOGLE_CLIENT_ID}
+        linked={readServiceAccount() !== null}
+        drafting={canDraft()}
+        checkedAt={checkedAt}
+        progress={progress}
+        lines={lines}
+        notIn={notIn}
         shownCount={shownCount.count ?? 0}
-        runs={runs}
         review={await photos((reviewResult.data ?? []) as unknown as TimelineRow[])}
         recent={await photos((recentResult.data ?? []) as unknown as TimelineRow[])}
         hidden={await photos((hiddenResult.data ?? []) as unknown as TimelineRow[])}
