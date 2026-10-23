@@ -305,7 +305,12 @@ a.square:hover { transform: scale(1.06); z-index: 1; }
 .legendCount { display: inline-block; min-width: 22px; padding: 3px 5px; border-radius: 999px; background: #fff; color: var(--ink); font: 800 0.65rem/1 var(--display); font-style: normal; text-align: center; box-shadow: 0 1px 3px rgba(34, 22, 58, 0.3); }
 a.square:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { a.square:hover { transform: none; } }
-.weekView { scroll-margin-top: 72px; }
+.weekView { scroll-margin-top: 72px; min-height: calc(100dvh - 72px); }
+.quiltHint { margin: 0 0 10px; font: 600 0.95rem/1.3 var(--display); color: var(--ink-2); }
+.square[data-picked] { outline: 3px solid var(--teal); outline-offset: 2px; z-index: 1; }
+.dayMark, .weekEmpty { scroll-margin-top: 84px; }
+.dayMark[data-picked] .dayAge { color: var(--teal); }
+.weekBack { margin-right: auto; }
 .weekHead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
 .weekHead h2 { font: 800 clamp(2rem, 9vw, 3rem)/1 var(--display); letter-spacing: -0.035em; }
 .weekHead h2 small { display: block; margin-top: 6px; font: 600 0.95rem/1.3 var(--display); letter-spacing: 0; color: var(--ink-2); }
@@ -344,6 +349,7 @@ a.square:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 .viewerBar button { min-height: 44px; padding: 0 1rem; border: 2px solid #fff; border-radius: 999px; background: none; color: #fff; font: 700 0.95rem/1 var(--display); cursor: pointer; }
 .viewerBar button:focus-visible { outline: 3px solid var(--duck); outline-offset: 2px; }
 @media (min-width: 900px) {
+  .weekPager .weekBack { display: none; }
   .daysCover { padding: 52px max(40px, calc((100% - 1200px) / 2)) 46px; }
   .daysWrap { width: min(1200px, 100% - 80px); margin: 0 auto; padding: 40px 0 72px; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 48px; align-items: start; }
   .quiltRow { grid-template-columns: 84px repeat(7, minmax(0, 1fr)); gap: 5px; margin-bottom: 5px; }

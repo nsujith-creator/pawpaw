@@ -29,7 +29,7 @@ Everything else is fixed text in the code. To change one of those, use the table
 |---|---|
 | Home: "Varada's family pages", വരദ, "Varada", "Her stories", "A note from acchan", "Her names", "Her people", the "…4 things…" line, the footer "pawpaw · kept for Varada, by acchan and amma" | `src/app/(archive)/page.tsx` |
 | Her days: "146 days of her, so far" and "Her photos go here, day by day." | `src/app/(archive)/days/page.tsx` |
-| Her days: "Nothing from this week yet.", Earlier, Later, "Her first year", "16 weeks old" | `src/components/family/her-days.tsx` |
+| Her days: "Tap a day to see it.", "Nothing from <day> yet.", "Nothing from this week yet.", Calendar, Earlier, Later, "Her first year", "16 weeks old" | `src/components/family/her-days.tsx` |
 | Lines under photos on her days (his words only, never a draft) | `src/components/family/day-strip.tsx` |
 | Desk → Her days wording, including "Lines for you", Keep this, Use mine, Another line, No line | `src/app/admin/her-days/page.tsx` and `her-days-desk.tsx` |
 | "Nothing written yet…" (empty chart) | `src/components/family/story-chart.tsx` |
