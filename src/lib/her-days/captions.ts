@@ -100,7 +100,10 @@ async function candidates(db: SupabaseClient, limit: number): Promise<Candidate[
   const redraftIds = ((redraft?.value as { media_ids?: string[] } | undefined)?.media_ids ?? []).slice(0, limit)
   if (redraftIds.length) {
     const { data } = await db.from('media_assets').select('id, storage_path, caption').in('id', redraftIds)
-    for (const row of data ?? []) picked.push({ mediaId: row.id as string, storagePath: row.storage_path as string, takenAt: null, oldLine: (row.caption as string | null) ?? null })
+    // A photo on her days keeps its date and age for the new line; a story photo has none here.
+    const { data: dated } = await db.from('timeline_media').select('media_asset_id, taken_at').in('media_asset_id', redraftIds)
+    const takenAt = new Map((dated ?? []).map(row => [row.media_asset_id as string, (row.taken_at as string | null) ?? null]))
+    for (const row of data ?? []) picked.push({ mediaId: row.id as string, storagePath: row.storage_path as string, takenAt: takenAt.get(row.id as string) ?? null, oldLine: (row.caption as string | null) ?? null })
   }
   if (picked.length < limit) {
     const { data } = await db.from('timeline_media').select('media_asset_id, taken_at, media_assets!inner(storage_path, caption)')
@@ -139,10 +142,17 @@ export async function draftMissingLines(db: SupabaseClient, options: { deadline:
         names, people, oldLine: candidate.oldLine,
       }, api)
       if (!line) continue
-      // A newer draft replaces any still waiting for the same photo.
-      await db.from('caption_drafts').update({ status: 'redrafted', decided_at: new Date().toISOString() }).eq('media_asset_id', candidate.mediaId).eq('status', 'waiting')
+      // A newer draft replaces any still waiting for the same photo. If the new one doesn't save,
+      // the old one goes back to waiting and the photo stays on the redraft list.
+      const { data: retired } = await db.from('caption_drafts').update({ status: 'redrafted', decided_at: new Date().toISOString() })
+        .eq('media_asset_id', candidate.mediaId).eq('status', 'waiting').select('id')
       const { error } = await db.from('caption_drafts').insert({ media_asset_id: candidate.mediaId, draft: line })
-      if (!error) drafted++
+      if (error) {
+        const ids = (retired ?? []).map(row => row.id as string)
+        if (ids.length) await db.from('caption_drafts').update({ status: 'waiting', decided_at: null }).in('id', ids)
+        continue
+      }
+      drafted++
       if (redraftIds.includes(candidate.mediaId)) {
         redraftIds = redraftIds.filter(id => id !== candidate.mediaId)
         await db.from('her_days_state').upsert({ key: 'redraft', value: { media_ids: redraftIds }, updated_at: new Date().toISOString() })

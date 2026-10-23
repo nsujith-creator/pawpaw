@@ -551,6 +551,41 @@ describe('her days: lines under photos', () => {
     expect(await draftMissingLines(db as never, { deadline: Date.now() + 10_000, api: api as never })).toBe(0)
   })
 
+  it('keeps a photo queued, and its old suggestion waiting, when a new one does not save; a redraft keeps its date', async () => {
+    const { db, tables, files } = fakeDb()
+    const jpeg = await sharp({ create: { width: 200, height: 200, channels: 3, background: '#ffc93c' } }).jpeg().toBuffer()
+    files.set('a.jpg', jpeg)
+    tables.media_assets.push({ id: 'm-a', storage_path: 'a.jpg', caption: 'Old line' })
+    tables.timeline_media.push({ id: 't-a', media_asset_id: 'm-a', taken_at: '2026-06-12T05:00:00Z', visibility: 'shown' })
+    tables.caption_drafts.push({ id: 'd-old', media_asset_id: 'm-a', draft: 'first try', status: 'waiting' })
+    tables.her_days_state.push({ key: 'redraft', value: { media_ids: ['m-a'] } })
+    const notes: string[] = []
+    const api = { beta: { messages: { create: vi.fn(async (request: { messages: { content: { type: string; text?: string }[] }[] }) => {
+      notes.push(request.messages[0].content.find(part => part.type === 'text')!.text!)
+      return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'second try' }] }
+    }) } } }
+    const realFrom = db.from
+    let failInsert = true
+    db.from = (table: string) => {
+      const query = realFrom(table)
+      if (table === 'caption_drafts' && failInsert) {
+        const insert = query.insert
+        query.insert = ((rows: Row) => { insert(rows); return { ...query, then: (resolve: (value: unknown) => void) => resolve({ data: null, error: { code: '500', message: 'down' } }) } }) as typeof query.insert
+      }
+      return query
+    }
+    expect(await draftMissingLines(db as never, { deadline: Date.now() + 10_000, api: api as never })).toBe(0)
+    expect(tables.caption_drafts.map(row => [row.id, row.status])).toEqual([['d-old', 'waiting']])
+    expect((tables.her_days_state[0].value as { media_ids: string[] }).media_ids).toEqual(['m-a'])
+    expect(notes[0]).toMatch(/12 June/)
+    expect(notes[0]).toMatch(/Old line/)
+
+    failInsert = false
+    expect(await draftMissingLines(db as never, { deadline: Date.now() + 10_000, api: api as never })).toBe(1)
+    expect(tables.caption_drafts.map(row => [row.draft, row.status])).toEqual([['first try', 'redrafted'], ['second try', 'waiting']])
+    expect((tables.her_days_state[0].value as { media_ids: string[] }).media_ids).toEqual([])
+  })
+
   it('puts a line up only when he keeps it or writes his own', async () => {
     const { db, tables } = fakeDb()
     deskDb = db

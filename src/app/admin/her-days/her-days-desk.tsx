@@ -43,22 +43,36 @@ export default function HerDaysDesk({ linked, drafting, checkedAt, progress, lin
   const alive = useRef(true)
   useEffect(() => () => { alive.current = false }, [])
 
-  // Keeps checking while there are photos still coming in, then refreshes the page.
+  // Keeps checking while there are photos still coming in, then refreshes the page. If a round
+  // brings nothing new in (an earlier look may still be holding some), it waits before trying again.
   const check = useCallback(async () => {
     setChecking(true)
     setNote(null)
-    for (let round = 0; round < 200 && alive.current; round++) {
-      const report = await checkNow()
-      if ('error' in report) { setNote(report.error); break }
-      setNow(report.progress)
-      setChecked(report.checkedAt)
-      if (report.state === 'not_linked') break
-      if (report.state === 'error') { setNote('The folder didn’t answer just now. It will try again by itself.'); break }
-      router.refresh()
-      if (report.state === 'busy') { await sleep(20_000); continue }
-      if (!report.progress || report.progress.pending === 0) break
+    let before: Progress | null = null
+    let stuck = 0
+    try {
+      for (let round = 0; round < 200 && alive.current; round++) {
+        const report = await checkNow()
+        if ('error' in report) { setNote(report.error); break }
+        setNow(report.progress)
+        setChecked(report.checkedAt)
+        if (report.state === 'not_linked') break
+        if (report.state === 'error') { setNote('The folder didn’t answer just now. It will try again by itself.'); break }
+        router.refresh()
+        if (report.state === 'busy') { await sleep(20_000); continue }
+        const after = report.progress
+        if (!after || after.pending === 0) break
+        const moved = !before || after.pending !== before.pending || after.added !== before.added
+        before = after
+        stuck = moved ? 0 : stuck + 1
+        if (stuck >= 3) break
+        if (stuck > 0) await sleep(20_000)
+      }
+    } catch {
+      setNote('The folder didn’t answer just now. It will try again by itself.')
+    } finally {
+      setChecking(false)
     }
-    setChecking(false)
   }, [router])
 
   // Opening the desk starts a check when it's been a while, or when photos are still coming in.
@@ -106,7 +120,7 @@ export default function HerDaysDesk({ linked, drafting, checkedAt, progress, lin
 
       {lines.length > 0 && <LineQueue lines={lines} onDone={() => router.refresh()} />}
       {lines.length === 0 && linked && !drafting && (
-        <p className={styles.quietNote}>Once Claude is set up, it’ll suggest a line for each photo here.</p>
+        <p className={styles.quietNote}>Suggested lines are switched off. Add your Claude key in Vercel to switch them on.</p>
       )}
 
       {review.length > 0 && (
