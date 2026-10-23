@@ -262,6 +262,23 @@
 .year > summary::before { content: "▸"; font-size: 0.9rem; transition: transform 0.2s var(--ease); }
 .year[open] > summary::before { transform: rotate(90deg); }
 .yearTitle small { font: 600 0.9rem/1 var(--display); color: var(--ink-2); letter-spacing: 0; }
+.month { margin: 0 0 6px; }
+.month > summary { list-style: none; cursor: pointer; }
+.month > summary::-webkit-details-marker { display: none; }
+.monthRibbon { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name thumbs" "count thumbs"; align-items: center; gap: 2px 12px; min-height: 56px; padding: 8px 12px; border-radius: 8px; background: var(--paper-2); }
+.month[open] > .monthRibbon { background: none; padding: 6px 0 0; min-height: 44px; }
+.month[open] > .monthRibbon .monthThumbs, .month[open] > .monthRibbon .monthCount { display: none; }
+.monthName { grid-area: name; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.monthName b { font: 800 1.05rem/1.1 var(--display); color: var(--crayon); }
+.monthName small { font: 600 0.8rem/1.2 var(--display); color: var(--ink-2); }
+.monthName::before { content: "▸"; align-self: center; font-size: 0.75rem; color: var(--ink-2); transition: transform 0.2s var(--ease); }
+.month[open] .monthName::before { transform: rotate(90deg); }
+.monthCount { grid-area: count; padding-left: 18px; font: 600 0.85rem/1.2 var(--display); color: var(--ink-2); }
+.monthThumbs { grid-area: thumbs; display: flex; }
+.monthThumbs img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 2px solid var(--paper); box-shadow: 0 2px 6px -2px rgba(34, 22, 58, 0.4); }
+.monthThumbs img + img { margin-left: -12px; }
+.monthRibbon:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .monthName::before, .year > summary::before { transition: none; } }
 .quilt { --sq: calc((min(100vw, 100%) - 32px - 64px - 6 * 4px) / 7); margin-top: 8px; }
 .quiltRow { display: grid; grid-template-columns: 64px repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 4px; align-items: center; border-radius: 4px; }
 .quiltRow[data-selected] .quiltWeek { color: var(--ink); }

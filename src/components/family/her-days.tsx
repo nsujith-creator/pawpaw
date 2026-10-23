@@ -6,9 +6,8 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { ageAt } from '@/lib/family/age'
 import { storyColour } from '@/lib/family/story-colour'
-import { dateOfDay, monthLabel, monthsTurned, quiltWeeks, weekLabel, type QuiltWeek } from '@/lib/her-days/days'
+import { monthLabel, monthsTurned, quiltWeeks, weekLabel, type QuiltWeek } from '@/lib/her-days/days'
 import type { DayMedia, DayStory } from '@/lib/her-days/load'
-import { BIRTHDAY } from '@/lib/family/age'
 import { storyHref } from './story-chart'
 import DayStrip from './day-strip'
 import ShowDay from './show-day'
@@ -21,13 +20,6 @@ function fullDate(date: string) {
 }
 function shortDate(date: string) {
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
-}
-
-// Her age in whole years on a date: 0 in her first year.
-function yearsOld(date: string) {
-  const [by, bm, bd] = BIRTHDAY.split('-').map(Number)
-  const [y, m, d] = date.split('-').map(Number)
-  return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0)
 }
 
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth']
@@ -47,13 +39,19 @@ export default function HerDays({ media, stories, today, requestedWeek, requeste
   const weeks = quiltWeeks(entries, today)
   const selected = pickWeek(weeks, requestedWeek)
   const selectedWeek = weeks.find(week => week.week === selected)!
-  const years = new Map<number, QuiltWeek<Entry>[]>()
-  for (const week of weeks) {
-    const age = yearsOld(dateOfDay(week.week * 7))
-    years.set(age, [...(years.get(age) ?? []), week])
+  const months = monthsOf(weeks)
+  const years = new Map<number, MonthGroup[]>()
+  for (const group of months) {
+    const age = Math.floor(group.month / 12)
+    years.set(age, [...(years.get(age) ?? []), group])
   }
   const newestYear = Math.max(...years.keys())
-  const selectedYear = yearsOld(dateOfDay(selected * 7))
+  const selectedMonth = months.find(group => group.weeks.some(week => week.week === selected))?.month ?? 0
+  const selectedYear = Math.floor(selectedMonth / 12)
+  // The month she's in now stays open (with the one before, while the new one is only days old),
+  // as does the month of the week being looked at. Every other month folds to one line.
+  const openMonths = new Set([months[0]?.month, selectedMonth])
+  if (months[0] && months[0].weeks.length < 2 && months[1]) openMonths.add(months[1].month)
   const picked = requestedDay !== null && Math.floor(requestedDay / 7) === selected ? requestedDay : null
 
   return (
@@ -61,19 +59,24 @@ export default function HerDays({ media, stories, today, requestedWeek, requeste
       <Suspense fallback={null}><ShowDay /></Suspense>
       <div id="calendar">
         <p className={styles.quiltHint}>Tap a day to see it.</p>
-        {[...years.entries()].map(([age, yearWeeks]) => {
-          const count = yearWeeks.reduce((sum, week) => sum + week.days.reduce((n, day) => n + day.items.filter(item => item.media).length, 0), 0)
+        {[...years.entries()].map(([age, yearMonths]) => {
+          const count = yearMonths.reduce((sum, group) => sum + photosIn(group.weeks).length, 0)
           return (
             <details key={age} className={styles.year} open={age === newestYear || age === selectedYear}>
               <summary className={styles.yearTitle}>{yearTitle(age)}{count > 0 && <small>{count.toLocaleString('en-IN')} photo{count === 1 ? '' : 's'}</small>}</summary>
-              <div className={styles.quilt} role="list">
-                {yearWeeks.map(week => (
-                  <div key={week.week} className={styles.quiltRow} role="listitem" data-selected={week.week === selected ? '' : undefined}>
-                    <p className={styles.quiltWeek}>{week.month !== null ? <b>{monthLabel(week.month)}</b> : week.week === 0 ? <b>born</b> : weekLabel(week.week)}</p>
-                    {week.days.map(day => <Square key={day.day} day={day} week={week.week} today={today} picked={day.day === picked} />)}
+              {yearMonths.map(group => (
+                <details key={group.month} className={styles.month} open={openMonths.has(group.month)}>
+                  <MonthRibbon group={group} today={today} />
+                  <div className={styles.quilt} role="list">
+                    {group.weeks.map(week => (
+                      <div key={week.week} className={styles.quiltRow} role="listitem" data-selected={week.week === selected ? '' : undefined}>
+                        <p className={styles.quiltWeek}>{week.month !== null ? <b>{monthLabel(week.month)}</b> : week.week === 0 ? <b>born</b> : weekLabel(week.week)}</p>
+                        {week.days.map(day => <Square key={day.day} day={day} week={week.week} today={today} picked={day.day === picked} />)}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </details>
+              ))}
             </details>
           )
         })}
@@ -81,6 +84,54 @@ export default function HerDays({ media, stories, today, requestedWeek, requeste
       </div>
       <WeekView week={selectedWeek} newest={weeks[0]?.week ?? 0} picked={picked} />
     </div>
+  )
+}
+
+// The months of her life, newest first. A month starts with the week she turned that many months
+// old (as the calendar's row labels show it), so "4 months" holds every week up to "5 months".
+interface MonthGroup { month: number; weeks: QuiltWeek<Entry>[] }
+
+export function monthsOf(weeks: QuiltWeek<Entry>[]): MonthGroup[] {
+  const groups: MonthGroup[] = []
+  let month = 0
+  for (const week of [...weeks].reverse()) {
+    if (week.month !== null) month = week.month
+    const last = groups.at(-1)
+    if (last && last.month === month) last.weeks.unshift(week)
+    else groups.push({ month, weeks: [week] })
+  }
+  return groups.reverse()
+}
+
+function photosIn(weeks: QuiltWeek<Entry>[]) {
+  return weeks.flatMap(week => week.days).sort((a, b) => a.day - b.day).flatMap(day => day.items.filter(item => item.media).map(item => item.media!))
+}
+
+// A folded month: its age, its dates, a few of its photos and how many there are.
+function MonthRibbon({ group, today }: { group: MonthGroup; today: string }) {
+  const photos = photosIn(group.weeks)
+  const stories = group.weeks.flatMap(week => week.days).flatMap(day => day.items.filter(item => item.story).map(item => item.story!))
+  const days = group.weeks.flatMap(week => week.days).filter(day => day.date <= today).sort((a, b) => a.day - b.day)
+  const first = days[0]?.date
+  const last = days.at(-1)?.date
+  const picks = photos.length <= 3 ? photos : [photos[0], photos[Math.floor(photos.length / 2)], photos[photos.length - 1]]
+  return (
+    <summary className={styles.monthRibbon}>
+      <span className={styles.monthName}>
+        <b>{group.month === 0 ? 'Born' : monthLabel(group.month)}</b>
+        {first && last && <small>{shortDate(first)} – {shortDate(last)}</small>}
+      </span>
+      {picks.length > 0 && (
+        <span className={styles.monthThumbs} aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {picks.map(photo => <img key={photo.id} src={`${photo.url}?w=480`} alt="" loading="lazy" decoding="async" />)}
+        </span>
+      )}
+      <span className={styles.monthCount}>
+        {photos.length > 0 ? `${photos.length.toLocaleString('en-IN')} photo${photos.length === 1 ? '' : 's'}` : stories.length ? '' : 'no photos yet'}
+        {stories.length > 0 && <span>{photos.length > 0 ? ' · ' : ''}{stories.length} {stories.length === 1 ? 'story' : 'stories'}</span>}
+      </span>
+    </summary>
   )
 }
 

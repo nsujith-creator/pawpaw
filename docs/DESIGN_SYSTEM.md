@@ -48,7 +48,7 @@ Each story has one of the five page colours (duck, teal, rose, sky, night). It a
 - **Her days:**
   - a teal cover, then a quilt: a square for every day of her life and a row for every week, newest at the top;
   - each square shows that day's first photo, a story's colour with a star, or the date;
-  - months she turns are marked on their week in crayon, and each year of her age folds into its own section (her first year, age 1, …);
+  - months she turns are marked on their week in crayon. Each year of her age folds into its own section (her first year, her second year, …), and inside a year each month of her age folds to a one-line ribbon (age, dates, up to three photos, how many photos and stories). The month she's in now, and the month of the week being looked at, stay open as full calendar rows, so a whole year is about one phone screen;
   - "Tap a day to see it." sits above the quilt. Tapping a day outlines it in teal and opens its week as her height chart: beside the quilt on wide screens, and on phones the page moves down to that day, with a Calendar pill to go back up. Each day hangs at her age with its stories and photos, and an empty day says "Nothing from <day> yet.";
   - each photo can carry his line beneath it, in the reading serif's italic, as wide as the photo;
   - photos open large on a night page, with their line under them and Previous and Next or a swipe.
