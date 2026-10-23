@@ -12,8 +12,11 @@ export default function ShowDay() {
   const day = params.get('day')
   useEffect(() => {
     if (week === null) return
-    const target = (day && document.getElementById(`day-${day}`)) || document.getElementById('week')
+    const weekView = document.getElementById('week')
+    let target = (day && document.getElementById(`day-${day}`)) || weekView
     if (!target) return
+    // A day near the top of its week shows better with the week's heading above it.
+    if (weekView && target !== weekView && target.getBoundingClientRect().top - weekView.getBoundingClientRect().top < 320) target = weekView
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const wide = window.matchMedia('(min-width: 900px)').matches
     target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: wide ? 'nearest' : 'start' })
