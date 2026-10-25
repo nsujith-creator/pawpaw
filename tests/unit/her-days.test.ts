@@ -27,7 +27,7 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({}) }))
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => deskDb }))
 
 const { importBatch, recordFound, retryFailed, preparePhoto, progressFor, finishVideos } = await import('@/lib/her-days/importer')
-const { albumItems, folderItem, syncHerDays } = await import('@/lib/her-days/sync')
+const { albumItems, folderItem, makeReader, syncHerDays } = await import('@/lib/her-days/sync')
 const { draftMissingLines } = await import('@/lib/her-days/captions')
 const { decideLine, writeLine } = await import('@/app/admin/her-days/actions')
 const { photosNeedingALine } = await import('@/lib/her-days/lines')
@@ -489,6 +489,30 @@ describe('her days: the whole way, from the folder and the album to her days', (
     } finally {
       delete process.env.GOOGLE_SERVICE_ACCOUNT
     }
+  })
+
+  it('streams a squeezed or plain video out of the album whole, without loading it into memory', async () => {
+    const { randomBytes } = await import('node:crypto')
+    const video = Buffer.concat([randomBytes(300_000), Buffer.alloc(900_000, 7)]) // part random, part squeezable
+    const zip = makeZip([
+      { name: 'V/VID_1.mp4', data: video, deflate: true },
+      { name: 'V/VID_1.mp4.supplemental-metadata.json', data: Buffer.from('{"photoTakenTime":{"timestamp":"1781242200"},"description":"first steps"}') },
+      { name: 'V/VID_2.mp4', data: video },
+    ])
+    const fetcher = vi.fn(async (_input: string | URL, init?: RequestInit) => {
+      const [, start, end] = /bytes=(\d+)-(\d+)/.exec(new Headers(init?.headers).get('range') ?? '')!
+      return new Response(new Uint8Array(zip.subarray(Number(start), Number(end) + 1)), { status: 206 })
+    }) as unknown as typeof fetch
+    const entries = await readEntries(async (start, end) => zip.subarray(start, end + 1), zip.length)
+    const reader = makeReader(fetcher, 'token')
+    const drain = async (stream: ReadableStream<Uint8Array>) => Buffer.concat(await (async () => { const out: Buffer[] = []; const r = stream.getReader(); for (;;) { const { done, value } = await r.read(); if (done) break; out.push(Buffer.from(value)) } return out })())
+    const [squeezed, plain] = albumItems(entries).filter(item => item.kind === 'video').map(item => ({ id: item.sourceItemId, source: 'takeout', filename: item.filename, kind: 'video', zip_entry: item.zipEntry }))
+    const first = await reader.video(squeezed as never)
+    expect(first).toMatchObject({ size: video.length, takenAt: '2026-06-12T05:30:00.000Z', description: 'first steps' })
+    expect((await drain(first.body)).equals(video)).toBe(true)
+    const second = await reader.video(plain as never)
+    expect(second.size).toBe(video.length)
+    expect((await drain(second.body)).equals(video)).toBe(true)
   })
 
   it('does nothing, and says so, before the folder is linked', async () => {

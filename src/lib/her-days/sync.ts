@@ -3,6 +3,8 @@
 // drafts lines for photos that have none. Safe to run often and from several places: each file goes
 // in once, and work left over is picked up by the next check.
 
+import { createInflateRaw } from 'node:zlib'
+import { Readable } from 'node:stream'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   ALBUM_ZIP_FILE_ID, GROWTH_TIMELINE_FOLDER_ID, HER_DAYS_FOLDER_NAME,
@@ -67,15 +69,16 @@ export function makeReader(fetcher: Fetcher, token: string): MediaReader {
         const size = Number(response.headers.get('content-length') ?? 0)
         return { body: response.body!, size }
       }
+      // A video from the album is read straight out of the zip as a stream, so even a big one
+      // never sits in memory all at once. A squeezed (deflated) video is unsqueezed on the way.
       const ref = item.zip_entry as ZipRef
       const sidecar = await sidecarOf(ref)
-      if (ref.entry.method === 0) {
-        const start = await dataStart(readZip, ref.entry)
-        const response = await download(fetcher, token, ALBUM_ZIP_FILE_ID, { start, end: start + ref.entry.compressedSize - 1 })
-        return { body: response.body!, size: ref.entry.compressedSize, takenAt: sidecar?.takenAt ?? null, description: sidecar?.description ?? null }
-      }
-      const bytes = await readEntry(readZip, ref.entry)
-      return { body: new Blob([new Uint8Array(bytes)]).stream(), size: bytes.length, takenAt: sidecar?.takenAt ?? null, description: sidecar?.description ?? null }
+      const start = await dataStart(readZip, ref.entry)
+      const response = await download(fetcher, token, ALBUM_ZIP_FILE_ID, { start, end: start + ref.entry.compressedSize - 1 })
+      let body: ReadableStream<Uint8Array> = response.body!
+      if (ref.entry.method === 8) body = Readable.toWeb(Readable.fromWeb(body as never).pipe(createInflateRaw())) as unknown as ReadableStream<Uint8Array>
+      else if (ref.entry.method !== 0) throw new Error('Unsupported zip compression')
+      return { body, size: ref.entry.size, takenAt: sidecar?.takenAt ?? null, description: sidecar?.description ?? null }
     },
   }
 }
