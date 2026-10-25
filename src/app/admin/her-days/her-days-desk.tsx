@@ -6,12 +6,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Progress } from '@/lib/her-days/importer'
-import { checkNow, decideLine, updateTimelineItem } from './actions'
+import { checkNow, decideLine, updateTimelineItem, writeLine } from './actions'
 import styles from '../admin.module.css'
 
 export interface DeskPhoto { id: string; kind: 'photo' | 'video'; date: string | null; reason: string | null; url: string | null }
 export interface DeskMonth { key: string; label: string; count: number }
-export interface DeskLine { id: string; draft: string; was: string | null; url: string }
+// draft is null for a photo nobody has suggested a line for: Sujith writes it himself.
+export interface DeskLine { id: string; mediaId: string; draft: string | null; was: string | null; url: string }
 
 function dayLabel(date: string) {
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
@@ -30,8 +31,8 @@ function sinceWords(iso: string | null) {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-export default function HerDaysDesk({ linked, drafting, checkedAt, progress, lines, notIn, shownCount, review, recent, hidden, months, month }: {
-  linked: boolean; drafting: boolean; checkedAt: string | null; progress: Progress | null
+export default function HerDaysDesk({ linked, checkedAt, progress, lines, notIn, shownCount, review, recent, hidden, months, month }: {
+  linked: boolean; checkedAt: string | null; progress: Progress | null
   lines: DeskLine[]; notIn: { name: string | null; reason: string | null }[]; shownCount: number
   review: DeskPhoto[]; recent: DeskPhoto[]; hidden: DeskPhoto[]; months: DeskMonth[]; month: string | null
 }) {
@@ -119,9 +120,6 @@ export default function HerDaysDesk({ linked, drafting, checkedAt, progress, lin
       </section>
 
       {lines.length > 0 && <LineQueue lines={lines} onDone={() => router.refresh()} />}
-      {lines.length === 0 && linked && !drafting && (
-        <p className={styles.quietNote}>Suggested lines are switched off. Add your Claude key in Vercel to switch them on.</p>
-      )}
 
       {review.length > 0 && (
         <section className={styles.group}>
@@ -203,18 +201,24 @@ function LineQueue({ lines, onDone }: { lines: DeskLine[]; onDone: () => void })
 }
 
 function LineCard({ line, onSorted }: { line: DeskLine; onSorted: () => void }) {
-  const [text, setText] = useState(line.draft)
+  const mine = line.draft === null // nobody suggested a line: this one is Sujith's to write
+  const [text, setText] = useState(line.draft ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const edited = text.trim() !== line.draft
+  const edited = text.trim() !== (line.draft ?? '')
+  const blank = text.trim() === ''
 
-  async function decide(kind: 'keep' | 'mine' | 'none' | 'again') {
+  async function decide(kind: 'keep' | 'mine' | 'none' | 'again' | 'later') {
+    if (kind === 'later') { onSorted(); return }
     setBusy(true); setError(null)
-    const result = await decideLine(line.id, kind === 'mine' ? { kind, text } : { kind })
+    const result = mine
+      ? await writeLine(line.mediaId, kind === 'mine' ? { kind, text } : { kind: 'none' })
+      : await decideLine(line.id, kind === 'mine' ? { kind, text } : { kind: kind as 'keep' | 'none' | 'again' })
     setBusy(false)
     if ('error' in result) { setError(result.error); return }
     onSorted()
   }
+  const save = () => { if (mine ? !blank : true) void decide(edited ? 'mine' : 'keep') }
 
   return (
     <div className={styles.lineCard}>
@@ -223,13 +227,15 @@ function LineCard({ line, onSorted }: { line: DeskLine; onSorted: () => void }) 
       <div className={styles.lineSide}>
         <label className={styles.lineField}>
           <span>The line under it</span>
-          <textarea value={text} rows={2} maxLength={200} onChange={event => setText(event.target.value)}
-            onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void decide(edited ? 'mine' : 'keep') } }} />
+          <textarea value={text} rows={2} maxLength={200} placeholder={mine ? 'What would you say about this one?' : undefined} onChange={event => setText(event.target.value)}
+            onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); save() } }} />
         </label>
         {line.was && <p className={styles.lineWas}>Before: {line.was}</p>}
         <div className={styles.actionRow}>
-          <button type="button" className={styles.primary} disabled={busy} onClick={() => void decide(edited ? 'mine' : 'keep')}>{edited ? 'Use mine' : 'Keep this'}</button>
-          <button type="button" className={styles.ghost} disabled={busy} onClick={() => void decide('again')}>Another line</button>
+          <button type="button" className={styles.primary} disabled={busy || (mine && blank)} onClick={save}>{mine ? 'Save' : edited ? 'Use mine' : 'Keep this'}</button>
+          {mine
+            ? <button type="button" className={styles.ghost} disabled={busy} onClick={() => void decide('later')}>Later</button>
+            : <button type="button" className={styles.ghost} disabled={busy} onClick={() => void decide('again')}>Another line</button>}
           <button type="button" className={styles.linkish} disabled={busy} onClick={() => void decide('none')}>No line</button>
         </div>
         {error && <p className={styles.error} role="alert">{error}</p>}

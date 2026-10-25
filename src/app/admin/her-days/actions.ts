@@ -64,6 +64,34 @@ export async function decideLine(draftId: string, decision: LineDecision): Promi
   return { ok: true }
 }
 
+// Takes a photo off the list of lines to be redone, once Sujith has dealt with it himself.
+async function stopRedraft(db: ReturnType<typeof createAdminClient>, mediaId: string) {
+  const { data } = await db.from('her_days_state').select('value').eq('key', 'redraft').maybeSingle()
+  const ids = (data?.value as { media_ids?: string[] } | undefined)?.media_ids ?? []
+  if (!ids.includes(mediaId)) return
+  await db.from('her_days_state').upsert({ key: 'redraft', value: { media_ids: ids.filter(id => id !== mediaId) }, updated_at: new Date().toISOString() })
+}
+
+// A line Sujith writes himself for a photo that has no suggestion, or no line at all. A photo he
+// has dealt with never comes back to be asked about again.
+export async function writeLine(mediaId: string, line: { kind: 'mine'; text: string } | { kind: 'none' }): Promise<{ ok: true } | { error: string }> {
+  try { await admin() } catch { return { error: SIGNED_OUT } }
+  const db = createAdminClient()
+  const now = new Date().toISOString()
+  let caption: string | null = null
+  if (line.kind === 'mine') {
+    caption = line.text.replace(/\s+/g, ' ').trim()
+    if (!caption) return { error: 'Write the line first, or choose No line.' }
+    if (caption.length > 200) return { error: 'That’s a bit long for under a photo. Keep it to a line.' }
+  }
+  const saved = await db.from('media_assets').update({ caption }).eq('id', mediaId).select('id')
+  if (saved.error || !saved.data?.length) return { error: 'That didn’t save. Try again.' }
+  await db.from('caption_drafts').insert({ media_asset_id: mediaId, draft: caption ?? '', status: caption ? 'rewritten' : 'no_line', final_text: caption, decided_at: now })
+  await stopRedraft(db, mediaId)
+  revalidatePath('/', 'layout')
+  return { ok: true }
+}
+
 // Show, hide, or fix the date of one photo on her days. A photo can only be shown on a day of
 // her life so far, so nothing ends up neither waiting for a look nor on her days.
 export async function updateTimelineItem(id: string, change: { visibility?: 'shown' | 'hidden'; date?: string }): Promise<{ ok: true } | { error: string }> {

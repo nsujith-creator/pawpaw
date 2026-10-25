@@ -29,7 +29,7 @@ vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => deskDb }))
 const { importBatch, recordFound, retryFailed, preparePhoto, progressFor, finishVideos } = await import('@/lib/her-days/importer')
 const { albumItems, folderItem, syncHerDays } = await import('@/lib/her-days/sync')
 const { draftMissingLines } = await import('@/lib/her-days/captions')
-const { decideLine } = await import('@/app/admin/her-days/actions')
+const { decideLine, writeLine } = await import('@/app/admin/her-days/actions')
 
 const root = join(__dirname, '../..')
 const read = (file: string) => readFileSync(join(root, file), 'utf8')
@@ -603,6 +603,32 @@ describe('her days: lines under photos', () => {
     expect(tables.media_assets.map(row => row.caption)).toEqual(['Hello? Yes, sleeping', 'Princess Diaries, Day 2', null])
     expect(tables.caption_drafts.map(row => row.status)).toEqual(['kept', 'rewritten', 'redrafted'])
     expect(tables.her_days_state.find(row => row.key === 'redraft')!.value).toEqual({ media_ids: ['m-c'] })
+  })
+})
+
+describe('her days: lines he writes himself', () => {
+  it('puts his own line on a photo that had none, and never asks about it again', async () => {
+    const { db, tables } = fakeDb()
+    deskDb = db
+    tables.media_assets.push({ id: 'm-a', caption: null }, { id: 'm-b', caption: 'A small person in a basket of wonder.' }, { id: 'm-c', caption: null })
+    tables.her_days_state.push({ key: 'redraft', value: { media_ids: ['m-b', 'm-c'] } })
+    expect(await writeLine('m-a', { kind: 'mine', text: '  Hello?   Yes, sleeping 😴 ' })).toEqual({ ok: true })
+    expect(await writeLine('m-b', { kind: 'mine', text: 'Ammuchi has opinions' })).toEqual({ ok: true })
+    expect(await writeLine('m-c', { kind: 'none' })).toEqual({ ok: true })
+    expect(tables.media_assets.map(row => row.caption)).toEqual(['Hello? Yes, sleeping 😴', 'Ammuchi has opinions', null])
+    expect(tables.caption_drafts.map(row => [row.media_asset_id, row.status])).toEqual([['m-a', 'rewritten'], ['m-b', 'rewritten'], ['m-c', 'no_line']])
+    expect(tables.her_days_state.find(row => row.key === 'redraft')!.value).toEqual({ media_ids: [] })
+  })
+
+  it('says plainly when the line is empty, too long, or the photo is gone', async () => {
+    const { db, tables } = fakeDb()
+    deskDb = db
+    tables.media_assets.push({ id: 'm-a', caption: null })
+    expect(await writeLine('m-a', { kind: 'mine', text: '   ' })).toMatchObject({ error: expect.stringMatching(/Write the line first/) })
+    expect(await writeLine('m-a', { kind: 'mine', text: 'x'.repeat(201) })).toMatchObject({ error: expect.stringMatching(/a bit long/) })
+    expect(await writeLine('missing', { kind: 'mine', text: 'hi' })).toMatchObject({ error: expect.stringMatching(/didn’t save/) })
+    expect(tables.caption_drafts).toHaveLength(0)
+    expect(tables.media_assets[0].caption).toBeNull()
   })
 })
 

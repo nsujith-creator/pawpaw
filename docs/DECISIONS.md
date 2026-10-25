@@ -2,6 +2,24 @@
 
 Newest first. Each production fix records its cause, the fix, how it was verified, the data check, and what it still cannot do. No private family content, photo addresses, identifiers or credentials here.
 
+## 2026-10-25 · Lines are written by Sujith, with no Claude key
+
+**Asked by Sujith:** he'll write the lines under her photos himself, so no Anthropic account or key is needed ("no need to spend money on that").
+
+**Decision:** the suggestion code stays in the app but switched off; it wakes only if a key is ever added.
+- With no key, the desk's "Lines for you" cards fill with photos that have no line (the 15 story lines written by an earlier AI pass first, with the old line shown as "Before"), then the rest newest first, 40 at a time.
+- Each card has an empty box: **Save**, **Later** (asks again next time), or **No line** (never asked again).
+- A photo he has dealt with never comes back; a story photo he rewrites is taken off the redo list.
+- Removed the desk note about switching suggestions on.
+
+**Cost:** none. The Anthropic API line in the 23 October entry no longer applies.
+
+**Still to do by hand:**
+- Share "Varada - Growth Timeline" with the Pawpaw Google helper's email (Viewer), and add its key as `GOOGLE_SERVICE_ACCOUNT` in Vercel. This needs Sujith's own Google Cloud sign-in.
+- The **Her days** folder exists in Drive (created 25 October).
+
+**Verified:** 39 Her days tests, including writing, skipping, over-long and empty lines. Desk card checked at 360, 390, 768 and 1440 px; Save stays on screen on a 740 px-tall phone.
+
 ## 2026-10-23 · Her days keeps itself up to date, and every photo gets a line in Sujith's voice
 
 **Asked by Sujith:** photos he sends to one folder should turn up on heyvarada.in by themselves, and every photo, old and new, should carry a line that sounds like a father or a friend talking, not a caption bot.
