@@ -423,6 +423,33 @@ describe('her days: bringing photos in', () => {
     expect(files.size).toBe(0)
   })
 
+  it('never uploads a video over 25 MB, says so plainly, and does not try it again', async () => {
+    const { db, tables } = fakeDb()
+    const upload = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', upload)
+    let cancelled = false
+    const big = { photo: vi.fn(), video: vi.fn(async () => ({ body: new ReadableStream<Uint8Array>({ cancel() { cancelled = true } }), size: 25 * 1024 * 1024 + 1 })) }
+    await recordFound(db as never, 'run-1', 'google_drive', [found('big', { kind: 'video', filename: 'VID_20260612_103000.mp4' })])
+    await importBatch(db as never, big as never, 'admin-1', null, 3)
+    vi.unstubAllGlobals()
+    expect(tables.import_items[0]).toMatchObject({ status: 'failed', attempts: 3, error: 'This video is too big to add here. You can add it to a story instead.' })
+    expect(upload).not.toHaveBeenCalled()
+    expect(tables.video_assets).toHaveLength(0)
+    expect(cancelled).toBe(true)
+    expect(await retryFailed(db as never)).toBe(0)
+  })
+
+  it('still sends a video of exactly 25 MB', async () => {
+    const { db, tables } = fakeDb()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
+    const size = 25 * 1024 * 1024
+    const edge = { photo: vi.fn(), video: vi.fn(async () => ({ body: new Blob([new Uint8Array(size)]).stream(), size })) }
+    await recordFound(db as never, 'run-1', 'google_drive', [found('edge', { kind: 'video', filename: 'VID_20260612_103000.mp4' })])
+    await importBatch(db as never, edge as never, 'admin-1', null, 3)
+    vi.unstubAllGlobals()
+    expect(tables.import_items[0].status).toBe('video_waiting')
+  })
+
   it('sends a video off, then puts it on her days with its still once it is ready', async () => {
     const { db, tables } = fakeDb()
     const upload = vi.fn(async () => new Response(null, { status: 204 }))
