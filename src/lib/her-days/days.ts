@@ -55,7 +55,8 @@ export function exifTime(exif: Buffer | undefined): string | null {
 // Only mechanical facts: Pawpaw never guesses who is in a photo or what it means.
 export function reviewReason(item: { takenAt: string | null; filename: string | null; takenAtSource?: string | null }, now = Date.now()): string | null {
   if (!item.takenAt) return 'No date on this one. When was it taken?'
-  if (item.takenAtSource === 'added') return 'This has no date of its own, so it sits on the day it was added. When was it taken?'
+  // A photo with no date of its own (a screenshot, a download) goes on the day it was put in the folder.
+  // The day can be changed from the desk afterwards.
   const day = dayNumber(indiaDate(item.takenAt))
   if (day < 0) return 'This says it was taken before she was born.'
   if (Date.parse(item.takenAt) > now + 86_400_000) return 'This says it was taken on a day that hasn’t come yet.'
