@@ -17,7 +17,12 @@ export async function createPrivateTusUpload(size: number, fileName: string) {
   const metadata = [`filename ${encoded(fileName)}`, `maxDurationSeconds ${encoded(String(MAX_DURATION_SECONDS))}`, 'requiresignedurls', `expiry ${encoded(expiry)}`].join(',')
   const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream?direct_user=true`, { method: 'POST', headers: { ...authHeaders(apiToken), 'Tus-Resumable': '1.0.0', 'Upload-Length': String(size), 'Upload-Metadata': metadata } })
   const uploadUrl = response.headers.get('location'); const cloudflareUid = uploadUrl ? new URL(uploadUrl).pathname.split('/').filter(Boolean).at(-1) : null
-  if (!response.ok || !uploadUrl || !cloudflareUid) throw new Error('Cloudflare Stream did not create an upload')
+  if (!response.ok || !uploadUrl || !cloudflareUid) {
+    // Says why Cloudflare said no (a status and its own error code and words), for the server log. Never a link or a key.
+    const body = await response.json().catch(() => null) as { errors?: { code?: number; message?: string }[] } | null
+    const reason = body?.errors?.[0]
+    throw new Error(`Cloudflare Stream did not create an upload (${response.status}${reason ? `: ${reason.code ?? ''} ${reason.message ?? ''}`.trimEnd() : ''})`)
+  }
   return { uploadUrl, cloudflareUid }
 }
 export async function getVideoState(cloudflareUid: string) {

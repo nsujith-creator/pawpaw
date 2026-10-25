@@ -11,7 +11,12 @@ import { exifTime, fileNameTime, indiaDate, reviewReason } from './days'
 
 export const LONG_EDGE = 1600
 export const MAX_PHOTO_BYTES = 60 * 1024 * 1024
-export const MAX_VIDEO_BYTES = 500 * 1024 * 1024
+// Videos are off for now (Sujith, 25 October): they are written down as skipped and never uploaded.
+// Set HER_DAYS_VIDEOS=on in Vercel to bring them back.
+export const videosAreOn = () => process.env.HER_DAYS_VIDEOS === 'on'
+
+// Videos up to 25 MB come in; anything bigger stays out (Sujith's rule), and can go in a story instead.
+export const MAX_VIDEO_BYTES = 25 * 1024 * 1024
 const TUS_CHUNK = 50 * 1024 * 1024 // a multiple of 256 KiB, as Cloudflare asks
 
 export type Source = 'google_drive' | 'takeout'
@@ -44,6 +49,8 @@ export interface Progress { total: number; pending: number; added: number; dupli
 export interface BatchResult { progress: Progress; claimed: number }
 
 export class FriendlyError extends Error {}
+// A video over the limit will never fit, so it is not tried again.
+export class TooBigError extends FriendlyError {}
 
 // A new file found in the folder or the album, ready to be written down.
 export interface FoundItem {
@@ -78,7 +85,7 @@ export async function recordFound(db: SupabaseClient, runId: string, source: Sou
     run_id: runId, source, source_item_id: item.sourceItemId, kind: item.kind, filename: item.filename,
     taken_at: item.takenAt, taken_at_source: item.takenAtSource, description: item.description,
     width: item.width, height: item.height, drive_file_id: item.driveFileId ?? null, zip_entry: item.zipEntry ?? null,
-    status: 'pending', video_ready: true,
+    status: item.kind === 'video' && !videosAreOn() ? 'skipped' : 'pending', video_ready: true,
   }))
   for (let start = 0; start < rows.length; start += 200) {
     const { error } = await db.from('import_items').upsert(rows.slice(start, start + 200), { onConflict: 'run_id,source_item_id', ignoreDuplicates: true })
@@ -145,7 +152,7 @@ async function removePhoto(db: SupabaseClient, stored: { mediaId: string; path: 
 // Streams a video into Cloudflare Stream in 50 MB pieces, without holding it all in memory.
 export async function streamToCloudflare(body: ReadableStream<Uint8Array>, size: number, filename: string, upload = fetch): Promise<string> {
   if (!size) throw new FriendlyError('This video didn’t come through. Try again.')
-  if (size > MAX_VIDEO_BYTES) throw new FriendlyError('This video is too long to add here. You can add it to a story instead.')
+  if (size > MAX_VIDEO_BYTES) throw new TooBigError('This video is too big to add here. You can add it to a story instead.')
   const { uploadUrl, cloudflareUid } = await createPrivateTusUpload(size, filename)
   try {
     const reader = body.getReader()
@@ -251,6 +258,10 @@ export async function importPhoto(db: SupabaseClient, reader: MediaReader, admin
 // and it goes on her days (finishVideos).
 export async function startVideo(db: SupabaseClient, reader: MediaReader, adminId: string, item: ImportItemRow): Promise<'waiting' | 'duplicate'> {
   const got = await reader.video(item)
+  if (got.size > MAX_VIDEO_BYTES) {
+    await got.body.cancel().catch(() => null)
+    throw new TooBigError('This video is too big to add here. You can add it to a story instead.')
+  }
   const date = settleDate(item, got.takenAt)
   if (date.source !== 'added' && await alreadyOnDays(db, item, date.takenAt)) {
     await got.body.cancel().catch(() => null)
@@ -325,12 +336,14 @@ export async function importBatch(db: SupabaseClient, reader: MediaReader, admin
   await Promise.all([...byName.values()].map(async group => {
     for (const item of group) {
       try {
+        if (item.kind === 'video' && !videosAreOn()) { await markItem(db, item.id, { status: 'skipped' }); continue }
         if (item.kind === 'video') await startVideo(db, reader, adminId, item)
         else await importPhoto(db, reader, adminId, item)
       } catch (failure) {
         // The desk keeps only a plain-language reason. The real one goes to the server log, without addresses.
         console.error('Her days: a file did not come in.', { kind: item.kind, message: (failure instanceof Error ? failure.message : 'unknown').replace(/https?:\/\/\S+/g, '[link]').slice(0, 160) })
-        await db.from('import_items').update({ status: 'failed', error: friendlyMessage(failure), updated_at: new Date().toISOString() }).eq('id', item.id)
+        // Too big is final: it goes on the desk's "Didn't come through" list at once and is never retried.
+        await db.from('import_items').update({ status: 'failed', error: friendlyMessage(failure), ...(failure instanceof TooBigError ? { attempts: 3 } : {}), updated_at: new Date().toISOString() }).eq('id', item.id)
       }
     }
   }))

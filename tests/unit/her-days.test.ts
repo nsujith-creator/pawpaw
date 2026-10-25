@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import sharp from 'sharp'
 import { generateKeyPairSync } from 'node:crypto'
 import { deflateRawSync } from 'node:zlib'
@@ -25,12 +25,15 @@ vi.mock('@/lib/auth/origin', () => ({ checkOrigin: () => undefined }))
 vi.mock('@/lib/auth/admin', () => ({ requireActiveAdmin: async () => ({ id: 'admin-1' }) }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({}) }))
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => deskDb }))
+const afterRuns: (() => Promise<void>)[] = []
+vi.mock('next/server', () => ({ after: (run: () => Promise<void>) => { afterRuns.push(run) } }))
 
 const { importBatch, recordFound, retryFailed, preparePhoto, progressFor, finishVideos } = await import('@/lib/her-days/importer')
 const { albumItems, folderItem, makeReader, syncHerDays } = await import('@/lib/her-days/sync')
 const { draftMissingLines } = await import('@/lib/her-days/captions')
 const { decideLine, writeLine } = await import('@/app/admin/her-days/actions')
 const { photosNeedingALine } = await import('@/lib/her-days/lines')
+const ping = await import('@/app/api/her-days/ping/route')
 
 const root = join(__dirname, '../..')
 const read = (file: string) => readFileSync(join(root, file), 'utf8')
@@ -338,6 +341,7 @@ const found = (id: string, overrides: Partial<FoundItem> = {}): FoundItem => ({
 
 describe('her days: bringing photos in', () => {
   let jpeg: Buffer
+  afterEach(() => { delete process.env.HER_DAYS_VIDEOS })
   beforeEach(async () => {
     jpeg = await sharp({ create: { width: 3000, height: 2000, channels: 3, background: '#c8325a' } }).jpeg().toBuffer()
     videoState.mockReset()
@@ -423,7 +427,48 @@ describe('her days: bringing photos in', () => {
     expect(files.size).toBe(0)
   })
 
+  it('leaves videos out while they are switched off: written down as skipped, never fetched', async () => {
+    const { db, tables } = fakeDb()
+    const video = vi.fn()
+    await recordFound(db as never, 'run-1', 'google_drive', [found('v', { kind: 'video', filename: 'VID_20260612_103000.mp4' }), found('p')])
+    expect(tables.import_items.map(row => [row.source_item_id, row.status])).toEqual([['v', 'skipped'], ['p', 'pending']])
+    tables.import_items[0].status = 'pending' // even one that slipped through is left alone
+    await importBatch(db as never, { photo: vi.fn(async () => ({ bytes: jpeg })), video } as never, 'admin-1', null, 3)
+    expect(video).not.toHaveBeenCalled()
+    expect(tables.import_items.map(row => row.status)).toEqual(['skipped', 'added'])
+  })
+
+  it('never uploads a video over 25 MB, says so plainly, and does not try it again', async () => {
+    process.env.HER_DAYS_VIDEOS = 'on'
+    const { db, tables } = fakeDb()
+    const upload = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', upload)
+    let cancelled = false
+    const big = { photo: vi.fn(), video: vi.fn(async () => ({ body: new ReadableStream<Uint8Array>({ cancel() { cancelled = true } }), size: 25 * 1024 * 1024 + 1 })) }
+    await recordFound(db as never, 'run-1', 'google_drive', [found('big', { kind: 'video', filename: 'VID_20260612_103000.mp4' })])
+    await importBatch(db as never, big as never, 'admin-1', null, 3)
+    vi.unstubAllGlobals()
+    expect(tables.import_items[0]).toMatchObject({ status: 'failed', attempts: 3, error: 'This video is too big to add here. You can add it to a story instead.' })
+    expect(upload).not.toHaveBeenCalled()
+    expect(tables.video_assets).toHaveLength(0)
+    expect(cancelled).toBe(true)
+    expect(await retryFailed(db as never)).toBe(0)
+  })
+
+  it('still sends a video of exactly 25 MB', async () => {
+    process.env.HER_DAYS_VIDEOS = 'on'
+    const { db, tables } = fakeDb()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
+    const size = 25 * 1024 * 1024
+    const edge = { photo: vi.fn(), video: vi.fn(async () => ({ body: new Blob([new Uint8Array(size)]).stream(), size })) }
+    await recordFound(db as never, 'run-1', 'google_drive', [found('edge', { kind: 'video', filename: 'VID_20260612_103000.mp4' })])
+    await importBatch(db as never, edge as never, 'admin-1', null, 3)
+    vi.unstubAllGlobals()
+    expect(tables.import_items[0].status).toBe('video_waiting')
+  })
+
   it('sends a video off, then puts it on her days with its still once it is ready', async () => {
+    process.env.HER_DAYS_VIDEOS = 'on'
     const { db, tables } = fakeDb()
     const upload = vi.fn(async () => new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', upload)
@@ -694,6 +739,44 @@ describe('her days: which photos need a line', () => {
     expect(await writeLine('m-a', { kind: 'none' })).toMatchObject({ error: expect.stringMatching(/didn’t save/) })
     db.from = realFrom
     expect(await writeLine('m-a', { kind: 'none' })).toEqual({ ok: true })
+  })
+})
+
+describe('her days: picking things up by itself', () => {
+  const knock = (key?: string) => ping.GET(new Request('https://www.heyvarada.in/api/her-days/ping', { headers: key ? { authorization: `Bearer ${key}` } : {} }))
+
+  it('turns away a knock with no key or the wrong one, and does nothing', async () => {
+    const { db, tables } = fakeDb()
+    deskDb = db
+    afterRuns.length = 0
+    tables.her_days_state.push({ key: 'ping', value: { key: 'right-key' } })
+    expect((await knock()).status).toBe(401)
+    expect((await knock('wrong-key')).status).toBe(401)
+    expect((await knock('right-key-but-longer')).status).toBe(401)
+    expect(afterRuns).toHaveLength(0)
+    deskDb = fakeDb().db // no key set up at all
+    expect((await knock('anything')).status).toBe(401)
+  })
+
+  it('answers at once to the right key and looks in the folder afterwards', async () => {
+    const { db, tables } = fakeDb()
+    deskDb = db
+    afterRuns.length = 0
+    tables.her_days_state.push({ key: 'ping', value: { key: 'right-key' } })
+    const answer = await knock('right-key')
+    expect(answer.status).toBe(200)
+    expect(await answer.text()).toBe('ok')
+    expect(afterRuns).toHaveLength(1)
+    await afterRuns[0]() // not linked in the test, so it finishes without touching anything
+  })
+
+  it('is set up by the database itself every two minutes, with a key nobody sees', () => {
+    const timer = read('supabase/migrations/20261025090000_her_days_keeps_itself_going.sql')
+    expect(timer).toContain("'*/2 * * * *'")
+    expect(timer).toContain('https://www.heyvarada.in/api/her-days/ping')
+    expect(timer).toContain('gen_random_uuid()')
+    expect(timer).not.toMatch(/alter table public\.(media_assets|video_assets|content_items|content_revisions|content_media)/)
+    expect(read('src/app/api/her-days/ping/route.ts')).toContain('timingSafeEqual')
   })
 })
 
