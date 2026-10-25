@@ -31,7 +31,7 @@ Everything else is fixed text in the code. To change one of those, use the table
 | Her days: "146 days of her, so far" and "Her photos go here, day by day." | `src/app/(archive)/days/page.tsx` |
 | Her days: "Tap a day to see it.", "Nothing from <day> yet.", "Nothing from this week yet.", Calendar, Earlier, Later, "Her first year", "16 weeks old" | `src/components/family/her-days.tsx` |
 | Lines under photos on her days (his words only, never a draft) | `src/components/family/day-strip.tsx` |
-| Desk → Her days wording, including "Lines for you", Keep this, Use mine, Another line, No line | `src/app/admin/her-days/page.tsx` and `her-days-desk.tsx` |
+| Desk → Her days wording, including "Lines for you", "What would you say about this one?", Save, Later, Keep this, Use mine, Another line, No line | `src/app/admin/her-days/page.tsx` and `her-days-desk.tsx` |
 | "Nothing written yet…" (empty chart) | `src/components/family/story-chart.tsx` |
 | Story pages: "Next on her chart", "← Home", "All her stories", "A few photos didn't load…" | `src/components/family/story-page.tsx` |
 | "Hung on her height chart…" (top of Her stories) | `src/app/(archive)/chapters/page.tsx` |

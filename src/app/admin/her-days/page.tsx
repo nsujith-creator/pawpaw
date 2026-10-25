@@ -6,6 +6,7 @@ import { lastChecked } from '@/lib/her-days/sync'
 import { progressFor } from '@/lib/her-days/importer'
 import { canDraft } from '@/lib/her-days/captions'
 import { indiaDate } from '@/lib/her-days/days'
+import { photosNeedingALine } from '@/lib/her-days/lines'
 import AdminState from '../admin-state'
 import HerDaysDesk, { type DeskLine, type DeskMonth, type DeskPhoto } from './her-days-desk'
 import styles from '../admin.module.css'
@@ -70,7 +71,7 @@ export default async function HerDaysDeskPage({ searchParams }: { searchParams: 
       : db.from('timeline_media').select(select).eq('visibility', 'shown').order('created_at', { ascending: false }).limit(24),
     db.from('timeline_media').select(select).eq('visibility', 'hidden').order('updated_at', { ascending: false }).limit(24),
     db.from('timeline_media').select('id', { count: 'exact', head: true }).eq('visibility', 'shown'),
-    db.from('caption_drafts').select('id, draft, media_assets(storage_path, caption)').eq('status', 'waiting').order('created_at', { ascending: true }).limit(40),
+    db.from('caption_drafts').select('id, draft, media_asset_id, media_assets(storage_path, caption)').eq('status', 'waiting').order('created_at', { ascending: true }).limit(40),
     db.from('import_items').select('filename, error').eq('status', 'failed').gte('attempts', 3).order('updated_at', { ascending: false }).limit(20),
   ])
   const months = await monthsOnHerDays(db)
@@ -79,10 +80,16 @@ export default async function HerDaysDeskPage({ searchParams }: { searchParams: 
   }
   const [progress, checkedAt] = await Promise.all([progressFor(db, {}).catch(() => null), lastChecked(db)])
 
-  type LineRow = { id: string; draft: string; media_assets: { storage_path: string; caption: string | null } | null }
+  type LineRow = { id: string; draft: string; media_asset_id: string; media_assets: { storage_path: string; caption: string | null } | null }
   const lines: DeskLine[] = await Promise.all(((linesResult.data ?? []) as unknown as LineRow[]).filter(row => row.media_assets).map(async row => ({
-    id: row.id, draft: row.draft, was: row.media_assets!.caption, url: await generateSignedUrl(row.media_assets!.storage_path),
+    id: row.id, mediaId: row.media_asset_id, draft: row.draft, was: row.media_assets!.caption, url: await generateSignedUrl(row.media_assets!.storage_path),
   })))
+  // With no suggestions switched on, the cards are photos that still need a line: the older lines
+  // Sujith wants redone first, then the rest, newest first.
+  if (!canDraft()) {
+    const needing = await photosNeedingALine(db, 40 - lines.length)
+    lines.push(...await Promise.all(needing.map(async media => ({ id: media.mediaId, mediaId: media.mediaId, draft: null, was: media.caption, url: await generateSignedUrl(media.storagePath) }))))
+  }
   const notIn = (failedResult.data ?? []).map(row => ({ name: row.filename as string | null, reason: row.error as string | null }))
 
   return (
@@ -93,7 +100,6 @@ export default async function HerDaysDeskPage({ searchParams }: { searchParams: 
       <p className={styles.lede}>Put photos in the Her days folder in Drive and they turn up here, and on her page.</p>
       <HerDaysDesk
         linked={readServiceAccount() !== null}
-        drafting={canDraft()}
         checkedAt={checkedAt}
         progress={progress}
         lines={lines}
