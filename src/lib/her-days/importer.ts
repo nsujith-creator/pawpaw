@@ -11,6 +11,10 @@ import { exifTime, fileNameTime, indiaDate, reviewReason } from './days'
 
 export const LONG_EDGE = 1600
 export const MAX_PHOTO_BYTES = 60 * 1024 * 1024
+// Videos are off for now (Sujith, 25 October): they are written down as skipped and never uploaded.
+// Set HER_DAYS_VIDEOS=on in Vercel to bring them back.
+export const videosAreOn = () => process.env.HER_DAYS_VIDEOS === 'on'
+
 // Videos up to 25 MB come in; anything bigger stays out (Sujith's rule), and can go in a story instead.
 export const MAX_VIDEO_BYTES = 25 * 1024 * 1024
 const TUS_CHUNK = 50 * 1024 * 1024 // a multiple of 256 KiB, as Cloudflare asks
@@ -81,7 +85,7 @@ export async function recordFound(db: SupabaseClient, runId: string, source: Sou
     run_id: runId, source, source_item_id: item.sourceItemId, kind: item.kind, filename: item.filename,
     taken_at: item.takenAt, taken_at_source: item.takenAtSource, description: item.description,
     width: item.width, height: item.height, drive_file_id: item.driveFileId ?? null, zip_entry: item.zipEntry ?? null,
-    status: 'pending', video_ready: true,
+    status: item.kind === 'video' && !videosAreOn() ? 'skipped' : 'pending', video_ready: true,
   }))
   for (let start = 0; start < rows.length; start += 200) {
     const { error } = await db.from('import_items').upsert(rows.slice(start, start + 200), { onConflict: 'run_id,source_item_id', ignoreDuplicates: true })
@@ -332,6 +336,7 @@ export async function importBatch(db: SupabaseClient, reader: MediaReader, admin
   await Promise.all([...byName.values()].map(async group => {
     for (const item of group) {
       try {
+        if (item.kind === 'video' && !videosAreOn()) { await markItem(db, item.id, { status: 'skipped' }); continue }
         if (item.kind === 'video') await startVideo(db, reader, adminId, item)
         else await importPhoto(db, reader, adminId, item)
       } catch (failure) {

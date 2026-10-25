@@ -2,6 +2,32 @@
 
 Newest first. Each production fix records its cause, the fix, how it was verified, the data check, and what it still cannot do. No private family content, photo addresses, identifiers or credentials here.
 
+## 2026-10-25 (later) · Her days picks things up by itself, and videos are off for now
+
+**Asked by Sujith:** a photo put in the Her days folder must be picked up with nobody opening the site, and no videos for now.
+
+**What it does now:**
+- **Every 2 minutes** the database's own timer (pg_cron with pg_net, both included in the free plan) knocks on `/api/her-days/ping`.
+- The door answers at once and looks in the folder afterwards. A knock while a look is running, or right after one, does nothing.
+- The knock's key is made inside the database (`her_days_state`, service role only) and never shown or sent anywhere else. A wrong or missing key gets a 401.
+- A photo put in the folder is therefore on her days within a few minutes. The first import of the album also carries on by itself.
+- Kept as backups: the daily 5 a.m. look (Vercel), a look when someone opens her days (at most every 15 minutes), and "Look in the folder now" on the desk.
+
+**Why not the other ways:**
+- Vercel's free plan runs a schedule once a day at most.
+- GitHub's free schedule would use up the monthly minutes on a private repo.
+- Google's own "tell me when a file changes" needs the domain verified and renewing every week.
+- An outside timer would be a new account.
+
+**Videos:** off. Videos found are written down as skipped and are never fetched or uploaded. Setting `HER_DAYS_VIDEOS=on` in Vercel brings them back, with the 25 MB limit (bigger ones are listed on the desk as too big and never tried again).
+
+**Data:** extensions pg_net and pg_cron, one row (`ping`) in `her_days_state`, one timer job (`her-days-look`). Nothing existing changed.
+
+**Limits:**
+- A very busy day with more than 270 seconds of photos carries on at the next knock.
+- If the Supabase project is paused (after 7 days with no activity on the free plan), the timer stops until it is resumed; the daily look and visits still work.
+- Cloudflare's refusal of album videos is still unexplained; the reason will appear in the log when videos are tried again.
+
 ## 2026-10-25 · Lines are written by Sujith, with no Claude key
 
 **Asked by Sujith:** he'll write the lines under her photos himself, so no Anthropic account or key is needed ("no need to spend money on that").
