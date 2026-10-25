@@ -317,8 +317,9 @@ export async function importBatch(db: SupabaseClient, reader: MediaReader, admin
   // A few at once, except files with the same name (the album's copy and the folder's copy of one
   // photo), which go one after the other so the second can see the first is already there.
   const byName = new Map<string, ImportItemRow[]>()
+  // Videos are big, so they go one after another, alongside the photos, never two at once.
   for (const item of claimed) {
-    const name = (item.filename ?? item.id).toLowerCase()
+    const name = item.kind === 'video' ? '\0videos' : (item.filename ?? item.id).toLowerCase()
     byName.set(name, [...(byName.get(name) ?? []), item])
   }
   await Promise.all([...byName.values()].map(async group => {
@@ -327,7 +328,8 @@ export async function importBatch(db: SupabaseClient, reader: MediaReader, admin
         if (item.kind === 'video') await startVideo(db, reader, adminId, item)
         else await importPhoto(db, reader, adminId, item)
       } catch (failure) {
-        // Only plain-language reasons are kept: never a file address or a link.
+        // The desk keeps only a plain-language reason. The real one goes to the server log, without addresses.
+        console.error('Her days: a file did not come in.', { kind: item.kind, message: (failure instanceof Error ? failure.message : 'unknown').replace(/https?:\/\/\S+/g, '[link]').slice(0, 160) })
         await db.from('import_items').update({ status: 'failed', error: friendlyMessage(failure), updated_at: new Date().toISOString() }).eq('id', item.id)
       }
     }
