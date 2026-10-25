@@ -53,10 +53,14 @@ export function exifTime(exif: Buffer | undefined): string | null {
 
 // Why a picked photo should wait for a person instead of going straight onto her days.
 // Only mechanical facts: Pawpaw never guesses who is in a photo or what it means.
-export function reviewReason(item: { takenAt: string | null; filename: string | null; takenAtSource?: string | null }, now = Date.now()): string | null {
+// A photo put in the folder with no date of its own (a screenshot, a download) goes on the day it was
+// put there, but only if that was just now. An older file moved in has a Drive date that isn't the
+// day it came, and a video is never given the benefit: both wait for a look.
+const FRESH_MS = 12 * 3_600_000
+
+export function reviewReason(item: { takenAt: string | null; filename: string | null; takenAtSource?: string | null; kind?: 'photo' | 'video' }, now = Date.now()): string | null {
   if (!item.takenAt) return 'No date on this one. When was it taken?'
-  // A photo with no date of its own (a screenshot, a download) goes on the day it was put in the folder.
-  // The day can be changed from the desk afterwards.
+  if (item.takenAtSource === 'added' && (item.kind === 'video' || Date.parse(item.takenAt) < now - FRESH_MS)) return 'This has no date of its own. When was it taken?'
   const day = dayNumber(indiaDate(item.takenAt))
   if (day < 0) return 'This says it was taken before she was born.'
   if (Date.parse(item.takenAt) > now + 86_400_000) return 'This says it was taken on a day that hasn’t come yet.'

@@ -1,0 +1,13 @@
+{
+  "task_id": "pawpaw-her-days-video-memory-repair",
+  "result": "repaired_videos_switched_off",
+  "root_cause": "The first look at the album read a large squeezed (deflated) video from the zip into memory whole, unsqueezed it, and copied it again, so a 400 MB video needed well over 1 GB. The server ran out of memory while also serving a family page, and the crash left the look's working mark set so later looks waited ten minutes.",
+  "fix": "Album videos are read from the zip as a stream and unsqueezed on the way; videos go one at a time; the real reason a file did not come in is logged without addresses; and Cloudflare's status and error are included when it refuses an upload. Videos are then switched off by owner decision (HER_DAYS_VIDEOS=on brings them back), and any over 25 MB is never uploaded.",
+  "verification": {
+    "unit_tests": "A real zip with a squeezed and a plain video is streamed out byte for byte; videos over 25 MB are never uploaded or retried and exactly 25 MB goes; videos are skipped while off; full suite and next build pass.",
+    "production": "After the streaming fix went live the server stayed up. Cloudflare then refused to start uploads for small album videos for a reason not yet known, so videos were switched off."
+  },
+  "data_integrity": "All 98 album videos are marked skipped in import_items (reversible: set status back to pending). The stuck working mark was cleared. No photo, story, caption or video record was lost; one video upload attempt left no video record.",
+  "limitations": "Why Cloudflare refused uploads is unexplained; the reason will appear in the server log the next time one is tried. Videos shared to the folder are ignored until switched on.",
+  "records": "docs/DECISIONS.md, entries 2026-10-23 and 2026-10-25"
+}

@@ -65,8 +65,13 @@ describe('her days: dates are India dates, counted from her birthday', () => {
     const now = Date.parse('2026-10-22T10:00:00Z')
     expect(reviewReason({ takenAt: '2026-06-12T05:00:00Z', filename: 'PXL_20260612_053000.jpg' }, now)).toBeNull()
     expect(reviewReason({ takenAt: null, filename: 'x.jpg' }, now)).toMatch(/No date/)
-    expect(reviewReason({ takenAt: '2026-07-01T05:00:00Z', filename: 'x.jpg', takenAtSource: 'added' }, now)).toBeNull() // no date of its own: goes on the day it was put in the folder
-    expect(reviewReason({ takenAt: '2026-07-01T05:00:00Z', filename: 'Screenshot_20260701.png', takenAtSource: 'added' }, now)).toMatch(/screenshot/)
+    // No date of its own: a photo put in the folder just now goes on that day. An older file moved in, or any video, waits.
+    expect(reviewReason({ takenAt: '2026-10-22T08:00:00Z', filename: 'x.jpg', takenAtSource: 'added' }, now)).toBeNull()
+    expect(reviewReason({ takenAt: '2026-10-22T08:00:00Z', filename: 'x.jpg', takenAtSource: 'added', kind: 'photo' }, now)).toBeNull()
+    expect(reviewReason({ takenAt: '2026-10-22T08:00:00Z', filename: 'x.mp4', takenAtSource: 'added', kind: 'video' }, now)).toMatch(/no date of its own/)
+    expect(reviewReason({ takenAt: '2026-07-01T05:00:00Z', filename: 'x.jpg', takenAtSource: 'added', kind: 'photo' }, now)).toMatch(/no date of its own/)
+    expect(reviewReason({ takenAt: '2026-10-21T20:00:00Z', filename: 'x.jpg', takenAtSource: 'added' }, now)).toMatch(/no date of its own/) // 14 hours old
+    expect(reviewReason({ takenAt: '2026-10-22T08:00:00Z', filename: 'Screenshot_20261022.png', takenAtSource: 'added' }, now)).toMatch(/screenshot/)
     expect(reviewReason({ takenAt: '2026-05-20T05:00:00Z', filename: 'x.jpg' }, now)).toMatch(/before she was born/)
     expect(reviewReason({ takenAt: '2026-12-01T05:00:00Z', filename: 'x.jpg' }, now)).toMatch(/hasn’t come yet/)
     expect(reviewReason({ takenAt: '2026-07-01T05:00:00Z', filename: 'IMG-20260701-WA0003.jpg' }, now)).toMatch(/WhatsApp/)
@@ -379,9 +384,15 @@ describe('her days: bringing photos in', () => {
 
   it('puts a photo with no date of its own straight on the day it was put in the folder', async () => {
     const { db, tables } = fakeDb()
-    await recordFound(db as never, 'run-1', 'google_drive', [found('shot', { filename: '1792868969913.png', takenAt: '2026-10-25T08:49:12.956Z', takenAtSource: 'added' })])
+    const justNow = new Date(Date.now() - 60_000).toISOString()
+    await recordFound(db as never, 'run-1', 'google_drive', [
+      found('shot', { filename: '1792868969913.png', takenAt: justNow, takenAtSource: 'added' }),
+      found('moved', { filename: 'old-photo.png', takenAt: '2026-03-01T08:00:00.000Z', takenAtSource: 'added' }),
+    ])
     await importBatch(db as never, photos(() => jpeg), 'admin-1', null, 3)
-    expect(tables.timeline_media[0]).toMatchObject({ visibility: 'shown', review_reason: null, taken_at: '2026-10-25T08:49:12.956Z', taken_at_source: 'added' })
+    expect(tables.timeline_media.find(row => row.source_item_id === 'shot')).toMatchObject({ visibility: 'shown', review_reason: null, taken_at: justNow, taken_at_source: 'added' })
+    // A file that was made in Drive long ago and only moved in waits for a look instead of landing on the wrong day.
+    expect(tables.timeline_media.find(row => row.source_item_id === 'moved')).toMatchObject({ visibility: 'review' })
   })
 
   it('puts his own words from Google Photos under the photo, and the album’s date beats the file name', async () => {
