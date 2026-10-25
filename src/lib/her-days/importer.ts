@@ -206,7 +206,7 @@ function settleDate(item: ImportItemRow, found?: string | null, fromPhoto?: stri
 }
 
 async function placeOnDays(db: SupabaseClient, item: ImportItemRow, adminId: string, stored: { mediaId: string; width: number; height: number }, date: { takenAt: string | null; source: string }, videoId: string | null) {
-  const reason = reviewReason({ takenAt: date.takenAt, filename: item.filename, takenAtSource: date.source })
+  const reason = reviewReason({ takenAt: date.takenAt, filename: item.filename, takenAtSource: date.source, kind: item.kind })
   return db.from('timeline_media').insert({
     kind: item.kind, media_asset_id: stored.mediaId, video_asset_id: videoId,
     taken_at: date.takenAt, taken_at_source: date.source,

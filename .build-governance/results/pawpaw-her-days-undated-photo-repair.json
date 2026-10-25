@@ -1,0 +1,13 @@
+{
+  "task_id": "pawpaw-her-days-undated-photo-repair",
+  "result": "repaired_pending_owner_merge",
+  "root_cause": "A photo put in the Her days Drive folder with no date of its own (a PNG with no camera date) was held in the desk's review list until the owner gave it a date, so it did not appear on the family pages. Review was the rule for any photo dated only by the day it was added.",
+  "fix": "A photo with no date of its own goes straight on the day it was put in the folder when that was within the last 12 hours. A file older than that (for example one moved in from elsewhere in Drive), and any video, still waits for a look, as do no date at all, before her birth, a future day, WhatsApp copies and screenshots. The day can be changed from the desk.",
+  "verification": {
+    "unit_tests": "Her days tests cover a fresh undated photo going on shown, a 14-hour-old and a months-old undated file held, a video held, and a named screenshot held; full suite and next build pass.",
+    "live_check": "The two owner test photos were found by the two-minute timer within one minute of arriving, then shown on the right day after the data correction below."
+  },
+  "data_integrity": "Two timeline_media rows from the Her days folder were set from review to shown by hand to match the new rule. No other row, caption, media file or story changed. Hiding either is one tap on the desk.",
+  "limitations": "A photo found more than 12 hours after it was made (an outage, or a long queue) waits for a look instead of going straight on. Drive does not say when a file entered a folder, so its creation time stands in for it.",
+  "records": "docs/DECISIONS.md, entry 2026-10-25 (even later)"
+}

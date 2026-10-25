@@ -2,6 +2,21 @@
 
 Newest first. Each production fix records its cause, the fix, how it was verified, the data check, and what it still cannot do. No private family content, photo addresses, identifiers or credentials here.
 
+## 2026-10-25 (even later) · A photo put in the folder shows up, and the day's two fixes are written down
+
+**Defect (owner-reported):** photos put in the Her days folder were picked up but did not appear on the site.
+- **Root cause:** a photo with no date of its own was held on the desk for a date. His test photos were PNGs with no camera date.
+- **Fix:** a photo with no date of its own goes on the day it was put in the folder if that was within the last 12 hours. Older files (moved in from elsewhere in Drive), videos, and the other mechanical reasons still wait for a look.
+- **Verification:** the two-minute timer picked both test photos up within a minute; tests cover the fresh, old and video cases; his two photos then showed on 25 October.
+- **Data check:** two `timeline_media` rows set to shown by hand. Nothing else changed.
+- **Limit:** Drive does not say when a file entered a folder, so its creation time stands in for it. A photo found over 12 hours late waits for a look.
+- Task result: `.build-governance/results/pawpaw-her-days-undated-photo-repair.json`.
+
+**Earlier the same day, the video memory failure** (found by the live check after the Google helper key went live):
+- **Root cause:** a big squeezed album video was read into memory whole, so the server ran out of memory while serving a page.
+- **Fix, verification and limit:** streaming, one at a time, then videos switched off. See the task result `.build-governance/results/pawpaw-her-days-video-memory-repair.json`.
+- **Data check:** 98 album videos marked skipped, reversible.
+
 ## 2026-10-25 (later) · Her days picks things up by itself, and videos are off for now
 
 **Asked by Sujith:** a photo put in the Her days folder must be picked up with nobody opening the site, and no videos for now.
