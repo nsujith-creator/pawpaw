@@ -30,6 +30,7 @@ const { importBatch, recordFound, retryFailed, preparePhoto, progressFor, finish
 const { albumItems, folderItem, syncHerDays } = await import('@/lib/her-days/sync')
 const { draftMissingLines } = await import('@/lib/her-days/captions')
 const { decideLine, writeLine } = await import('@/app/admin/her-days/actions')
+const { photosNeedingALine } = await import('@/lib/her-days/lines')
 
 const root = join(__dirname, '../..')
 const read = (file: string) => readFileSync(join(root, file), 'utf8')
@@ -629,6 +630,46 @@ describe('her days: lines he writes himself', () => {
     expect(await writeLine('missing', { kind: 'mine', text: 'hi' })).toMatchObject({ error: expect.stringMatching(/didn’t save/) })
     expect(tables.caption_drafts).toHaveLength(0)
     expect(tables.media_assets[0].caption).toBeNull()
+  })
+})
+
+describe('her days: which photos need a line', () => {
+  it('reaches older photos even when the newest ones have all been dealt with', async () => {
+    const { db, tables } = fakeDb()
+    // 450 photos, newest first by day; the newest 420 were already marked "No line".
+    for (let n = 0; n < 450; n++) {
+      tables.media_assets.push({ id: `m${n}`, storage_path: `p${n}.jpg`, caption: null })
+      tables.timeline_media.push({ id: `t${n}`, media_asset_id: `m${n}`, visibility: 'shown', taken_at: new Date(Date.UTC(2026, 9, 1) - n * 3600_000).toISOString() })
+      if (n < 420) tables.caption_drafts.push({ id: `d${n}`, media_asset_id: `m${n}`, draft: '', status: 'no_line' })
+    }
+    const list = await photosNeedingALine(db as never, 40)
+    expect(list).toHaveLength(30)
+    expect(list[0].mediaId).toBe('m420')
+    expect(list.at(-1)!.mediaId).toBe('m449')
+  })
+
+  it('puts the older lines he wants redone first, and leaves out a photo that is already written', async () => {
+    const { db, tables } = fakeDb()
+    tables.media_assets.push({ id: 'm-old', storage_path: 'a.jpg', caption: 'A small person in a basket of wonder.' }, { id: 'm-new', storage_path: 'b.jpg', caption: null }, { id: 'm-done', storage_path: 'c.jpg', caption: 'Mine' })
+    tables.timeline_media.push({ id: 't1', media_asset_id: 'm-new', visibility: 'shown', taken_at: '2026-10-01T00:00:00Z' }, { id: 't2', media_asset_id: 'm-done', visibility: 'shown', taken_at: '2026-10-02T00:00:00Z' })
+    tables.her_days_state.push({ key: 'redraft', value: { media_ids: ['m-old'] } })
+    const list = await photosNeedingALine(db as never, 40)
+    expect(list.map(item => [item.mediaId, item.caption])).toEqual([['m-old', 'A small person in a basket of wonder.'], ['m-new', null]])
+  })
+
+  it('says so when his note about a photo does not save, so nothing looks done that is not', async () => {
+    const { db, tables } = fakeDb()
+    deskDb = db
+    tables.media_assets.push({ id: 'm-a', caption: null })
+    const realFrom = db.from
+    db.from = (table: string) => {
+      const query = realFrom(table)
+      if (table === 'caption_drafts') query.insert = (() => ({ ...query, then: (resolve: (value: unknown) => void) => resolve({ data: null, error: { code: '500', message: 'down' } }) })) as typeof query.insert
+      return query
+    }
+    expect(await writeLine('m-a', { kind: 'none' })).toMatchObject({ error: expect.stringMatching(/didn’t save/) })
+    db.from = realFrom
+    expect(await writeLine('m-a', { kind: 'none' })).toEqual({ ok: true })
   })
 })
 

@@ -65,11 +65,13 @@ export async function decideLine(draftId: string, decision: LineDecision): Promi
 }
 
 // Takes a photo off the list of lines to be redone, once Sujith has dealt with it himself.
-async function stopRedraft(db: ReturnType<typeof createAdminClient>, mediaId: string) {
-  const { data } = await db.from('her_days_state').select('value').eq('key', 'redraft').maybeSingle()
+async function stopRedraft(db: ReturnType<typeof createAdminClient>, mediaId: string): Promise<boolean> {
+  const { data, error } = await db.from('her_days_state').select('value').eq('key', 'redraft').maybeSingle()
+  if (error) return false
   const ids = (data?.value as { media_ids?: string[] } | undefined)?.media_ids ?? []
-  if (!ids.includes(mediaId)) return
-  await db.from('her_days_state').upsert({ key: 'redraft', value: { media_ids: ids.filter(id => id !== mediaId) }, updated_at: new Date().toISOString() })
+  if (!ids.includes(mediaId)) return true
+  const saved = await db.from('her_days_state').upsert({ key: 'redraft', value: { media_ids: ids.filter(id => id !== mediaId) }, updated_at: new Date().toISOString() })
+  return !saved.error
 }
 
 // A line Sujith writes himself for a photo that has no suggestion, or no line at all. A photo he
@@ -86,8 +88,9 @@ export async function writeLine(mediaId: string, line: { kind: 'mine'; text: str
   }
   const saved = await db.from('media_assets').update({ caption }).eq('id', mediaId).select('id')
   if (saved.error || !saved.data?.length) return { error: 'That didn’t save. Try again.' }
-  await db.from('caption_drafts').insert({ media_asset_id: mediaId, draft: caption ?? '', status: caption ? 'rewritten' : 'no_line', final_text: caption, decided_at: now })
-  await stopRedraft(db, mediaId)
+  // Saving again is harmless, so a failure here is reported and he can simply try once more.
+  const noted = await db.from('caption_drafts').insert({ media_asset_id: mediaId, draft: caption ?? '', status: caption ? 'rewritten' : 'no_line', final_text: caption, decided_at: now })
+  if (noted.error || !(await stopRedraft(db, mediaId))) return { error: 'That didn’t save. Try again.' }
   revalidatePath('/', 'layout')
   return { ok: true }
 }
