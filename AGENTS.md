@@ -103,3 +103,9 @@ Every word on the family pages and the desk is one person talking to another. Th
 - Short. One line beats two. Don't narrate the layout ("each row is…", "tap here to…") when the screen already shows it.
 - Errors say what happened and what to do next, in plain words, with no blame and no jargon.
 - Before shipping any screen, read every visible word aloud. If it sounds like software talking, rewrite it.
+
+## Shared AI Control Centre - all projects
+
+For project work, first retrieve shared instructions and the relevant project record from https://www.notion.so/40427700561e814d9617e5a1542c8d25. Follow verified authoritative sources; if the record or access is missing, say so. After an approved material decision or verified milestone, append an authorized record update and decision-log event, then read both back. Report failed write-back. Never present proposals, stale memory or unsupported agent claims as verified state.
+
+Project record: https://app.notion.com/p/40427700561e81eb9cc6f032fe45e9f7
